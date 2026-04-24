@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>實習公司查詢系統</title>
+</head>
+<body>
+    <h1>找尋實習公司</h1>
+    
+    <form method="GET" action="">
+        <input type="text" name="q" value="{{ query }}" placeholder="輸入公司名稱或產業...">
+        <button type="submit">搜尋</button>
+    </form>
+
+    <hr>
+
+    <h2>查詢結果</h2>
+    {% if companies %}
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>編號</th>
+                <th>公司名稱</th>
+                <th>產業</th>
+                <th>地點</th>
+                <th>簡介</th>
+            </tr>
+            {% for company in companies %}
+            <tr>
+                <td>{{ company.company_id }}</td>
+                <td>{{ company.name }}</td>
+                <td>{{ company.industry }}</td>
+                <td>{{ company.location }}</td>
+                <td>{{ company.description|truncatechars:50 }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>目前沒有找到符合條件的資料。</p>
+    {% endif %}
+</body>
+</html>
