@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.shortcuts import render
+from django.http import Http404
 from django.db import connection
 
 # 輔助函式：將 SQL 查詢結果轉換成 Dictionary，方便前端 Template 讀取
@@ -41,3 +42,28 @@ def search_companies(request):
     }
     
     return render(request, 'company/company_search.html', context)
+
+def company_detail(request, company_id):
+    with connection.cursor() as cursor:
+        # 透過 company_id 查詢單一公司資料
+        sql = """
+            SELECT company_id, name, industry, description, location, website 
+            FROM companies 
+            WHERE company_id = %s
+        """
+        cursor.execute(sql, [company_id])
+        row = cursor.fetchone()
+        
+        # 如果找不到該公司，回傳 404 錯誤頁面
+        if not row:
+            raise Http404("找不到該公司資料")
+            
+        # 將單筆查詢結果 (Tuple) 轉換為 Dictionary
+        columns = [col[0] for col in cursor.description]
+        company_data = dict(zip(columns, row))
+        
+    context = {
+        'company': company_data
+    }
+    
+    return render(request, 'company/company_detail.html', context)

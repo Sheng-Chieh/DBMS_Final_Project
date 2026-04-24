@@ -21,4 +21,5 @@ from company import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('search/', views.search_companies, name='search_companies'),
+    path('company/<int:company_id>/', views.company_detail, name='company_detail'),
 ]
