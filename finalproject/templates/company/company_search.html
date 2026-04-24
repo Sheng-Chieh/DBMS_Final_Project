@@ -5,40 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>實習公司查詢系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 隱藏捲軸但保留捲動功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Modal 動畫 */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 300ms, transform 300ms;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
 
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <header class="mb-10 text-center">
-            <h1 class="text-4xl font-extrabold text-blue-600 mb-3 drop-shadow-sm">找尋實習公司</h1>
-            <p class="text-slate-500">探索各大公司資訊，尋找您理想的實習機會</p>
-        </header>
+    <!-- 頂部漸層橫幅與搜尋列 -->
+    <div class="bg-gradient-to-r from-[#53c8d8] to-[#42b5d4] pb-10 pt-12 px-4 shadow-sm mb-8">
+        <div class="container mx-auto max-w-5xl">
+            <header class="mb-8 text-center">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-2 drop-shadow-md tracking-wider">找實習，從現在開始</h1>
+            </header>
 
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-slate-200 transition-all hover:shadow-md">
-            <form method="GET" action="" class="flex flex-col sm:flex-row gap-4">
-                <div class="relative flex-grow">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <!-- 整合型搜尋列 (膠囊設計) -->
+            <div class="max-w-4xl mx-auto relative z-20">
+                <!-- 搜尋列上方的標籤 -->
+                <div class="flex items-center space-x-6 mb-2 px-4">
+                    <span class="text-white font-bold flex items-center pb-2 border-b-2 border-white cursor-pointer">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        搜尋
+                    </span>
+                </div>
+
+                <form method="GET" action="" class="bg-white rounded-2xl md:rounded-full p-1.5 flex flex-col md:flex-row items-center shadow-lg w-full">
+                    
+                    <!-- 1. 產業選擇 Modal 觸發器 -->
+                    <div class="relative w-full md:w-40 md:flex-none">
+                        <input type="hidden" name="industry" id="industry-input" value="{{ sel_industry }}">
+                        <button type="button" class="w-full bg-transparent pl-6 pr-10 py-3 text-slate-700 font-medium focus:outline-none cursor-pointer hover:bg-slate-50 rounded-full transition-colors flex justify-between items-center text-left" onclick="openIndustryModal()">
+                            <span id="industry-text" class="truncate">
+                                {% if sel_industry %}{{ sel_industry }}{% else %}所有產業{% endif %}
+                            </span>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 pointer-events-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="hidden md:block h-6 w-px bg-slate-200 mx-1"></div>
+                    <div class="md:hidden w-full h-px bg-slate-100 my-1"></div>
+
+                    <!-- 2. 地區選擇 Modal 觸發器 -->
+                    <div class="relative w-full md:w-36 md:flex-none">
+                        <input type="hidden" name="location" id="location-input" value="{{ sel_location }}">
+                        <button type="button" class="w-full bg-transparent pl-6 pr-10 py-3 text-slate-700 font-medium focus:outline-none cursor-pointer hover:bg-slate-50 rounded-full transition-colors flex justify-between items-center text-left" onclick="openLocationModal()">
+                            <span id="location-text" class="truncate">
+                                {% if sel_location %}{{ sel_location }}{% else %}所有地區{% endif %}
+                            </span>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 pointer-events-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="hidden md:block h-6 w-px bg-slate-200 mx-1"></div>
+                    <div class="md:hidden w-full h-px bg-slate-100 my-1"></div>
+
+                    <!-- 3. 關鍵字輸入 -->
+                    <div class="flex-grow flex items-center w-full md:w-auto pl-4 pr-2 hover:bg-slate-50 rounded-full transition-colors z-10 relative">
+                        <svg class="h-5 w-5 text-slate-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                         </svg>
+                        <input type="text" name="q" value="{{ query }}" placeholder="請輸入關鍵字..." autocomplete="off"
+                               class="w-full bg-transparent border-none py-3 px-3 text-slate-700 focus:outline-none focus:ring-0 placeholder-slate-400">
                     </div>
-                    <input type="text" name="q" value="{{ query }}" placeholder="輸入公司名稱或產業關鍵字..." 
-                           class="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent transition-all">
-                </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-8 rounded-xl shadow-sm transition-colors flex items-center justify-center whitespace-nowrap">
-                    搜尋
-                </button>
-            </form>
-        </div>
 
+                    <!-- 4. 搜尋按鈕 -->
+                    <div class="w-full md:w-auto p-1 mt-2 md:mt-0 z-10 relative">
+                        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-8 rounded-full shadow-md transition-all flex items-center justify-center whitespace-nowrap">
+                            搜尋
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜尋結果區塊 -->
+    <div class="container mx-auto px-4 pb-12 max-w-6xl relative z-0">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-slate-800">查詢結果</h2>
-                {% if query %}
-                    <span class="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                        關鍵字: <span class="font-semibold text-blue-600">"{{ query }}"</span>
-                    </span>
-                {% endif %}
+                <div class="flex flex-wrap gap-2 text-sm">
+                    {% if sel_industry %}
+                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">產業: <span class="font-semibold text-blue-600">{{ sel_industry }}</span></span>
+                    {% endif %}
+                    {% if sel_location %}
+                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">地區: <span class="font-semibold text-blue-600">{{ sel_location }}</span></span>
+                    {% endif %}
+                    {% if query %}
+                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">關鍵字: <span class="font-semibold text-blue-600">{{ query }}</span></span>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="p-0">
@@ -51,13 +128,12 @@
                                     <th class="py-4 px-6 border-b border-slate-200">產業</th>
                                     <th class="py-4 px-6 border-b border-slate-200">地點</th>
                                     <th class="py-4 px-6 border-b border-slate-200 w-1/3">簡介</th>
-                                    <th class="py-4 px-6 border-b border-slate-200 text-center">操作</th> <!-- 新增操作欄位 -->
+                                    <th class="py-4 px-6 border-b border-slate-200 text-center"></th>
                                 </tr>
                             </thead>
                             <tbody class="text-slate-600 text-sm">
                                 {% for company in companies %}
                                 <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition-colors duration-150">
-                                    <!-- 將公司名稱加上連結 -->
                                     <td class="py-4 px-6 font-bold text-base">
                                         <a href="{% url 'company_detail' company.company_id %}" class="text-blue-600 hover:text-blue-800 hover:underline">
                                             {{ company.name }}
@@ -65,19 +141,18 @@
                                     </td>
                                     <td class="py-4 px-6 whitespace-nowrap">
                                         <span class="bg-indigo-50 text-indigo-700 py-1.5 px-3 rounded-lg text-xs font-bold tracking-wide border border-indigo-100">
-                                            {{ company.industry }}
+                                            {{ company.industry_category }} - {{ company.industry_subcategory }}
                                         </span>
                                     </td>
                                     <td class="py-4 px-6 text-slate-500 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            {{ company.location }}
+                                            {{ company.location_city }}{{ company.location_district }}
                                         </div>
                                     </td>
                                     <td class="py-4 px-6 text-slate-500 leading-relaxed" title="{{ company.description }}">
                                         {{ company.description|truncatechars:50 }}
                                     </td>
-                                    <!-- 新增：查看詳情按鈕 -->
                                     <td class="py-4 px-6 text-center whitespace-nowrap">
                                         <a href="{% url 'company_detail' company.company_id %}" 
                                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors">
@@ -95,11 +170,546 @@
                             <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <h3 class="text-lg font-semibold text-slate-700 mb-1">找不到相關公司</h3>
-                        <p class="text-slate-500 max-w-sm mx-auto">目前沒有找到符合條件的資料，請嘗試使用其他關鍵字或減少搜尋限制條件。</p>
+                        <p class="text-slate-500 max-w-sm mx-auto">目前沒有找到符合條件的資料，請嘗試放寬產業、地區或關鍵字限制。</p>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
+
+    <!-- ================== 產業類型 Modal ================== -->
+    <div id="industry-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeIndustryModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[70vh] flex flex-col overflow-hidden mx-4">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="w-8"></div>
+                <h3 class="text-xl font-bold text-slate-800 tracking-wide">產業類型</h3>
+                <button type="button" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 focus:outline-none transition-colors" onclick="closeIndustryModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="px-6 py-4 border-b border-slate-100 bg-white">
+                <input type="text" placeholder="搜尋產業關鍵字" autocomplete="off" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <div class="mt-3 text-sm text-slate-500 font-medium">請選擇項目..</div>
+            </div>
+            <div class="flex flex-1 overflow-hidden bg-white">
+                <div class="w-2/5 sm:w-1/3 border-r border-slate-200 overflow-y-auto no-scrollbar py-2" id="industry-modal-left-panel"></div>
+                <div class="w-3/5 sm:w-2/3 overflow-y-auto p-6 bg-white" id="industry-modal-right-panel"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="text-sm text-slate-600 font-medium">
+                    可選擇 <span id="industry-selected-count" class="text-blue-600 font-bold text-base">0</span> / 10 項
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" class="px-5 py-2 border border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 focus:outline-none transition-colors" onclick="resetIndustrySelection()">重設</button>
+                    <button type="button" class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 shadow-sm focus:outline-none transition-colors" onclick="confirmIndustrySelection()">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== 工作地區 Modal ================== -->
+    <div id="location-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeLocationModal()"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[70vh] flex flex-col overflow-hidden mx-4">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="w-8"></div>
+                <h3 class="text-xl font-bold text-slate-800 tracking-wide">工作地區</h3>
+                <button type="button" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 focus:outline-none transition-colors" onclick="closeLocationModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="px-6 py-4 border-b border-slate-100 bg-white">
+                <input type="text" placeholder="搜尋地區關鍵字" autocomplete="off" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <div class="mt-3 text-sm text-slate-500 font-medium">請選擇項目..</div>
+            </div>
+            <div class="flex flex-1 overflow-hidden bg-white">
+                <div class="w-2/5 sm:w-1/3 border-r border-slate-200 overflow-y-auto no-scrollbar py-2" id="location-modal-left-panel"></div>
+                <div class="w-3/5 sm:w-2/3 overflow-y-auto p-6 bg-white" id="location-modal-right-panel"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="text-sm text-slate-600 font-medium">
+                    可選擇 <span id="location-selected-count" class="text-blue-600 font-bold text-base">0</span> / 10 項
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" class="px-5 py-2 border border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 focus:outline-none transition-colors" onclick="resetLocationSelection()">重設</button>
+                    <button type="button" class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 shadow-sm focus:outline-none transition-colors" onclick="confirmLocationSelection()">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== JavaScript 腳本 ================== -->
+    <script>
+        // ----------------------- 產業 Modal 邏輯 -----------------------
+        const industryData = [
+            {
+                group: '科技與資訊',
+                categories: [
+                    { name: '科技', items: ['軟體工程', '系統整合', '資訊安全', 'AI人工智慧', '大數據', '區塊鏈'] },
+                    { name: '電子', items: ['半導體', '光電', '電腦硬體', '電子零組件', '消費性電子'] }
+                ]
+            },
+            {
+                group: '商業與金融',
+                categories: [
+                    { name: '金融', items: ['銀行', '人壽保險', '產物保險', '證券', '投信投顧', '金融科技'] },
+                    { name: '專業', items: ['會計服務', '法律服務', '企管顧問', '人力資源', '廣告公關', '翻譯設計'] }
+                ]
+            },
+            {
+                group: '製造與工程',
+                categories: [
+                    { name: '製造', items: ['精密機械', '汽車製造', '食品加工', '紡織成衣', '化工塑膠', '鋼鐵金屬'] },
+                    { name: '營建', items: ['建築營造', '土木工程', '室內設計', '建材傢俱'] }
+                ]
+            },
+            {
+                group: '民生與服務',
+                categories: [
+                    { name: '服務', items: ['餐飲服務', '飯店住宿', '休閒娛樂', '美容美髮', '婚紗攝影', '寵物相關'] },
+                    { name: '零售', items: ['百貨量販', '便利商店', '電子商務', '連鎖加盟', '進出口貿易'] },
+                    { name: '醫療', items: ['醫院診所', '生技研發', '醫療器材', '藥妝照護', '長照服務'] }
+                ]
+            },
+            {
+                group: '教育與運輸',
+                categories: [
+                    { name: '教育', items: ['各級學校', '補習班', '數位學習', '出版傳媒', '藝文展演', '體育相關'] },
+                    { name: '物流', items: ['航空運輸', '航運港埠', '陸上運輸', '倉儲物流', '郵政快遞'] }
+                ]
+            }
+        ];
+
+        let selectedIndustries = new Set();
+        let activeIndustryCategory = '科技';
+
+        function renderIndustryLeftPanel() {
+            const leftPanel = document.getElementById('industry-modal-left-panel');
+            let html = '';
+            industryData.forEach(group => {
+                html += `<div class="px-5 py-3 text-sm font-bold text-blue-600 bg-white sticky top-0 z-10">${group.group}</div>`;
+                group.categories.forEach(category => {
+                    const isActive = category.name === activeIndustryCategory;
+                    const activeClass = isActive 
+                        ? 'bg-[#eef5fa] border-r-4 border-blue-500 font-bold text-blue-700' 
+                        : 'hover:bg-slate-50 cursor-pointer text-slate-700';
+                    html += `<div class="px-5 py-3 ${activeClass} transition-colors" onclick="selectIndustryCategory('${category.name}')">${category.name}業</div>`;
+                });
+            });
+            leftPanel.innerHTML = html;
+        }
+
+        function selectIndustryCategory(name) {
+            activeIndustryCategory = name;
+            renderIndustryLeftPanel();
+            renderIndustryRightPanel();
+        }
+
+        function renderIndustryRightPanel() {
+            const rightPanel = document.getElementById('industry-modal-right-panel');
+            let html = '';
+            
+            let activeData = null;
+            for (const group of industryData) {
+                const found = group.categories.find(c => c.name === activeIndustryCategory);
+                if (found) { activeData = found; break; }
+            }
+            if (!activeData) return;
+
+            const allItems = activeData.items;
+            const allItemsSelected = allItems.length > 0 && allItems.every(i => selectedIndustries.has(`${activeIndustryCategory}-${i}`));
+            const isEntirelySelected = selectedIndustries.has(activeIndustryCategory) || allItemsSelected;
+
+            html += `
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                               onchange="toggleIndustryCategory('${activeIndustryCategory}', this.checked)"
+                               ${isEntirelySelected ? 'checked' : ''}>
+                        <span class="text-slate-800 font-medium group-hover:text-blue-600 transition-colors">${activeIndustryCategory}業全部</span>
+                    </label>
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </div>
+                <div class="space-y-4 ml-1">
+            `;
+            
+            activeData.items.forEach(item => {
+                const itemKey = `${activeIndustryCategory}-${item}`;
+                const isSelected = selectedIndustries.has(itemKey) || isEntirelySelected;
+                
+                html += `
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                               value="${itemKey}"
+                               onchange="toggleIndustryItem('${activeIndustryCategory}', '${item}', this.checked)"
+                               ${isSelected ? 'checked' : ''}>
+                        <span class="text-slate-600 group-hover:text-slate-900 transition-colors">${item}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            rightPanel.innerHTML = html;
+        }
+
+        function toggleIndustryCategory(categoryName, isChecked) {
+            let activeData = null;
+            for (const group of industryData) {
+                const found = group.categories.find(c => c.name === categoryName);
+                if (found) { activeData = found; break; }
+            }
+            
+            if (isChecked) {
+                if (selectedIndustries.size >= 10 && !selectedIndustries.has(categoryName)) {
+                    alert('最多只能選擇 10 項');
+                    renderIndustryRightPanel();
+                    return;
+                }
+                selectedIndustries.add(categoryName);
+                activeData.items.forEach(i => selectedIndustries.delete(`${categoryName}-${i}`));
+            } else {
+                selectedIndustries.delete(categoryName);
+                activeData.items.forEach(i => selectedIndustries.delete(`${categoryName}-${i}`));
+            }
+            
+            updateIndustryCount();
+            renderIndustryRightPanel();
+        }
+
+        function toggleIndustryItem(categoryName, item, isChecked) {
+            const itemKey = `${categoryName}-${item}`;
+            if (selectedIndustries.has(categoryName)) {
+                selectedIndustries.delete(categoryName);
+                let activeData = null;
+                for (const group of industryData) {
+                    const found = group.categories.find(c => c.name === categoryName);
+                    if (found) { activeData = found; break; }
+                }
+                if (activeData) {
+                    activeData.items.forEach(i => {
+                        if (i !== item) selectedIndustries.add(`${categoryName}-${i}`);
+                    });
+                }
+            } else {
+                if (isChecked) {
+                    if (selectedIndustries.size >= 10) {
+                        alert('最多只能選擇 10 項');
+                        renderIndustryRightPanel(); 
+                        return;
+                    }
+                    selectedIndustries.add(itemKey);
+                } else {
+                    selectedIndustries.delete(itemKey);
+                }
+            }
+            
+            let activeData = null;
+            for (const group of industryData) {
+                const found = group.categories.find(c => c.name === categoryName);
+                if (found) { activeData = found; break; }
+            }
+            if (activeData) {
+                const allSelected = activeData.items.every(i => selectedIndustries.has(`${categoryName}-${i}`));
+                if (allSelected) {
+                    activeData.items.forEach(i => selectedIndustries.delete(`${categoryName}-${i}`));
+                    selectedIndustries.add(categoryName);
+                }
+            }
+
+            updateIndustryCount();
+            renderIndustryRightPanel();
+        }
+
+        function updateIndustryCount() {
+            document.getElementById('industry-selected-count').innerText = selectedIndustries.size;
+        }
+
+        function resetIndustrySelection() {
+            selectedIndustries.clear();
+            updateIndustryCount();
+            renderIndustryRightPanel();
+        }
+
+        function openIndustryModal() {
+            const modal = document.getElementById('industry-modal');
+            modal.classList.remove('hidden');
+            
+            const currentVal = document.getElementById('industry-input').value;
+            if (currentVal && selectedIndustries.size === 0) {
+                const vals = currentVal.split(',');
+                vals.forEach(v => {
+                    v = v.trim();
+                    if (v) selectedIndustries.add(v);
+                });
+                if (vals.length > 0) {
+                    const firstVal = vals[0].trim();
+                    activeIndustryCategory = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
+                }
+            }
+            
+            updateIndustryCount();
+            renderIndustryLeftPanel();
+            renderIndustryRightPanel();
+        }
+
+        function closeIndustryModal() {
+            document.getElementById('industry-modal').classList.add('hidden');
+        }
+
+        function confirmIndustrySelection() {
+            const arr = Array.from(selectedIndustries);
+            document.getElementById('industry-input').value = arr.join(',');
+            
+            const textDisplay = document.getElementById('industry-text');
+            if (arr.length === 0) {
+                textDisplay.innerText = '所有產業';
+            } else if (arr.length === 1) {
+                const txt = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0] + '業';
+                textDisplay.innerText = txt;
+            } else {
+                textDisplay.innerText = `已選 ${arr.length} 項`;
+            }
+            closeIndustryModal();
+        }
+
+
+        // ----------------------- 地區 Modal 邏輯 -----------------------
+        const locationData = [
+            {
+                group: '北部',
+                cities: [
+                    { name: '台北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] },
+                    { name: '新北市', districts: ['板橋區', '三重區', '中和區', '永和區', '新莊區', '新店區', '樹林區', '鶯歌區', '三峽區', '淡水區', '汐止區', '瑞芳區', '土城區', '蘆洲區', '五股區', '泰山區', '林口區', '深坑區', '石碇區', '坪林區', '三芝區', '石門區', '八里區', '平溪區', '雙溪區', '貢寮區', '金山區', '萬里區', '烏來區'] },
+                    { name: '基隆市', districts: ['仁愛區', '信義區', '中正區', '中山區', '安樂區', '暖暖區', '七堵區'] },
+                    { name: '桃園市', districts: ['桃園區', '中壢區', '大溪區', '楊梅區', '蘆竹區', '大園區', '龜山區', '八德區', '龍潭區', '平鎮區', '新屋區', '觀音區', '復興區'] },
+                    { name: '新竹市', districts: ['東區', '北區', '香山區'] },
+                    { name: '新竹縣', districts: ['竹北市', '竹東鎮', '新埔鎮', '關西鎮', '湖口鄉', '新豐鄉', '芎林鄉', '橫山鄉', '北埔鄉', '寶山鄉', '峨眉鄉', '尖石鄉', '五峰鄉'] },
+                    { name: '苗栗縣', districts: ['苗栗市', '苑裡鎮', '通霄鎮', '竹南鎮', '頭份市', '後龍鎮', '卓蘭鎮', '大湖鄉', '公館鄉', '銅鑼鄉', '南庄鄉', '頭屋鄉', '三義鄉', '西湖鄉', '造橋鄉', '三灣鄉', '獅潭鄉', '泰安鄉'] }
+                ]
+            },
+            {
+                group: '中部',
+                cities: [
+                    { name: '台中市', districts: ['中區', '東區', '南區', '西區', '北區', '北屯區', '西屯區', '南屯區', '太平區', '大里區', '霧峰區', '烏日區', '豐原區', '后里區', '石岡區', '東勢區', '和平區', '新社區', '潭子區', '大雅區', '神岡區', '大肚區', '沙鹿區', '龍井區', '梧棲區', '清水區', '大甲區', '外埔區', '大安區'] },
+                    { name: '彰化縣', districts: ['彰化市', '鹿港鎮', '和美鎮', '線西鄉', '伸港鄉', '福興鄉', '秀水鄉', '花壇鄉', '芬園鄉', '員林市', '溪湖鎮', '田中鎮', '大村鄉', '埔鹽鄉', '埔心鄉', '永靖鄉', '社頭鄉', '二水鄉', '北斗鎮', '二林鎮', '田尾鄉', '埤頭鄉', '芳苑鄉', '大城鄉', '竹塘鄉', '溪州鄉'] },
+                    { name: '南投縣', districts: ['南投市', '埔里鎮', '草屯鎮', '竹山鎮', '集集鎮', '名間鄉', '鹿谷鄉', '中寮鄉', '魚池鄉', '國姓鄉', '水里鄉', '信義鄉', '仁愛鄉'] },
+                    { name: '雲林縣', districts: ['斗六市', '斗南鎮', '虎尾鎮', '西螺鎮', '土庫鎮', '北港鎮', '古坑鄉', '大埤鄉', '莿桐鄉', '林內鄉', '二崙鄉', '崙背鄉', '麥寮鄉', '東勢鄉', '褒忠鄉', '臺西鄉', '元長鄉', '四湖鄉', '口湖鄉', '水林鄉'] }
+                ]
+            },
+            {
+                group: '南部',
+                cities: [
+                    { name: '嘉義市', districts: ['東區', '西區'] },
+                    { name: '嘉義縣', districts: ['太保市', '朴子市', '布袋鎮', '大林鎮', '民雄鄉', '溪口鄉', '新港鄉', '六腳鄉', '東石鄉', '義竹鄉', '鹿草鄉', '水上鄉', '中埔鄉', '竹崎鄉', '梅山鄉', '番路鄉', '大埔鄉', '阿里山鄉'] },
+                    { name: '台南市', districts: ['新營區', '鹽水區', '白河區', '柳營區', '後壁區', '東山區', '麻豆區', '下營區', '六甲區', '官田區', '大內區', '佳里區', '學甲區', '西港區', '七股區', '將軍區', '北門區', '新化區', '善化區', '新市區', '安定區', '山上區', '玉井區', '楠西區', '南化區', '左鎮區', '仁德區', '歸仁區', '關廟區', '龍崎區', '永康區', '東區', '南區', '北區', '安南區', '安平區', '中西區'] },
+                    { name: '高雄市', districts: ['鹽埕區', '鼓山區', '左營區', '楠梓區', '三民區', '新興區', '前金區', '苓雅區', '前鎮區', '旗津區', '小港區', '鳳山區', '林園區', '大寮區', '大樹區', '大社區', '仁武區', '鳥松區', '岡山區', '橋頭區', '燕巢區', '田寮區', '阿蓮區', '路竹區', '湖內區', '茄萣區', '永安區', '彌陀區', '梓官區', '旗山區', '美濃區', '六龜區', '甲仙區', '杉林區', '內門區', '茂林區', '桃源區', '那瑪夏區'] },
+                    { name: '屏東縣', districts: ['屏東市', '潮州鎮', '東港鎮', '恆春鎮', '萬丹鄉', '長治鄉', '麟洛鄉', '九如鄉', '里港鄉', '鹽埔鄉', '高樹鄉', '萬巒鄉', '內埔鄉', '竹田鄉', '新埤鄉', '枋寮鄉', '新園鄉', '崁頂鄉', '林邊鄉', '南州鄉', '佳冬鄉', '琉球鄉', '車城鄉', '滿州鄉', '枋山鄉', '三地門鄉', '霧臺鄉', '瑪家鄉', '泰武鄉', '來義鄉', '春日鄉', '獅子鄉', '牡丹鄉', '麻家鄉'] }
+                ]
+            },
+            {
+                group: '東部及離島',
+                cities: [
+                    { name: '宜蘭縣', districts: ['宜蘭市', '羅東鎮', '蘇澳鎮', '頭城鎮', '礁溪鄉', '壯圍鄉', '員山鄉', '冬山鄉', '五結鄉', '三星鄉', '大同鄉', '南澳鄉'] },
+                    { name: '花蓮縣', districts: ['花蓮市', '鳳林鎮', '玉里鎮', '新城鄉', '吉安鄉', '壽豐鄉', '光復鄉', '豐濱鄉', '瑞穗鄉', '富里鄉', '秀林鄉', '萬榮鄉', '卓溪鄉'] },
+                    { name: '台東縣', districts: ['臺東市', '成功鎮', '關山鎮', '卑南鄉', '大武鄉', '太麻里鄉', '東河鄉', '長濱鄉', '鹿野鄉', '池上鄉', '綠島鄉', '延平鄉', '海端鄉', '達仁鄉', '金峰鄉', '蘭嶼鄉'] },
+                    { name: '澎湖縣', districts: ['馬公市', '湖西鄉', '白沙鄉', '西嶼鄉', '望安鄉', '七美鄉'] },
+                    { name: '金門縣', districts: ['金城鎮', '金湖鎮', '金沙鎮', '金寧鄉', '烈嶼鄉', '烏坵鄉'] },
+                    { name: '連江縣', districts: ['南竿鄉', '北竿鄉', '莒光鄉', '東引鄉'] }
+                ]
+            }
+        ];
+
+        let selectedLocations = new Set();
+        let activeCityName = '台北市';
+
+        function renderLocationLeftPanel() {
+            const leftPanel = document.getElementById('location-modal-left-panel');
+            let html = '';
+            locationData.forEach(group => {
+                html += `<div class="px-5 py-3 text-sm font-bold text-blue-600 bg-white sticky top-0 z-10">${group.group}</div>`;
+                group.cities.forEach(city => {
+                    const isActive = city.name === activeCityName;
+                    const activeClass = isActive 
+                        ? 'bg-[#eef5fa] border-r-4 border-blue-500 font-bold text-blue-700' 
+                        : 'hover:bg-slate-50 cursor-pointer text-slate-700';
+                    html += `<div class="px-5 py-3 ${activeClass} transition-colors" onclick="selectCity('${city.name}')">${city.name}</div>`;
+                });
+            });
+            leftPanel.innerHTML = html;
+        }
+
+        function selectCity(cityName) {
+            activeCityName = cityName;
+            renderLocationLeftPanel();
+            renderLocationRightPanel();
+        }
+
+        function renderLocationRightPanel() {
+            const rightPanel = document.getElementById('location-modal-right-panel');
+            let html = '';
+            
+            let activeCityData = null;
+            for (const group of locationData) {
+                const found = group.cities.find(c => c.name === activeCityName);
+                if (found) { activeCityData = found; break; }
+            }
+            if (!activeCityData) return;
+
+            const allDistricts = activeCityData.districts;
+            const allDistrictsSelected = allDistricts.length > 0 && allDistricts.every(d => selectedLocations.has(`${activeCityName}-${d}`));
+            const isCityEntirelySelected = selectedLocations.has(activeCityName) || allDistrictsSelected;
+
+            html += `
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                               onchange="toggleCity('${activeCityName}', this.checked)"
+                               ${isCityEntirelySelected ? 'checked' : ''}>
+                        <span class="text-slate-800 font-medium group-hover:text-blue-600 transition-colors">${activeCityName}全部</span>
+                    </label>
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                </div>
+                <div class="space-y-4 ml-1">
+            `;
+            
+            activeCityData.districts.forEach(district => {
+                const itemKey = `${activeCityName}-${district}`;
+                const isSelected = selectedLocations.has(itemKey) || isCityEntirelySelected;
+                
+                html += `
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                               value="${itemKey}"
+                               onchange="toggleDistrict('${activeCityName}', '${district}', this.checked)"
+                               ${isSelected ? 'checked' : ''}>
+                        <span class="text-slate-600 group-hover:text-slate-900 transition-colors">${district}</span>
+                    </label>
+                `;
+            });
+            
+            html += `</div>`;
+            rightPanel.innerHTML = html;
+        }
+
+        function toggleCity(cityName, isChecked) {
+            let activeCityData = null;
+            for (const group of locationData) {
+                const found = group.cities.find(c => c.name === cityName);
+                if (found) { activeCityData = found; break; }
+            }
+            
+            if (isChecked) {
+                if (selectedLocations.size >= 10 && !selectedLocations.has(cityName)) {
+                    alert('最多只能選擇 10 項');
+                    renderLocationRightPanel();
+                    return;
+                }
+                selectedLocations.add(cityName);
+                activeCityData.districts.forEach(d => selectedLocations.delete(`${cityName}-${d}`));
+            } else {
+                selectedLocations.delete(cityName);
+                activeCityData.districts.forEach(d => selectedLocations.delete(`${cityName}-${d}`));
+            }
+            
+            updateLocationCount();
+            renderLocationRightPanel();
+        }
+
+        function toggleDistrict(cityName, district, isChecked) {
+            const itemKey = `${cityName}-${district}`;
+            if (selectedLocations.has(cityName)) {
+                selectedLocations.delete(cityName);
+                let activeCityData = null;
+                for (const group of locationData) {
+                    const found = group.cities.find(c => c.name === cityName);
+                    if (found) { activeCityData = found; break; }
+                }
+                if (activeCityData) {
+                    activeCityData.districts.forEach(d => {
+                        if (d !== district) selectedLocations.add(`${cityName}-${d}`);
+                    });
+                }
+            } else {
+                if (isChecked) {
+                    if (selectedLocations.size >= 10) {
+                        alert('最多只能選擇 10 項');
+                        renderLocationRightPanel(); 
+                        return;
+                    }
+                    selectedLocations.add(itemKey);
+                } else {
+                    selectedLocations.delete(itemKey);
+                }
+            }
+            
+            let activeCityData = null;
+            for (const group of locationData) {
+                const found = group.cities.find(c => c.name === cityName);
+                if (found) { activeCityData = found; break; }
+            }
+            if (activeCityData) {
+                const allSelected = activeCityData.districts.every(d => selectedLocations.has(`${cityName}-${d}`));
+                if (allSelected) {
+                    activeCityData.districts.forEach(d => selectedLocations.delete(`${cityName}-${d}`));
+                    selectedLocations.add(cityName);
+                }
+            }
+
+            updateLocationCount();
+            renderLocationRightPanel();
+        }
+
+        function updateLocationCount() {
+            document.getElementById('location-selected-count').innerText = selectedLocations.size;
+        }
+
+        function resetLocationSelection() {
+            selectedLocations.clear();
+            updateLocationCount();
+            renderLocationRightPanel();
+        }
+
+        function openLocationModal() {
+            const modal = document.getElementById('location-modal');
+            modal.classList.remove('hidden');
+            
+            const currentVal = document.getElementById('location-input').value;
+            if (currentVal && selectedLocations.size === 0) {
+                const vals = currentVal.split(',');
+                vals.forEach(v => {
+                    v = v.trim();
+                    if (v) selectedLocations.add(v);
+                });
+                if (vals.length > 0) {
+                    const firstVal = vals[0].trim();
+                    activeCityName = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
+                }
+            }
+            
+            updateLocationCount();
+            renderLocationLeftPanel();
+            renderLocationRightPanel();
+        }
+
+        function closeLocationModal() {
+            document.getElementById('location-modal').classList.add('hidden');
+        }
+
+        function confirmLocationSelection() {
+            const arr = Array.from(selectedLocations);
+            document.getElementById('location-input').value = arr.join(',');
+            
+            const textDisplay = document.getElementById('location-text');
+            if (arr.length === 0) {
+                textDisplay.innerText = '所有地區';
+            } else if (arr.length === 1) {
+                const txt = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0];
+                textDisplay.innerText = txt;
+            } else {
+                textDisplay.innerText = `已選 ${arr.length} 項`;
+            }
+            closeLocationModal();
+        }
+    </script>
 </body>
 </html>
