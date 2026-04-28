@@ -7,15 +7,20 @@ def search_companies(request):
     query = request.GET.get('q', '').strip()
     industry_param = request.GET.get('industry', '').strip()
     location_param = request.GET.get('location', '').strip()
+
+    has_search_criteria = bool(query or industry_param or location_param)
     
     # 呼叫寫在 models.py 裡的 SQL 查詢方法
     companies_data = Company.objects.search_with_raw_sql(query, industry_param, location_param)
+
+    display_companies = companies_data if has_search_criteria else companies_data[:5]
         
     context = {
-        'companies': companies_data,
+        'companies': display_companies,
         'query': query,
         'sel_industry': industry_param,  
         'sel_location': location_param,  
+        'has_search_criteria': has_search_criteria,
     }
     
     return render(request, 'company/company_search.html', context)

@@ -15,6 +15,22 @@
             scrollbar-width: none;
         }
         
+        /* 自定義美化捲軸 (用於列表與詳情區) */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
         /* Modal 動畫 */
         .modal-enter {
             opacity: 0;
@@ -29,25 +45,23 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
 
-    <!-- 頂部漸層橫幅與搜尋列 -->
-    <div class="bg-gradient-to-r from-[#53c8d8] to-[#42b5d4] pb-10 pt-12 px-4 shadow-sm mb-8">
-        <div class="container mx-auto max-w-5xl">
+    <!-- 頂部漸層橫幅與搜尋列 (保持不變) -->
+    <div class="bg-gradient-to-r from-[#53c8d8] to-[#42b5d4] pb-10 pt-12 px-4 shadow-sm mb-6">
+        <div class="container mx-auto max-w-6xl">
             <header class="mb-8 text-center">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-2 drop-shadow-md tracking-wider">公司搜尋</h1>
             </header>
 
             <!-- 整合型搜尋列 (膠囊設計) -->
             <div class="max-w-4xl mx-auto relative z-20">
-                <!-- 搜尋列上方的標籤 -->
                 <div class="flex items-center space-x-6 mb-2 px-4">
                     <span class="text-white font-bold flex items-center pb-2 border-b-2 border-white cursor-pointer">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        搜尋
+                        搜尋條件
                     </span>
                 </div>
 
                 <form method="GET" action="" class="bg-white rounded-2xl md:rounded-full p-1.5 flex flex-col md:flex-row items-center shadow-lg w-full">
-                    
                     <!-- 1. 產業選擇 Modal 觸發器 -->
                     <div class="relative w-full md:w-40 md:flex-none">
                         <input type="hidden" name="industry" id="industry-input" value="{{ sel_industry }}">
@@ -85,7 +99,7 @@
                         <svg class="h-5 w-5 text-slate-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                         </svg>
-                        <input type="text" name="q" value="{{ query }}" placeholder="請輸入關鍵字..." autocomplete="off"
+                        <input type="text" name="q" value="{{ query }}" placeholder="請輸入公司名稱或關鍵字..." autocomplete="off"
                                class="w-full bg-transparent border-none py-3 px-3 text-slate-700 focus:outline-none focus:ring-0 placeholder-slate-400">
                     </div>
 
@@ -100,84 +114,156 @@
         </div>
     </div>
 
-    <!-- 搜尋結果區塊 -->
-    <div class="container mx-auto px-4 pb-12 max-w-6xl relative z-0">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-slate-800">查詢結果</h2>
-                <div class="flex flex-wrap gap-2 text-sm">
-                    {% if sel_industry %}
-                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">產業: <span class="font-semibold text-blue-600">{{ sel_industry }}</span></span>
-                    {% endif %}
-                    {% if sel_location %}
-                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">地區: <span class="font-semibold text-blue-600">{{ sel_location }}</span></span>
-                    {% endif %}
-                    {% if query %}
-                        <span class="text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">關鍵字: <span class="font-semibold text-blue-600">{{ query }}</span></span>
-                    {% endif %}
-                </div>
-            </div>
+    <!-- 搜尋結果區塊 (雙欄式佈局) -->
+    <div class="container mx-auto px-4 pb-12 max-w-7xl relative z-0">
+        
+        <!-- 搜尋標籤顯示區 -->
+        <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
+            {% if has_search_criteria %}
+                <span class="text-slate-600 font-medium">查詢結果：</span>
+                {% if sel_industry %}
+                    <span class="text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">產業: <span class="font-semibold text-blue-600">{{ sel_industry }}</span></span>
+                {% endif %}
+                {% if sel_location %}
+                    <span class="text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">地區: <span class="font-semibold text-blue-600">{{ sel_location }}</span></span>
+                {% endif %}
+                {% if query %}
+                    <span class="text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">關鍵字: <span class="font-semibold text-blue-600">{{ query }}</span></span>
+                {% endif %}
+            {% else %}
+                <span class="text-slate-600 font-medium">熱門企業</span>
+            {% endif %}
+        </div>
 
-            <div class="p-0">
+        <div class="flex flex-col md:flex-row gap-6 relative items-start">
+            
+            <!-- 左側：公司列表區 (加上 md:flex-1 讓它能自動填滿剩餘空間) -->
+            <div id="list-panel" class="w-full md:flex-1 flex flex-col gap-4 h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar pr-2 pb-10 transition-all duration-300">
                 {% if companies %}
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-100 text-slate-600 uppercase text-xs font-semibold tracking-wider">
-                                    <th class="py-4 px-6 border-b border-slate-200">公司名稱</th>
-                                    <th class="py-4 px-6 border-b border-slate-200">產業</th>
-                                    <th class="py-4 px-6 border-b border-slate-200">地點</th>
-                                    <th class="py-4 px-6 border-b border-slate-200 w-1/3">簡介</th>
-                                    <th class="py-4 px-6 border-b border-slate-200 text-center"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-slate-600 text-sm">
-                                {% for company in companies %}
-                                <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition-colors duration-150">
-                                    <td class="py-4 px-6 font-bold text-base">
-                                        <a href="{% url 'company_detail' company.company_id %}" class="text-blue-600 hover:text-blue-800 hover:underline">
-                                            {{ company.name }}
-                                        </a>
-                                    </td>
-                                    <td class="py-4 px-6 whitespace-nowrap">
-                                        <span class="bg-indigo-50 text-indigo-700 py-1.5 px-3 rounded-lg text-xs font-bold tracking-wide border border-indigo-100">
-                                            {{ company.industry_category }} - {{ company.industry_subcategory }}
-                                        </span>
-                                    </td>
-                                    <td class="py-4 px-6 text-slate-500 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            {{ company.location_city }}{{ company.location_district }}
-                                        </div>
-                                    </td>
-                                    <td class="py-4 px-6 text-slate-500 leading-relaxed" title="{{ company.description }}">
-                                        {{ company.description|truncatechars:50 }}
-                                    </td>
-                                    <td class="py-4 px-6 text-center whitespace-nowrap">
-                                        <a href="{% url 'company_detail' company.company_id %}" 
-                                           class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors">
-                                            查看詳情
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    {% for company in companies %}
+                    <!-- 公司卡片 -->
+                    <div class="company-card cursor-pointer bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-blue-400 hover:shadow-md transition-all duration-200" 
+                         onclick="showCompanyDetails(this)">
+                        
+                        <h2 class="text-lg font-bold text-blue-700 mb-1 leading-tight">{{ company.name }}</h2>
+                        
+                        <div class="flex items-center text-slate-500 text-sm mb-3">
+                            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold mr-2 border border-indigo-100">{{ company.industry_category }}</span>
+                            <div class="flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                {{ company.location_city }}{{ company.location_district }}
+                            </div>
+                        </div>
+
+                        <p class="text-slate-600 text-sm line-clamp-2 leading-relaxed">
+                            {{ company.description|truncatechars:80 }}
+                        </p>
+
+                        <!-- 將該公司的完整資料隱藏在 HTML 中，讓 JS 點擊時抓取，不需打 API -->
+                        <div class="hidden company-data">
+                            <div class="data-name">{{ company.name }}</div>
+                            <div class="data-industry">{{ company.industry_category }} - {{ company.industry_subcategory }}</div>
+                            <div class="data-location">{{ company.location_city }}{{ company.location_district }}</div>
+                            <div class="data-website">{{ company.website|default:'' }}</div>
+                            <div class="data-desc">{{ company.description|linebreaksbr }}</div>
+                            <div class="data-url">{% url 'company_detail' company.company_id %}</div>
+                        </div>
                     </div>
+                    {% endfor %}
                 {% else %}
-                    <div class="py-16 px-6 text-center flex flex-col items-center justify-center">
+                    <!-- 無結果狀態 (修正了遺失的結尾標籤) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 py-16 px-6 text-center flex flex-col items-center justify-center">
                         <div class="bg-slate-100 p-4 rounded-full mb-4">
                             <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <h3 class="text-lg font-semibold text-slate-700 mb-1">找不到相關公司</h3>
-                        <p class="text-slate-500 max-w-sm mx-auto">目前沒有找到符合條件的資料，請嘗試放寬產業、地區或關鍵字限制。</p>
+                        <p class="text-slate-500 text-sm">請嘗試放寬產業、地區或關鍵字限制。</p>
                     </div>
                 {% endif %}
             </div>
+
+            <!-- 右側：動態詳細資料顯示區 (全靠 CSS 控制 RWD 與側邊固定) -->
+            <div id="detail-panel" class="hidden fixed inset-0 z-[200] bg-slate-50/95 backdrop-blur-sm p-4 md:p-0 md:bg-transparent md:backdrop-blur-none w-full md:w-[45%] lg:w-[40%] shrink-0 h-full md:h-[calc(100vh-250px)] md:sticky md:top-4 transition-all duration-300">
+                
+                <!-- 點擊後顯示的詳細資料容器 -->
+                <div id="detail-content-state" class="w-full h-full bg-white rounded-2xl shadow-2xl md:shadow-sm border border-slate-200 overflow-y-auto custom-scrollbar relative opacity-0 translate-y-4 transition-all duration-300 ease-out">
+                    
+                    <!-- 手機版返回按鈕 (僅在小螢幕顯示) -->
+                    <button onclick="closeDetailPanel()" class="md:hidden absolute top-4 left-4 z-10 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 backdrop-blur-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+
+                    <!-- 卡片頂部設計 (Cover Header) -->
+                    <div class="h-28 bg-gradient-to-r from-blue-500 to-indigo-600 relative">
+                        <!-- 右上角獨立頁面連結與關閉按鈕 -->
+                        <div class="absolute top-4 right-4 flex space-x-2 z-10">
+                            <a id="detail-fullscreen-link" href="#" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition-colors text-sm font-medium flex items-center" title="在新分頁開啟完整頁面" target="_blank">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
+                            <button onclick="closeDetailPanel()" class="hidden md:flex bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition-colors text-sm font-medium items-center" title="關閉預覽">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="px-8 pb-10 -mt-12 relative z-10">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 inline-block mb-4">
+                            <h1 id="view-name" class="text-2xl font-extrabold text-slate-800 leading-tight">公司名稱</h1>
+                        </div>
+
+                        <div class="mb-6">
+                            <span id="view-industry" class="bg-indigo-100 text-indigo-700 py-1.5 px-4 rounded-full text-sm font-bold tracking-wide border border-indigo-200 shadow-sm">
+                                產業類別
+                            </span>
+                        </div>
+
+                        <!-- 資訊區塊 (地點與網站) -->
+                        <div class="flex flex-col sm:flex-row gap-6 mb-8 pb-6 border-b border-slate-100">
+                            <div class="flex items-center text-slate-600">
+                                <div class="bg-slate-100 p-2.5 rounded-full mr-3 text-slate-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-0.5">公司地點</p>
+                                    <p id="view-location" class="font-medium text-slate-800">地點</p>
+                                </div>
+                            </div>
+
+                            <div id="view-website-container" class="flex items-center text-slate-600">
+                                <div class="bg-slate-100 p-2.5 rounded-full mr-3 text-slate-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-0.5">官方網站</p>
+                                    <a id="view-website" href="#" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 hover:text-blue-800 hover:underline max-w-[200px] truncate block">
+                                        網址
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 簡介內容 -->
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                關於公司
+                            </h2>
+                            <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
+                                <!-- JS 會將內容塞入這裡 -->
+                                <p id="view-desc" class="text-slate-600 leading-relaxed text-md"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 右側區域結束 -->
+
         </div>
     </div>
 
-    <!-- ================== 產業類型 Modal ================== -->
+
+    <!-- ================== 產業類型與地區 Modal (保持與原本完全相同) ================== -->
+    <!-- 產業類型 Modal -->
     <div id="industry-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeIndustryModal()"></div>
         <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[70vh] flex flex-col overflow-hidden mx-4">
@@ -187,10 +273,6 @@
                 <button type="button" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 focus:outline-none transition-colors" onclick="closeIndustryModal()">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-            </div>
-            <div class="px-6 py-4 border-b border-slate-100 bg-white">
-                <input type="text" placeholder="搜尋產業關鍵字" autocomplete="off" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                <div class="mt-3 text-sm text-slate-500 font-medium">請選擇項目..</div>
             </div>
             <div class="flex flex-1 overflow-hidden bg-white">
                 <div class="w-2/5 sm:w-1/3 border-r border-slate-200 overflow-y-auto no-scrollbar py-2" id="industry-modal-left-panel"></div>
@@ -208,7 +290,7 @@
         </div>
     </div>
 
-    <!-- ================== 工作地區 Modal ================== -->
+    <!-- 工作地區 Modal -->
     <div id="location-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeLocationModal()"></div>
         <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[70vh] flex flex-col overflow-hidden mx-4">
@@ -218,10 +300,6 @@
                 <button type="button" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 focus:outline-none transition-colors" onclick="closeLocationModal()">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-            </div>
-            <div class="px-6 py-4 border-b border-slate-100 bg-white">
-                <input type="text" placeholder="搜尋地區關鍵字" autocomplete="off" class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                <div class="mt-3 text-sm text-slate-500 font-medium">請選擇項目..</div>
             </div>
             <div class="flex flex-1 overflow-hidden bg-white">
                 <div class="w-2/5 sm:w-1/3 border-r border-slate-200 overflow-y-auto no-scrollbar py-2" id="location-modal-left-panel"></div>
@@ -241,7 +319,82 @@
 
     <!-- ================== JavaScript 腳本 ================== -->
     <script>
-        // ----------------------- 產業 Modal 邏輯 -----------------------
+        // --- 點擊卡片顯示詳情邏輯 ---
+        function showCompanyDetails(cardElement) {
+            // 1. 重置所有卡片的選中狀態
+            document.querySelectorAll('.company-card').forEach(el => {
+                el.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200', 'bg-blue-50/30');
+                el.classList.add('border-slate-200', 'bg-white');
+            });
+
+            // 2. 為當前點擊的卡片加上選中效果 (Active State)
+            cardElement.classList.remove('border-slate-200', 'bg-white');
+            cardElement.classList.add('border-blue-500', 'ring-2', 'ring-blue-200', 'bg-blue-50/30');
+
+            // 3. 從隱藏區塊中取得該公司的所有資料
+            const dataContainer = cardElement.querySelector('.company-data');
+            const name = dataContainer.querySelector('.data-name').innerHTML;
+            const industry = dataContainer.querySelector('.data-industry').innerHTML;
+            const location = dataContainer.querySelector('.data-location').innerHTML;
+            const website = dataContainer.querySelector('.data-website').innerHTML;
+            const desc = dataContainer.querySelector('.data-desc').innerHTML;
+            const detailUrl = dataContainer.querySelector('.data-url').innerHTML;
+
+            // 4. 將資料填入右側詳情區塊
+            document.getElementById('view-name').innerHTML = name;
+            document.getElementById('view-industry').innerHTML = industry;
+            document.getElementById('view-location').innerHTML = location;
+            document.getElementById('view-desc').innerHTML = desc;
+            document.getElementById('detail-fullscreen-link').href = detailUrl;
+
+            // 處理網站連結 (可能為空)
+            const webContainer = document.getElementById('view-website-container');
+            const webLink = document.getElementById('view-website');
+            if (website && website.trim() !== 'None') {
+                webContainer.classList.remove('hidden');
+                webContainer.classList.add('flex');
+                webLink.href = website;
+                webLink.innerHTML = website;
+            } else {
+                webContainer.classList.add('hidden');
+                webContainer.classList.remove('flex');
+            }
+
+            // 5. 顯示詳情面板 (只要移除 hidden，CSS 就會負責處理所有響應式排版邏輯)
+            const detailPanel = document.getElementById('detail-panel');
+            detailPanel.classList.remove('hidden');
+
+            // 6. 加上過場動畫
+            const contentState = document.getElementById('detail-content-state');
+            
+            // 重置動畫狀態 (使其每次點擊都能重新執行動畫)
+            contentState.classList.remove('opacity-100', 'translate-y-0');
+            contentState.classList.add('opacity-0', 'translate-y-4');
+
+            // 使用 setTimeout 觸發瀏覽器重繪來執行動畫
+            setTimeout(() => {
+                contentState.classList.remove('opacity-0', 'translate-y-4');
+                contentState.classList.add('opacity-100', 'translate-y-0');
+            }, 20);
+        }
+
+        // 關閉詳細資料面板
+        function closeDetailPanel() {
+            const detailPanel = document.getElementById('detail-panel');
+
+            // 直接隱藏即可，左側清單會依靠 flex-1 自然恢復 100% 寬度
+            detailPanel.classList.add('hidden');
+            
+            // 取消卡片選中狀態
+            document.querySelectorAll('.company-card').forEach(el => {
+                el.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200', 'bg-blue-50/30');
+                el.classList.add('border-slate-200', 'bg-white');
+            });
+        }
+
+        // =========================================================================
+        // 以下為原有的 Modal 邏輯，完全保留不變以維持原本的搜尋功能
+        // =========================================================================
         const industryData = [
             {
                 group: '科技與資訊',
@@ -309,7 +462,6 @@
         function renderIndustryRightPanel() {
             const rightPanel = document.getElementById('industry-modal-right-panel');
             let html = '';
-            
             let activeData = null;
             for (const group of industryData) {
                 const found = group.categories.find(c => c.name === activeIndustryCategory);
@@ -329,7 +481,6 @@
                                ${isEntirelySelected ? 'checked' : ''}>
                         <span class="text-slate-800 font-medium group-hover:text-blue-600 transition-colors">${activeIndustryCategory}業全部</span>
                     </label>
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                 </div>
                 <div class="space-y-4 ml-1">
             `;
@@ -337,13 +488,10 @@
             activeData.items.forEach(item => {
                 const itemKey = `${activeIndustryCategory}-${item}`;
                 const isSelected = selectedIndustries.has(itemKey) || isEntirelySelected;
-                
                 html += `
                     <label class="flex items-center space-x-3 cursor-pointer group">
                         <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                               value="${itemKey}"
-                               onchange="toggleIndustryItem('${activeIndustryCategory}', '${item}', this.checked)"
-                               ${isSelected ? 'checked' : ''}>
+                               value="${itemKey}" onchange="toggleIndustryItem('${activeIndustryCategory}', '${item}', this.checked)" ${isSelected ? 'checked' : ''}>
                         <span class="text-slate-600 group-hover:text-slate-900 transition-colors">${item}</span>
                     </label>
                 `;
@@ -358,20 +506,14 @@
                 const found = group.categories.find(c => c.name === categoryName);
                 if (found) { activeData = found; break; }
             }
-            
             if (isChecked) {
-                if (selectedIndustries.size >= 10 && !selectedIndustries.has(categoryName)) {
-                    alert('最多只能選擇 10 項');
-                    renderIndustryRightPanel();
-                    return;
-                }
+                if (selectedIndustries.size >= 10 && !selectedIndustries.has(categoryName)) { alert('最多只能選擇 10 項'); renderIndustryRightPanel(); return; }
                 selectedIndustries.add(categoryName);
                 activeData.items.forEach(i => selectedIndustries.delete(`${categoryName}-${i}`));
             } else {
                 selectedIndustries.delete(categoryName);
                 activeData.items.forEach(i => selectedIndustries.delete(`${categoryName}-${i}`));
             }
-            
             updateIndustryCount();
             renderIndustryRightPanel();
         }
@@ -386,23 +528,16 @@
                     if (found) { activeData = found; break; }
                 }
                 if (activeData) {
-                    activeData.items.forEach(i => {
-                        if (i !== item) selectedIndustries.add(`${categoryName}-${i}`);
-                    });
+                    activeData.items.forEach(i => { if (i !== item) selectedIndustries.add(`${categoryName}-${i}`); });
                 }
             } else {
                 if (isChecked) {
-                    if (selectedIndustries.size >= 10) {
-                        alert('最多只能選擇 10 項');
-                        renderIndustryRightPanel(); 
-                        return;
-                    }
+                    if (selectedIndustries.size >= 10) { alert('最多只能選擇 10 項'); renderIndustryRightPanel(); return; }
                     selectedIndustries.add(itemKey);
                 } else {
                     selectedIndustries.delete(itemKey);
                 }
             }
-            
             let activeData = null;
             for (const group of industryData) {
                 const found = group.categories.find(c => c.name === categoryName);
@@ -415,108 +550,44 @@
                     selectedIndustries.add(categoryName);
                 }
             }
-
             updateIndustryCount();
             renderIndustryRightPanel();
         }
 
-        function updateIndustryCount() {
-            document.getElementById('industry-selected-count').innerText = selectedIndustries.size;
-        }
-
-        function resetIndustrySelection() {
-            selectedIndustries.clear();
-            updateIndustryCount();
-            renderIndustryRightPanel();
-        }
+        function updateIndustryCount() { document.getElementById('industry-selected-count').innerText = selectedIndustries.size; }
+        function resetIndustrySelection() { selectedIndustries.clear(); updateIndustryCount(); renderIndustryRightPanel(); }
 
         function openIndustryModal() {
-            const modal = document.getElementById('industry-modal');
-            modal.classList.remove('hidden');
-            
+            document.getElementById('industry-modal').classList.remove('hidden');
             const currentVal = document.getElementById('industry-input').value;
             if (currentVal && selectedIndustries.size === 0) {
                 const vals = currentVal.split(',');
-                vals.forEach(v => {
-                    v = v.trim();
-                    if (v) selectedIndustries.add(v);
-                });
+                vals.forEach(v => { v = v.trim(); if (v) selectedIndustries.add(v); });
                 if (vals.length > 0) {
                     const firstVal = vals[0].trim();
                     activeIndustryCategory = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
                 }
             }
-            
-            updateIndustryCount();
-            renderIndustryLeftPanel();
-            renderIndustryRightPanel();
+            updateIndustryCount(); renderIndustryLeftPanel(); renderIndustryRightPanel();
         }
-
-        function closeIndustryModal() {
-            document.getElementById('industry-modal').classList.add('hidden');
-        }
+        function closeIndustryModal() { document.getElementById('industry-modal').classList.add('hidden'); }
 
         function confirmIndustrySelection() {
             const arr = Array.from(selectedIndustries);
             document.getElementById('industry-input').value = arr.join(',');
-            
             const textDisplay = document.getElementById('industry-text');
-            if (arr.length === 0) {
-                textDisplay.innerText = '所有產業';
-            } else if (arr.length === 1) {
-                const txt = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0] + '業';
-                textDisplay.innerText = txt;
-            } else {
-                textDisplay.innerText = `已選 ${arr.length} 項`;
-            }
+            if (arr.length === 0) { textDisplay.innerText = '所有產業'; } 
+            else if (arr.length === 1) { textDisplay.innerText = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0] + '業'; } 
+            else { textDisplay.innerText = `已選 ${arr.length} 項`; }
             closeIndustryModal();
         }
 
-
-        // ----------------------- 地區 Modal 邏輯 -----------------------
+        // ======================= 地區 Modal 邏輯 =======================
         const locationData = [
-            {
-                group: '北部',
-                cities: [
-                    { name: '台北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] },
-                    { name: '新北市', districts: ['板橋區', '三重區', '中和區', '永和區', '新莊區', '新店區', '樹林區', '鶯歌區', '三峽區', '淡水區', '汐止區', '瑞芳區', '土城區', '蘆洲區', '五股區', '泰山區', '林口區', '深坑區', '石碇區', '坪林區', '三芝區', '石門區', '八里區', '平溪區', '雙溪區', '貢寮區', '金山區', '萬里區', '烏來區'] },
-                    { name: '基隆市', districts: ['仁愛區', '信義區', '中正區', '中山區', '安樂區', '暖暖區', '七堵區'] },
-                    { name: '桃園市', districts: ['桃園區', '中壢區', '大溪區', '楊梅區', '蘆竹區', '大園區', '龜山區', '八德區', '龍潭區', '平鎮區', '新屋區', '觀音區', '復興區'] },
-                    { name: '新竹市', districts: ['東區', '北區', '香山區'] },
-                    { name: '新竹縣', districts: ['竹北市', '竹東鎮', '新埔鎮', '關西鎮', '湖口鄉', '新豐鄉', '芎林鄉', '橫山鄉', '北埔鄉', '寶山鄉', '峨眉鄉', '尖石鄉', '五峰鄉'] },
-                    { name: '苗栗縣', districts: ['苗栗市', '苑裡鎮', '通霄鎮', '竹南鎮', '頭份市', '後龍鎮', '卓蘭鎮', '大湖鄉', '公館鄉', '銅鑼鄉', '南庄鄉', '頭屋鄉', '三義鄉', '西湖鄉', '造橋鄉', '三灣鄉', '獅潭鄉', '泰安鄉'] }
-                ]
-            },
-            {
-                group: '中部',
-                cities: [
-                    { name: '台中市', districts: ['中區', '東區', '南區', '西區', '北區', '北屯區', '西屯區', '南屯區', '太平區', '大里區', '霧峰區', '烏日區', '豐原區', '后里區', '石岡區', '東勢區', '和平區', '新社區', '潭子區', '大雅區', '神岡區', '大肚區', '沙鹿區', '龍井區', '梧棲區', '清水區', '大甲區', '外埔區', '大安區'] },
-                    { name: '彰化縣', districts: ['彰化市', '鹿港鎮', '和美鎮', '線西鄉', '伸港鄉', '福興鄉', '秀水鄉', '花壇鄉', '芬園鄉', '員林市', '溪湖鎮', '田中鎮', '大村鄉', '埔鹽鄉', '埔心鄉', '永靖鄉', '社頭鄉', '二水鄉', '北斗鎮', '二林鎮', '田尾鄉', '埤頭鄉', '芳苑鄉', '大城鄉', '竹塘鄉', '溪州鄉'] },
-                    { name: '南投縣', districts: ['南投市', '埔里鎮', '草屯鎮', '竹山鎮', '集集鎮', '名間鄉', '鹿谷鄉', '中寮鄉', '魚池鄉', '國姓鄉', '水里鄉', '信義鄉', '仁愛鄉'] },
-                    { name: '雲林縣', districts: ['斗六市', '斗南鎮', '虎尾鎮', '西螺鎮', '土庫鎮', '北港鎮', '古坑鄉', '大埤鄉', '莿桐鄉', '林內鄉', '二崙鄉', '崙背鄉', '麥寮鄉', '東勢鄉', '褒忠鄉', '臺西鄉', '元長鄉', '四湖鄉', '口湖鄉', '水林鄉'] }
-                ]
-            },
-            {
-                group: '南部',
-                cities: [
-                    { name: '嘉義市', districts: ['東區', '西區'] },
-                    { name: '嘉義縣', districts: ['太保市', '朴子市', '布袋鎮', '大林鎮', '民雄鄉', '溪口鄉', '新港鄉', '六腳鄉', '東石鄉', '義竹鄉', '鹿草鄉', '水上鄉', '中埔鄉', '竹崎鄉', '梅山鄉', '番路鄉', '大埔鄉', '阿里山鄉'] },
-                    { name: '台南市', districts: ['新營區', '鹽水區', '白河區', '柳營區', '後壁區', '東山區', '麻豆區', '下營區', '六甲區', '官田區', '大內區', '佳里區', '學甲區', '西港區', '七股區', '將軍區', '北門區', '新化區', '善化區', '新市區', '安定區', '山上區', '玉井區', '楠西區', '南化區', '左鎮區', '仁德區', '歸仁區', '關廟區', '龍崎區', '永康區', '東區', '南區', '北區', '安南區', '安平區', '中西區'] },
-                    { name: '高雄市', districts: ['鹽埕區', '鼓山區', '左營區', '楠梓區', '三民區', '新興區', '前金區', '苓雅區', '前鎮區', '旗津區', '小港區', '鳳山區', '林園區', '大寮區', '大樹區', '大社區', '仁武區', '鳥松區', '岡山區', '橋頭區', '燕巢區', '田寮區', '阿蓮區', '路竹區', '湖內區', '茄萣區', '永安區', '彌陀區', '梓官區', '旗山區', '美濃區', '六龜區', '甲仙區', '杉林區', '內門區', '茂林區', '桃源區', '那瑪夏區'] },
-                    { name: '屏東縣', districts: ['屏東市', '潮州鎮', '東港鎮', '恆春鎮', '萬丹鄉', '長治鄉', '麟洛鄉', '九如鄉', '里港鄉', '鹽埔鄉', '高樹鄉', '萬巒鄉', '內埔鄉', '竹田鄉', '新埤鄉', '枋寮鄉', '新園鄉', '崁頂鄉', '林邊鄉', '南州鄉', '佳冬鄉', '琉球鄉', '車城鄉', '滿州鄉', '枋山鄉', '三地門鄉', '霧臺鄉', '瑪家鄉', '泰武鄉', '來義鄉', '春日鄉', '獅子鄉', '牡丹鄉', '麻家鄉'] }
-                ]
-            },
-            {
-                group: '東部及離島',
-                cities: [
-                    { name: '宜蘭縣', districts: ['宜蘭市', '羅東鎮', '蘇澳鎮', '頭城鎮', '礁溪鄉', '壯圍鄉', '員山鄉', '冬山鄉', '五結鄉', '三星鄉', '大同鄉', '南澳鄉'] },
-                    { name: '花蓮縣', districts: ['花蓮市', '鳳林鎮', '玉里鎮', '新城鄉', '吉安鄉', '壽豐鄉', '光復鄉', '豐濱鄉', '瑞穗鄉', '富里鄉', '秀林鄉', '萬榮鄉', '卓溪鄉'] },
-                    { name: '台東縣', districts: ['臺東市', '成功鎮', '關山鎮', '卑南鄉', '大武鄉', '太麻里鄉', '東河鄉', '長濱鄉', '鹿野鄉', '池上鄉', '綠島鄉', '延平鄉', '海端鄉', '達仁鄉', '金峰鄉', '蘭嶼鄉'] },
-                    { name: '澎湖縣', districts: ['馬公市', '湖西鄉', '白沙鄉', '西嶼鄉', '望安鄉', '七美鄉'] },
-                    { name: '金門縣', districts: ['金城鎮', '金湖鎮', '金沙鎮', '金寧鄉', '烈嶼鄉', '烏坵鄉'] },
-                    { name: '連江縣', districts: ['南竿鄉', '北竿鄉', '莒光鄉', '東引鄉'] }
-                ]
-            }
+            { group: '北部', cities: [{ name: '台北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] }, { name: '新北市', districts: ['板橋區', '三重區', '中和區', '永和區', '新莊區', '新店區', '樹林區', '鶯歌區', '三峽區', '淡水區', '汐止區', '瑞芳區', '土城區', '蘆洲區', '五股區', '泰山區', '林口區', '深坑區', '石碇區', '坪林區', '三芝區', '石門區', '八里區', '平溪區', '雙溪區', '貢寮區', '金山區', '萬里區', '烏來區'] }, { name: '基隆市', districts: ['仁愛區', '信義區', '中正區', '中山區', '安樂區', '暖暖區', '七堵區'] }, { name: '桃園市', districts: ['桃園區', '中壢區', '大溪區', '楊梅區', '蘆竹區', '大園區', '龜山區', '八德區', '龍潭區', '平鎮區', '新屋區', '觀音區', '復興區'] }, { name: '新竹市', districts: ['東區', '北區', '香山區'] }, { name: '新竹縣', districts: ['竹北市', '竹東鎮', '新埔鎮', '關西鎮', '湖口鄉', '新豐鄉', '芎林鄉', '橫山鄉', '北埔鄉', '寶山鄉', '峨眉鄉', '尖石鄉', '五峰鄉'] }, { name: '苗栗縣', districts: ['苗栗市', '苑裡鎮', '通霄鎮', '竹南鎮', '頭份市', '後龍鎮', '卓蘭鎮', '大湖鄉', '公館鄉', '銅鑼鄉', '南庄鄉', '頭屋鄉', '三義鄉', '西湖鄉', '造橋鄉', '三灣鄉', '獅潭鄉', '泰安鄉'] }]},
+            { group: '中部', cities: [{ name: '台中市', districts: ['中區', '東區', '南區', '西區', '北區', '北屯區', '西屯區', '南屯區', '太平區', '大里區', '霧峰區', '烏日區', '豐原區', '后里區', '石岡區', '東勢區', '和平區', '新社區', '潭子區', '大雅區', '神岡區', '大肚區', '沙鹿區', '龍井區', '梧棲區', '清水區', '大甲區', '外埔區', '大安區'] }, { name: '彰化縣', districts: ['彰化市', '鹿港鎮', '和美鎮', '線西鄉', '伸港鄉', '福興鄉', '秀水鄉', '花壇鄉', '芬園鄉', '員林市', '溪湖鎮', '田中鎮', '大村鄉', '埔鹽鄉', '埔心鄉', '永靖鄉', '社頭鄉', '二水鄉', '北斗鎮', '二林鎮', '田尾鄉', '埤頭鄉', '芳苑鄉', '大城鄉', '竹塘鄉', '溪州鄉'] }, { name: '南投縣', districts: ['南投市', '埔里鎮', '草屯鎮', '竹山鎮', '集集鎮', '名間鄉', '鹿谷鄉', '中寮鄉', '魚池鄉', '國姓鄉', '水里鄉', '信義鄉', '仁愛鄉'] }, { name: '雲林縣', districts: ['斗六市', '斗南鎮', '虎尾鎮', '西螺鎮', '土庫鎮', '北港鎮', '古坑鄉', '大埤鄉', '莿桐鄉', '林內鄉', '二崙鄉', '崙背鄉', '麥寮鄉', '東勢鄉', '褒忠鄉', '臺西鄉', '元長鄉', '四湖鄉', '口湖鄉', '水林鄉'] }]},
+            { group: '南部', cities: [{ name: '嘉義市', districts: ['東區', '西區'] }, { name: '嘉義縣', districts: ['太保市', '朴子市', '布袋鎮', '大林鎮', '民雄鄉', '溪口鄉', '新港鄉', '六腳鄉', '東石鄉', '義竹鄉', '鹿草鄉', '水上鄉', '中埔鄉', '竹崎鄉', '梅山鄉', '番路鄉', '大埔鄉', '阿里山鄉'] }, { name: '台南市', districts: ['新營區', '鹽水區', '白河區', '柳營區', '後壁區', '東山區', '麻豆區', '下營區', '六甲區', '官田區', '大內區', '佳里區', '學甲區', '西港區', '七股區', '將軍區', '北門區', '新化區', '善化區', '新市區', '安定區', '山上區', '玉井區', '楠西區', '南化區', '左鎮區', '仁德區', '歸仁區', '關廟區', '龍崎區', '永康區', '東區', '南區', '北區', '安南區', '安平區', '中西區'] }, { name: '高雄市', districts: ['鹽埕區', '鼓山區', '左營區', '楠梓區', '三民區', '新興區', '前金區', '苓雅區', '前鎮區', '旗津區', '小港區', '鳳山區', '林園區', '大寮區', '大樹區', '大社區', '仁武區', '鳥松區', '岡山區', '橋頭區', '燕巢區', '田寮區', '阿蓮區', '路竹區', '湖內區', '茄萣區', '永安區', '彌陀區', '梓官區', '旗山區', '美濃區', '六龜區', '甲仙區', '杉林區', '內門區', '茂林區', '桃源區', '那瑪夏區'] }, { name: '屏東縣', districts: ['屏東市', '潮州鎮', '東港鎮', '恆春鎮', '萬丹鄉', '長治鄉', '麟洛鄉', '九如鄉', '里港鄉', '鹽埔鄉', '高樹鄉', '萬巒鄉', '內埔鄉', '竹田鄉', '新埤鄉', '枋寮鄉', '新園鄉', '崁頂鄉', '林邊鄉', '南州鄉', '佳冬鄉', '琉球鄉', '車城鄉', '滿州鄉', '枋山鄉', '三地門鄉', '霧臺鄉', '瑪家鄉', '泰武鄉', '來義鄉', '春日鄉', '獅子鄉', '牡丹鄉', '麻家鄉'] }]},
+            { group: '東部及離島', cities: [{ name: '宜蘭縣', districts: ['宜蘭市', '羅東鎮', '蘇澳鎮', '頭城鎮', '礁溪鄉', '壯圍鄉', '員山鄉', '冬山鄉', '五結鄉', '三星鄉', '大同鄉', '南澳鄉'] }, { name: '花蓮縣', districts: ['花蓮市', '鳳林鎮', '玉里鎮', '新城鄉', '吉安鄉', '壽豐鄉', '光復鄉', '豐濱鄉', '瑞穗鄉', '富里鄉', '秀林鄉', '萬榮鄉', '卓溪鄉'] }, { name: '台東縣', districts: ['臺東市', '成功鎮', '關山鎮', '卑南鄉', '大武鄉', '太麻里鄉', '東河鄉', '長濱鄉', '鹿野鄉', '池上鄉', '綠島鄉', '延平鄉', '海端鄉', '達仁鄉', '金峰鄉', '蘭嶼鄉'] }, { name: '澎湖縣', districts: ['馬公市', '湖西鄉', '白沙鄉', '西嶼鄉', '望安鄉', '七美鄉'] }, { name: '金門縣', districts: ['金城鎮', '金湖鎮', '金沙鎮', '金寧鄉', '烈嶼鄉', '烏坵鄉'] }, { name: '連江縣', districts: ['南竿鄉', '北竿鄉', '莒光鄉', '東引鄉'] }]}
         ];
 
         let selectedLocations = new Set();
@@ -529,25 +600,18 @@
                 html += `<div class="px-5 py-3 text-sm font-bold text-blue-600 bg-white sticky top-0 z-10">${group.group}</div>`;
                 group.cities.forEach(city => {
                     const isActive = city.name === activeCityName;
-                    const activeClass = isActive 
-                        ? 'bg-[#eef5fa] border-r-4 border-blue-500 font-bold text-blue-700' 
-                        : 'hover:bg-slate-50 cursor-pointer text-slate-700';
+                    const activeClass = isActive ? 'bg-[#eef5fa] border-r-4 border-blue-500 font-bold text-blue-700' : 'hover:bg-slate-50 cursor-pointer text-slate-700';
                     html += `<div class="px-5 py-3 ${activeClass} transition-colors" onclick="selectCity('${city.name}')">${city.name}</div>`;
                 });
             });
             leftPanel.innerHTML = html;
         }
 
-        function selectCity(cityName) {
-            activeCityName = cityName;
-            renderLocationLeftPanel();
-            renderLocationRightPanel();
-        }
+        function selectCity(cityName) { activeCityName = cityName; renderLocationLeftPanel(); renderLocationRightPanel(); }
 
         function renderLocationRightPanel() {
             const rightPanel = document.getElementById('location-modal-right-panel');
             let html = '';
-            
             let activeCityData = null;
             for (const group of locationData) {
                 const found = group.cities.find(c => c.name === activeCityName);
@@ -563,11 +627,9 @@
                 <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
                     <label class="flex items-center space-x-3 cursor-pointer group">
                         <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
-                               onchange="toggleCity('${activeCityName}', this.checked)"
-                               ${isCityEntirelySelected ? 'checked' : ''}>
+                               onchange="toggleCity('${activeCityName}', this.checked)" ${isCityEntirelySelected ? 'checked' : ''}>
                         <span class="text-slate-800 font-medium group-hover:text-blue-600 transition-colors">${activeCityName}全部</span>
                     </label>
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
                 </div>
                 <div class="space-y-4 ml-1">
             `;
@@ -575,18 +637,14 @@
             activeCityData.districts.forEach(district => {
                 const itemKey = `${activeCityName}-${district}`;
                 const isSelected = selectedLocations.has(itemKey) || isCityEntirelySelected;
-                
                 html += `
                     <label class="flex items-center space-x-3 cursor-pointer group">
                         <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                               value="${itemKey}"
-                               onchange="toggleDistrict('${activeCityName}', '${district}', this.checked)"
-                               ${isSelected ? 'checked' : ''}>
+                               value="${itemKey}" onchange="toggleDistrict('${activeCityName}', '${district}', this.checked)" ${isSelected ? 'checked' : ''}>
                         <span class="text-slate-600 group-hover:text-slate-900 transition-colors">${district}</span>
                     </label>
                 `;
             });
-            
             html += `</div>`;
             rightPanel.innerHTML = html;
         }
@@ -597,22 +655,15 @@
                 const found = group.cities.find(c => c.name === cityName);
                 if (found) { activeCityData = found; break; }
             }
-            
             if (isChecked) {
-                if (selectedLocations.size >= 10 && !selectedLocations.has(cityName)) {
-                    alert('最多只能選擇 10 項');
-                    renderLocationRightPanel();
-                    return;
-                }
+                if (selectedLocations.size >= 10 && !selectedLocations.has(cityName)) { alert('最多只能選擇 10 項'); renderLocationRightPanel(); return; }
                 selectedLocations.add(cityName);
                 activeCityData.districts.forEach(d => selectedLocations.delete(`${cityName}-${d}`));
             } else {
                 selectedLocations.delete(cityName);
                 activeCityData.districts.forEach(d => selectedLocations.delete(`${cityName}-${d}`));
             }
-            
-            updateLocationCount();
-            renderLocationRightPanel();
+            updateLocationCount(); renderLocationRightPanel();
         }
 
         function toggleDistrict(cityName, district, isChecked) {
@@ -624,24 +675,13 @@
                     const found = group.cities.find(c => c.name === cityName);
                     if (found) { activeCityData = found; break; }
                 }
-                if (activeCityData) {
-                    activeCityData.districts.forEach(d => {
-                        if (d !== district) selectedLocations.add(`${cityName}-${d}`);
-                    });
-                }
+                if (activeCityData) { activeCityData.districts.forEach(d => { if (d !== district) selectedLocations.add(`${cityName}-${d}`); }); }
             } else {
                 if (isChecked) {
-                    if (selectedLocations.size >= 10) {
-                        alert('最多只能選擇 10 項');
-                        renderLocationRightPanel(); 
-                        return;
-                    }
+                    if (selectedLocations.size >= 10) { alert('最多只能選擇 10 項'); renderLocationRightPanel(); return; }
                     selectedLocations.add(itemKey);
-                } else {
-                    selectedLocations.delete(itemKey);
-                }
+                } else { selectedLocations.delete(itemKey); }
             }
-            
             let activeCityData = null;
             for (const group of locationData) {
                 const found = group.cities.find(c => c.name === cityName);
@@ -654,60 +694,34 @@
                     selectedLocations.add(cityName);
                 }
             }
-
-            updateLocationCount();
-            renderLocationRightPanel();
+            updateLocationCount(); renderLocationRightPanel();
         }
 
-        function updateLocationCount() {
-            document.getElementById('location-selected-count').innerText = selectedLocations.size;
-        }
-
-        function resetLocationSelection() {
-            selectedLocations.clear();
-            updateLocationCount();
-            renderLocationRightPanel();
-        }
+        function updateLocationCount() { document.getElementById('location-selected-count').innerText = selectedLocations.size; }
+        function resetLocationSelection() { selectedLocations.clear(); updateLocationCount(); renderLocationRightPanel(); }
 
         function openLocationModal() {
-            const modal = document.getElementById('location-modal');
-            modal.classList.remove('hidden');
-            
+            document.getElementById('location-modal').classList.remove('hidden');
             const currentVal = document.getElementById('location-input').value;
             if (currentVal && selectedLocations.size === 0) {
                 const vals = currentVal.split(',');
-                vals.forEach(v => {
-                    v = v.trim();
-                    if (v) selectedLocations.add(v);
-                });
+                vals.forEach(v => { v = v.trim(); if (v) selectedLocations.add(v); });
                 if (vals.length > 0) {
                     const firstVal = vals[0].trim();
                     activeCityName = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
                 }
             }
-            
-            updateLocationCount();
-            renderLocationLeftPanel();
-            renderLocationRightPanel();
+            updateLocationCount(); renderLocationLeftPanel(); renderLocationRightPanel();
         }
-
-        function closeLocationModal() {
-            document.getElementById('location-modal').classList.add('hidden');
-        }
+        function closeLocationModal() { document.getElementById('location-modal').classList.add('hidden'); }
 
         function confirmLocationSelection() {
             const arr = Array.from(selectedLocations);
             document.getElementById('location-input').value = arr.join(',');
-            
             const textDisplay = document.getElementById('location-text');
-            if (arr.length === 0) {
-                textDisplay.innerText = '所有地區';
-            } else if (arr.length === 1) {
-                const txt = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0];
-                textDisplay.innerText = txt;
-            } else {
-                textDisplay.innerText = `已選 ${arr.length} 項`;
-            }
+            if (arr.length === 0) { textDisplay.innerText = '所有地區'; } 
+            else if (arr.length === 1) { textDisplay.innerText = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0]; } 
+            else { textDisplay.innerText = `已選 ${arr.length} 項`; }
             closeLocationModal();
         }
     </script>
