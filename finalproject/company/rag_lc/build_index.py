@@ -22,7 +22,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 def fetch_companies():
     sql = """
         SELECT company_id, name, industry_category, industry_subcategory,
-               description, location_city, location_district, website
+               description, description_detail, location_city, location_district, website
         FROM companies
     """
     with connection.cursor() as cursor:
@@ -32,12 +32,13 @@ def fetch_companies():
 
 
 def to_doc(c):
+    detail = c.get("description_detail") or c.get("description") or ""
     text = (
         f"公司名稱: {c['name']}\n"
         f"產業: {c['industry_category']} / {c['industry_subcategory']}\n"
         f"地點: {c['location_city']}{c['location_district']}\n"
         f"網站: {c.get('website') or ''}\n"
-        f"簡介: {c.get('description') or ''}\n"
+        f"簡介: {detail}\n"
     )
     return Document(
         page_content=text,

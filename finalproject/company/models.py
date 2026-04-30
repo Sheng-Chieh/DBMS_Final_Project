@@ -17,16 +17,17 @@ class CompanyManager(models.Manager["Company"]):
         """處理多條件搜尋的 SQL 邏輯"""
         with connection.cursor() as cursor:
             sql = """
-                SELECT company_id, name, industry_category, industry_subcategory, description, location_city, location_district, website 
-                FROM companies 
+                SELECT company_id, name, industry_category, industry_subcategory, description, description_detail,
+                       location_city, location_district, website
+                FROM companies
                 WHERE 1=1
             """
             params = []
             
             # 1. 處理關鍵字條件
             if query:
-                sql += " AND (name LIKE %s OR description LIKE %s)"
-                params.extend([f"%{query}%", f"%{query}%"])
+                sql += " AND (name LIKE %s OR description LIKE %s OR description_detail LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
                 
             # 2. 處理多選「產業類型」條件
             if industry_param:
@@ -36,6 +37,8 @@ class CompanyManager(models.Manager["Company"]):
                     for ind in industries:
                         if '-' in ind:
                             cat, sub = ind.split('-', 1)
+                            cat = cat.strip()
+                            sub = sub.strip()
                             industry_conditions.append("(industry_category = %s AND industry_subcategory = %s)")
                             params.extend([cat, sub])
                         else:
@@ -43,7 +46,7 @@ class CompanyManager(models.Manager["Company"]):
                             params.append(ind)
                     sql += f" AND ({' OR '.join(industry_conditions)})"
                     
-            # 3. 處理多選「地點」條件（允許不完整名稱）
+            # 3. 處理多選「地點」條件
             if location_param:
                 locations = [loc.strip() for loc in location_param.split(',') if loc.strip()]
                 if locations:
@@ -51,11 +54,13 @@ class CompanyManager(models.Manager["Company"]):
                     for loc in locations:
                         if '-' in loc:
                             city, dist = loc.split('-', 1)
-                            location_conditions.append("(location_city LIKE %s AND location_district LIKE %s)")
-                            params.extend([f"%{city}%", f"%{dist}%"])
+                            city = city.strip()
+                            dist = dist.strip()
+                            location_conditions.append("(location_city = %s AND location_district = %s)")
+                            params.extend([city, dist])
                         else:
-                            location_conditions.append("location_city LIKE %s")
-                            params.append(f"%{loc}%")
+                            location_conditions.append("location_city = %s")
+                            params.append(loc)
                     sql += f" AND ({' OR '.join(location_conditions)})"
                 
             cursor.execute(sql, params)
@@ -65,7 +70,8 @@ class CompanyManager(models.Manager["Company"]):
         """聊天用搜尋：關鍵字 OR 比對，多欄位擴大命中範圍"""
         with connection.cursor() as cursor:
             sql = """
-                SELECT company_id, name, industry_category, industry_subcategory, description, location_city, location_district, website
+                SELECT company_id, name, industry_category, industry_subcategory, description, description_detail,
+                       location_city, location_district, website
                 FROM companies
                 WHERE 1=1
             """
@@ -75,11 +81,11 @@ class CompanyManager(models.Manager["Company"]):
                 keyword_conditions = []
                 for kw in keywords:
                     keyword_conditions.append(
-                        "(name LIKE %s OR description LIKE %s OR location_city LIKE %s "
+                        "(name LIKE %s OR description LIKE %s OR description_detail LIKE %s OR location_city LIKE %s "
                         "OR location_district LIKE %s OR industry_category LIKE %s OR industry_subcategory LIKE %s)"
                     )
                     like = f"%{kw}%"
-                    params.extend([like, like, like, like, like, like])
+                    params.extend([like, like, like, like, like, like, like])
 
                 sql += f" AND ({' OR '.join(keyword_conditions)})"
 
@@ -90,8 +96,9 @@ class CompanyManager(models.Manager["Company"]):
         """處理單一公司詳細資料的 SQL 邏輯"""
         with connection.cursor() as cursor:
             sql = """
-                SELECT company_id, name, industry_category, industry_subcategory, description, location_city, location_district, website 
-                FROM companies 
+                SELECT company_id, name, industry_category, industry_subcategory, description, description_detail,
+                       location_city, location_district, website
+                FROM companies
                 WHERE company_id = %s
             """
             cursor.execute(sql, [company_id])
