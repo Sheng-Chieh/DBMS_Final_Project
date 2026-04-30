@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from company import views
+from accounts import views as account_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('search/', views.search_companies, name='search_companies'),
     path('company/<int:company_id>/', views.company_detail, name='company_detail'),
+
+    path('login/', account_views.login, name='login'),
+    path('register/', account_views.register, name='register'),
 ]
