@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>微任務列表</title>
+    <style>
+        table { border-collapse: collapse; width: 80%; margin: 20px auto; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">當前開放的微任務</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>專案名稱</th>
+                <th>產業類別</th>
+                <th>描述</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+            <tr>
+                <td>{{ project.0 }}</td> <td>{{ project.1 }}</td> <td>{{ project.3 }}</td> <td>{{ project.2 }}</td> <td>{{ project.4 }}</td> </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
