@@ -74,7 +74,7 @@ def chat_recommend_companies_lc(request):
         return JsonResponse({"error": "至少需要輸入一個需求描述"}, status=400)
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3.1-flash-lite-preview",
         google_api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.2,
     )
@@ -93,6 +93,23 @@ def chat_recommend_companies_lc(request):
             return json.loads(match.group(0))
         except Exception:
             return None
+
+    def normalize_llm_text(resp) -> str:
+        if hasattr(resp, "content"):
+            content = resp.content
+        else:
+            content = resp
+
+        def extract_text(item) -> str:
+            if isinstance(item, dict) and "text" in item:
+                return str(item.get("text") or "")
+            return str(item)
+
+        if isinstance(content, dict) and "text" in content:
+            return str(content.get("text") or "").strip()
+        if isinstance(content, list):
+            return "\n".join(extract_text(item) for item in content).strip()
+        return str(content).strip()
 
     def normalize_keywords(items):
         keywords = []
@@ -132,7 +149,7 @@ def chat_recommend_companies_lc(request):
     )
 
     kw_msg = keyword_prompt.format_messages(user_text=user_query)
-    kw_resp = llm.invoke(kw_msg).content.strip()
+    kw_resp = normalize_llm_text(llm.invoke(kw_msg))
     kw_arr = extract_json_array(kw_resp)
     keywords = normalize_keywords(kw_arr)
     if not keywords:
@@ -157,7 +174,13 @@ def chat_recommend_companies_lc(request):
 
     # 2) LangChain Retriever
     retriever = CompanyRetrieverLC(persist_dir="rag_data_lc")
-    retrieved = retriever.search(user_query, top_k=5, candidate_ids=candidate_ids)
+    retrieved = retriever.search(
+        user_query,
+        top_k=3,
+        candidate_ids=candidate_ids,
+        keywords=keywords,
+        fetch_k=25,
+    )
 
     # 3) Gemini 產生推薦理由
     prompt = ChatPromptTemplate.from_messages(
@@ -177,7 +200,7 @@ def chat_recommend_companies_lc(request):
 
     companies_json = json.dumps(retrieved, ensure_ascii=False, indent=2)
     msg = prompt.format_messages(search_context=full_search_context, companies_json=companies_json)
-    resp = llm.invoke(msg).content.strip()
+    resp = normalize_llm_text(llm.invoke(msg))
 
     why_map = {}
     try:
