@@ -43,7 +43,7 @@ class CompanyManager(models.Manager["Company"]):
                             params.append(ind)
                     sql += f" AND ({' OR '.join(industry_conditions)})"
                     
-            # 3. 處理多選「地點」條件
+            # 3. 處理多選「地點」條件（允許不完整名稱）
             if location_param:
                 locations = [loc.strip() for loc in location_param.split(',') if loc.strip()]
                 if locations:
@@ -51,13 +51,38 @@ class CompanyManager(models.Manager["Company"]):
                     for loc in locations:
                         if '-' in loc:
                             city, dist = loc.split('-', 1)
-                            location_conditions.append("(location_city = %s AND location_district = %s)")
-                            params.extend([city, dist])
+                            location_conditions.append("(location_city LIKE %s AND location_district LIKE %s)")
+                            params.extend([f"%{city}%", f"%{dist}%"])
                         else:
-                            location_conditions.append("location_city = %s")
-                            params.append(loc)
+                            location_conditions.append("location_city LIKE %s")
+                            params.append(f"%{loc}%")
                     sql += f" AND ({' OR '.join(location_conditions)})"
                 
+            cursor.execute(sql, params)
+            return dictfetchall(cursor)
+
+    def search_chat_with_keywords(self, keywords):
+        """聊天用搜尋：關鍵字 OR 比對，多欄位擴大命中範圍"""
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT company_id, name, industry_category, industry_subcategory, description, location_city, location_district, website
+                FROM companies
+                WHERE 1=1
+            """
+            params = []
+
+            if keywords:
+                keyword_conditions = []
+                for kw in keywords:
+                    keyword_conditions.append(
+                        "(name LIKE %s OR description LIKE %s OR location_city LIKE %s "
+                        "OR location_district LIKE %s OR industry_category LIKE %s OR industry_subcategory LIKE %s)"
+                    )
+                    like = f"%{kw}%"
+                    params.extend([like, like, like, like, like, like])
+
+                sql += f" AND ({' OR '.join(keyword_conditions)})"
+
             cursor.execute(sql, params)
             return dictfetchall(cursor)
 

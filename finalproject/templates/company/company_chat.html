@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI 公司推薦對話</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --brand: #0ea5a8;
+      --brand-2: #f59e0b;
+      --paper: #ffffff;
+      --bg: #f8fafc;
+    }
+
+    body {
+      font-family: "Space Grotesk", "Noto Sans TC", sans-serif;
+      background: radial-gradient(1200px 600px at 10% -20%, #c2f2f1 0%, rgba(194, 242, 241, 0) 60%),
+                  radial-gradient(1000px 600px at 110% -30%, #fde68a 0%, rgba(253, 230, 138, 0) 60%),
+                  linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+      color: var(--ink);
+    }
+
+    .chat-shell {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    .chat-stream {
+      height: min(62vh, 620px);
+      overflow-y: auto;
+    }
+
+    .msg {
+      display: flex;
+      margin: 10px 0;
+      animation: floatIn 280ms ease;
+    }
+
+    .msg-user {
+      justify-content: flex-end;
+    }
+
+    .msg-assistant {
+      justify-content: flex-start;
+    }
+
+    .bubble {
+      max-width: 78%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      position: relative;
+      line-height: 1.55;
+    }
+
+    .bubble-user {
+      background: linear-gradient(135deg, #0ea5a8, #06b6d4);
+      color: #f8fafc;
+      border-top-right-radius: 6px;
+    }
+
+    .bubble-assistant {
+      background: #f8fafc;
+      color: var(--ink);
+      border: 1px solid #e2e8f0;
+      border-top-left-radius: 6px;
+    }
+
+    .bubble-meta {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    .pending {
+      opacity: 0.7;
+      font-style: italic;
+    }
+
+    .rec-block {
+      margin: 12px 0 4px;
+      padding: 12px;
+      border: 1px dashed #cbd5f5;
+      border-radius: 14px;
+      background: #f1f5ff;
+    }
+
+    .rec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .rec-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .rec-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .rec-title {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .rec-meta {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .rec-why {
+      font-size: 14px;
+      color: #0f172a;
+      margin-top: 8px;
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <div class="chat-shell rounded-3xl p-6 md:p-8">
+      <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight">AI 公司推薦對話</h1>
+          <p class="text-slate-500 mt-2">用聊天方式描述需求，AI 會整理推薦公司與理由。</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/search/" class="px-4 py-2 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all">
+            回到搜尋
+          </a>
+          <button id="clear-btn" class="px-4 py-2 text-sm rounded-full border border-slate-200 hover:border-slate-300">
+            清空對話
+          </button>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 gap-4 mb-6">
+        <div>
+          <div class="text-sm font-medium text-slate-600 mb-1">提示</div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            例：找台北 AI 新創，喜歡技術導向與團隊文化
+          </div>
+        </div>
+      </section>
+
+      <div class="chat-stream rounded-2xl border border-slate-200 bg-white p-4" id="chat-stream" aria-live="polite">
+        <div id="chat-list"></div>
+      </div>
+
+      <div class="mt-4 flex flex-col md:flex-row gap-3 items-stretch">
+        <textarea id="chat-input" rows="2" class="flex-1 border rounded-2xl px-4 py-3 text-sm resize-none"
+                  placeholder="輸入需求，例如：想找台北 AI 新創，重視技術文化"></textarea>
+        <button id="chat-btn" class="bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-semibold">
+          送出
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const messages = [];
+    const chatList = document.getElementById("chat-list");
+    const chatStream = document.getElementById("chat-stream");
+    const inputEl = document.getElementById("chat-input");
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return '';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function nowTime() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function appendBubble(role, text, isPending = false) {
+      const wrapper = document.createElement("div");
+      wrapper.className = `msg msg-${role}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = `bubble bubble-${role}`;
+      if (isPending) bubble.classList.add("pending");
+
+      const content = document.createElement("div");
+      content.className = "bubble-text";
+      content.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+
+      const meta = document.createElement("div");
+      meta.className = "bubble-meta";
+      meta.textContent = nowTime();
+
+      bubble.appendChild(content);
+      bubble.appendChild(meta);
+      wrapper.appendChild(bubble);
+      chatList.appendChild(wrapper);
+      chatStream.scrollTop = chatStream.scrollHeight;
+      return bubble;
+    }
+
+    function appendRecommendations(recs) {
+      if (!recs.length) return;
+
+      const block = document.createElement("div");
+      block.className = "rec-block";
+
+      const title = document.createElement("div");
+      title.className = "rec-title";
+      title.textContent = "推薦公司";
+      block.appendChild(title);
+
+      const grid = document.createElement("div");
+      grid.className = "rec-grid";
+
+      recs.forEach((c) => {
+        const card = document.createElement("a");
+        card.className = "rec-card";
+        card.href = `/company/${c.company_id}/`;
+        card.target = "_blank";
+        card.rel = "noopener";
+
+        const name = document.createElement("div");
+        name.className = "rec-title";
+        name.textContent = c.name || "未命名公司";
+
+        const meta = document.createElement("div");
+        meta.className = "rec-meta";
+        meta.textContent = `${c.industry_category || ""} / ${(c.location_city || "")}${c.location_district || ""}`;
+
+        const why = document.createElement("div");
+        why.className = "rec-why";
+        why.textContent = c.why || "";
+
+        card.appendChild(name);
+        card.appendChild(meta);
+        card.appendChild(why);
+        grid.appendChild(card);
+      });
+
+      block.appendChild(grid);
+      chatList.appendChild(block);
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    async function sendChat() {
+      const msg = inputEl.value.trim();
+
+      if (!msg) return;
+
+      appendBubble("user", msg);
+      messages.push({ role: "user", content: msg });
+
+      inputEl.value = "";
+      const pendingBubble = appendBubble("assistant", "AI 正在推薦中...", true);
+
+      const res = await fetch("/company/chat_lc/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ message: msg, messages }),
+      });
+
+      const data = await res.json();
+      const replyText = data.assistant_message || data.answer || "已完成推薦。";
+
+      pendingBubble.classList.remove("pending");
+      pendingBubble.querySelector(".bubble-text").innerText = replyText;
+
+      if (!res.ok) return;
+
+      messages.push({ role: "assistant", content: replyText });
+      appendRecommendations(data.recommendations || []);
+    }
+
+    document.getElementById("chat-btn").addEventListener("click", sendChat);
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    });
+
+    document.getElementById("clear-btn").addEventListener("click", () => {
+      messages.length = 0;
+      chatList.innerHTML = "";
+      inputEl.value = "";
+    });
+  </script>
+</body>
+</html>

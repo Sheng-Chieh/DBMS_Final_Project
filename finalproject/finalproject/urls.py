@@ -24,4 +24,6 @@ urlpatterns = [
     path('search/', views.search_companies, name='search_companies'),
     path('company/<int:company_id>/', views.company_detail, name='company_detail'),
     path('projects/', micro_views.project_list, name='project_list'), 
+    path('company/chat_lc/', views.chat_recommend_companies_lc, name='chat_recommend_companies_lc'),
+    path('company/chat/', views.company_chat_page, name='company_chat_page'),
 ]
