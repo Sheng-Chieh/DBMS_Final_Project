@@ -1,0 +1,8 @@
+Django
+python-dotenv
+PyMySQL
+langchain-core
+langchain-community
+langchain-google-genai
+chromadb
+sentence-transformers
