@@ -79,8 +79,29 @@
     }
 
     .pending {
-      opacity: 0.7;
+      opacity: 0.85;
       font-style: italic;
+    }
+
+    .pending .bubble-text {
+      background: linear-gradient(270deg, #0ea5a8, #3b82f6, #8b5cf6, #0ea5a8);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientWave 2s ease infinite;
+      font-weight: 600;
+    }
+
+    @keyframes gradientWave {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
     }
 
     .rec-block {
@@ -162,7 +183,7 @@
         <div>
           <div class="text-sm font-medium text-slate-600 mb-1">提示</div>
           <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            例：找台北 AI 新創，喜歡技術導向與團隊文化
+            例：請推薦我半導體相關的公司，有發展 AI PC 或 AIOT 的尤佳
           </div>
         </div>
       </section>
@@ -173,7 +194,7 @@
 
       <div class="mt-4 flex flex-col md:flex-row gap-3 items-stretch">
         <textarea id="chat-input" rows="2" class="flex-1 border rounded-2xl px-4 py-3 text-sm resize-none"
-                  placeholder="輸入需求，例如：想找台北 AI 新創，重視技術文化"></textarea>
+                  placeholder="輸入需求"></textarea>
         <button id="chat-btn" class="bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-semibold">
           送出
         </button>
@@ -283,25 +304,64 @@
       inputEl.value = "";
       const pendingBubble = appendBubble("assistant", "AI 正在推薦中...", true);
 
-      const res = await fetch("/company/chat_lc/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({ message: msg, messages }),
-      });
+      try {
+        const res = await fetch("/company/chat_lc/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({ message: msg, messages }),
+        });
 
-      const data = await res.json();
-      const replyText = data.assistant_message || data.answer || "已完成推薦。";
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
 
-      pendingBubble.classList.remove("pending");
-      pendingBubble.querySelector(".bubble-text").innerText = replyText;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          // Decode chunk and add to our buffer
+          buffer += decoder.decode(value, { stream: true });
 
-      if (!res.ok) return;
+          // Split buffer by SSE double newline separator
+          const parts = buffer.split("\n\n");
+          // Keep the last arguably incomplete chunk in the buffer
+          buffer = parts.pop();
 
-      messages.push({ role: "assistant", content: replyText });
-      appendRecommendations(data.recommendations || []);
+          for (const part of parts) {
+            if (part.startsWith("data: ")) {
+              const jsonStr = part.substring(6);
+              try {
+                const data = JSON.parse(jsonStr);
+
+                if (data.type === "progress") {
+                  // 更新進行中的進度訊息
+                  pendingBubble.querySelector(".bubble-text").innerText = data.text;
+                } else if (data.type === "result") {
+                  // 最終結果完成
+                  const replyText = data.payload.assistant_message || data.payload.answer || "已完成推薦。";
+                  pendingBubble.classList.remove("pending");
+                  pendingBubble.querySelector(".bubble-text").innerText = replyText;
+                  messages.push({ role: "assistant", content: replyText });
+                  appendRecommendations(data.payload.recommendations || []);
+                } else if (data.type === "error") {
+                  // 錯誤提示
+                  pendingBubble.classList.remove("pending");
+                  pendingBubble.querySelector(".bubble-text").innerText = data.text;
+                }
+
+              } catch (err) {
+                console.error("SSE parse error", err, part);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Network error", err);
+        pendingBubble.classList.remove("pending");
+        pendingBubble.querySelector(".bubble-text").innerText = "網路發生連線錯誤，請稍後再試。";
+      }
     }
 
     document.getElementById("chat-btn").addEventListener("click", sendChat);

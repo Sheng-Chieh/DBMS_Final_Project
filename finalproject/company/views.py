@@ -1,12 +1,19 @@
 from django.shortcuts import render
 from django.http import Http404
+from django.conf import settings
 from .models import Company
 
+import jieba
+import jieba.analyse
+
+from functools import lru_cache
+from pathlib import Path
 import json
 import os
 import re
+import time
 
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -14,6 +21,93 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from .rag_lc.retriever import CompanyRetrieverLC
+
+RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
+
+RAG_SYNONYMS = {
+    "單車": ["自行車", "腳踏車", "bike", "bicycle"],
+    "自行車": ["單車", "腳踏車", "bike", "bicycle"],
+    "腳踏車": ["單車", "自行車", "bike", "bicycle"],
+}
+
+
+def _normalize_keyword(keyword: str) -> str:
+    return (keyword or "").strip().lower()
+
+
+def expand_keywords(keywords):
+    expanded = []
+    for kw in keywords:
+        k = _normalize_keyword(kw)
+        if not k:
+            continue
+        if k not in expanded:
+            expanded.append(k)
+        for syn in RAG_SYNONYMS.get(k, []):
+            s = _normalize_keyword(syn)
+            if s and s not in expanded:
+                expanded.append(s)
+    return expanded
+
+
+def extract_evidence_snippet(evidence: str) -> str:
+    if not evidence:
+        return ""
+    for line in evidence.splitlines():
+        line = line.strip()
+        if line.startswith("簡介:"):
+            return line.replace("簡介:", "", 1).strip()
+    return evidence.strip()
+
+
+def build_fallback_why(result, display_keywords):
+    matched = result.get("matched_keywords") or []
+    industry = result.get("industry_category") or ""
+    sub = result.get("industry_subcategory") or ""
+    location = result.get("location_city") or ""
+    snippet = extract_evidence_snippet(result.get("evidence") or "")
+    snippet = re.sub(r"\s+", " ", snippet)
+
+    pieces = []
+    if matched:
+        pieces.append(f"涵蓋關鍵字「{'、'.join(matched[:3])}」")
+    elif display_keywords:
+        pieces.append(f"與「{'、'.join(display_keywords[:2])}」需求相關")
+
+    if industry:
+        if sub:
+            pieces.append(f"{industry}/{sub}產業")
+        else:
+            pieces.append(f"{industry}產業")
+
+    if location:
+        pieces.append(f"位於{location}")
+
+    if snippet:
+        pieces.append(f"簡介提到「{snippet[:40]}」")
+
+    if not pieces:
+        return "符合您的條件。"
+
+    return "，".join(pieces) + "。"
+
+
+@lru_cache(maxsize=1)
+def get_retriever():
+    return CompanyRetrieverLC(persist_dir=RAG_PERSIST_DIR, model_name=RAG_EMBEDDING_MODEL)
+
+
+@lru_cache(maxsize=1)
+def get_llm():
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    return ChatGoogleGenerativeAI(
+        model="gemini-3.1-flash-lite-preview",
+        google_api_key=api_key,
+        temperature=0.2,
+    )
 
 def search_companies(request):
     # 從 URL GET 請求中獲取多個過濾參數
@@ -53,191 +147,206 @@ def company_detail(request, company_id):
     
     return render(request, 'company/company_detail.html', context)
 
+def normalize_llm_text(text):
+    """將 LLM 回傳的物件 (可能為 LangChain AIMessage、Gemini List 結構等) 正規化為純文字字串"""
+    if hasattr(text, "content"):
+        text = text.content
+        
+    if isinstance(text, list):
+        parts = []
+        for item in text:
+            if isinstance(item, dict) and "text" in item:
+                parts.append(str(item.get("text") or ""))
+            else:
+                parts.append(str(item))
+        return "\n".join([p for p in parts if p])
+        
+    if isinstance(text, dict) and "text" in text:
+        return str(text.get("text") or "")
+        
+    return str(text)
+
+def extract_json_array(text):
+    try:
+        cleaned = (text or "").strip()
+        if not cleaned:
+            return []
+        cleaned = re.sub(r"^```(?:json)?\s*|```$", "", cleaned, flags=re.MULTILINE).strip()
+        start = cleaned.find("[")
+        end = cleaned.rfind("]")
+        if start != -1 and end != -1 and end > start:
+            return json.loads(cleaned[start : end + 1])
+        return json.loads(cleaned)
+    except Exception:
+        return []
+
+
+def repair_json_array(llm, raw_text: str) -> str:
+    if not llm:
+        return "[]"
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "你是 JSON 修復助手。請把使用者提供的內容修正成『純 JSON 陣列』，只輸出 JSON。",
+            ),
+            ("user", "請將以下內容修正成 JSON 陣列：\n{raw_text}"),
+        ]
+    )
+    msg = prompt.format_messages(raw_text=raw_text)
+    return normalize_llm_text(llm.invoke(msg))
+
 @csrf_exempt
 def chat_recommend_companies_lc(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)
-
+        
     payload = json.loads(request.body or "{}")
     messages = payload.get("messages") or []
     user_query = (payload.get("message") or "").strip()
-
+    
+    # 若無最新查詢，嘗試從歷史對話中尋找最後一句 user 發言
     if not user_query:
         for m in reversed(messages):
-            if m.get("role") == "user":
-                content = (m.get("content") or "").strip()
-                if content:
-                    user_query = content
-                    break
-
+            if m.get("role") == "user" and m.get("content", "").strip():
+                user_query = m["content"].strip()
+                break
+                    
     if not user_query:
-        return JsonResponse({"error": "至少需要輸入一個需求描述"}, status=400)
+        return JsonResponse({"error": "請提供查詢內容"}, status=400)
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-3.1-flash-lite-preview",
-        google_api_key=os.getenv("GEMINI_API_KEY"),
-        temperature=0.2,
-    )
+    def event_stream():
+        def send_progress(text):
+            """回傳當前處理進度給前端 (SSE 格式)"""
+            return f"data: {json.dumps({'type': 'progress', 'text': text}, ensure_ascii=False)}\n\n"
 
-    def extract_json_array(text: str):
-        # Try exact JSON first, then extract the first top-level array.
+        def send_result(payload):
+            """回傳最終處理結果給前端 (SSE 格式)"""
+            return f"data: {json.dumps({'type': 'result', 'payload': payload}, ensure_ascii=False)}\n\n"
+
+        def send_error(text):
+            """回傳錯誤訊息給前端 (SSE 格式)"""
+            return f"data: {json.dumps({'type': 'error', 'text': text}, ensure_ascii=False)}\n\n"
+
         try:
-            return json.loads(text)
-        except Exception:
-            pass
+            # =========================================================
+            # Step 1: 需求分析與關鍵字擷取 (Jieba)
+            # =========================================================
+            yield send_progress("正在分析您的需求與擷取關鍵字...")
+            
+            keywords = jieba.analyse.extract_tags(user_query, topK=5)
+            if not keywords:
+                keywords = [word for word in jieba.lcut(user_query) if len(word.strip()) > 1]
 
-        match = re.search(r"\[.*\]", text, flags=re.DOTALL)
-        if not match:
-            return None
-        try:
-            return json.loads(match.group(0))
-        except Exception:
-            return None
+            display_keywords = keywords[:]
+            expanded_keywords = expand_keywords(keywords)
 
-    def normalize_llm_text(resp) -> str:
-        if hasattr(resp, "content"):
-            content = resp.content
-        else:
-            content = resp
+            search_context = f"使用者查詢：{user_query} | 關鍵字：{', '.join(display_keywords)}" if display_keywords else f"使用者查詢：{user_query}"
 
-        def extract_text(item) -> str:
-            if isinstance(item, dict) and "text" in item:
-                return str(item.get("text") or "")
-            return str(item)
+            # =========================================================
+            # Step 2: 向量資料庫檢索 (ChromaDB + Hybrid Search)
+            # =========================================================
+            yield send_progress(f"正在資料庫中搜尋相符的公司 (分析了 {len(expanded_keywords)} 個特徵)...")
+            
+            retriever = get_retriever()
+            
+            # 使用較嚴格的門檻 (distance_threshold=0.9 或至少命中1個關鍵字) 搜尋
+            retrieved = retriever.search(
+                query=user_query, top_k=3, keywords=expanded_keywords, fetch_k=30,
+                min_keyword_hits=1, distance_threshold=0.9
+            )
 
-        if isinstance(content, dict) and "text" in content:
-            return str(content.get("text") or "").strip()
-        if isinstance(content, list):
-            return "\n".join(extract_text(item) for item in content).strip()
-        return str(content).strip()
+            # 若查無結果，放寬門檻再試一次 (distance_threshold=1.2)
+            if not retrieved and expanded_keywords:
+                retrieved = retriever.search(
+                    query=user_query, top_k=3, keywords=expanded_keywords, fetch_k=30,
+                    min_keyword_hits=0, distance_threshold=1.2
+                )
 
-    def normalize_keywords(items):
-        keywords = []
-        if not isinstance(items, list):
-            return keywords
-        for item in items:
-            if isinstance(item, str):
-                cleaned = item.strip()
-                if cleaned and cleaned not in keywords:
-                    keywords.append(cleaned)
-        return keywords
+            if not retrieved:
+                yield send_result({
+                    "answer": "抱歉，目前找不到符合條件的公司。",
+                    "assistant_message": "抱歉，目前找不到符合條件的公司。",
+                    "recommendations": [],
+                })
+                return
 
-    def fallback_keywords(text: str):
-        keywords = []
-        parts = re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", text)
-        for part in parts:
-            if re.match(r"^[A-Za-z0-9]+$", part):
-                if part not in keywords:
-                    keywords.append(part)
+            # =========================================================
+            # Step 3: 交給 Gemini LLM 腦力激盪並生成推薦理由
+            # =========================================================
+            yield send_progress(f"已找到 {len(retrieved)} 家相關公司，正在請 AI 腦力激盪並撰寫推薦理由...")
+            
+            llm = get_llm()
+            resp = "[]"
+            
+            if llm:
+                prompt = ChatPromptTemplate.from_messages([
+                    ("system",
+                     "你是一個專業的台灣企業推薦助手。請根據檢索到的公司資料，以繁體中文回答。\n"
+                     "請回傳純 JSON 陣列，不要有 markdown 標記，格式如下：\n"
+                     "[\n  {{\n    \"company_id\": 1,\n    \"why\": \"推薦這家公司的理由(約30字)\"\n  }}\n]\n"
+                     "注意：回傳的 JSON 必須包含所有傳入的公司，並且只輸出 JSON 陣列。"
+                    ),
+                    ("user", "搜索脈絡：{search_context}\n\n檢索到的公司：\n{companies_json}\n\n請根據上述資料給出推薦理由 JSON：")
+                ])
+
+                # 準備傳給 LLM 參考的 JSON (不含不必要的欄位以節省 Token)
+                llm_candidates = [
+                    {k: r.get(k) for k in ("company_id", "name", "industry_category", "industry_subcategory", "location_city", "location_district", "evidence")} 
+                    for r in retrieved
+                ]
+                msg = prompt.format_messages(search_context=search_context, companies_json=json.dumps(llm_candidates, ensure_ascii=False))
+                
+                try:
+                    resp = normalize_llm_text(llm.invoke(msg))
+                except Exception as e:
+                    print(f"LLM 呼叫失敗: {e}")
             else:
-                if len(part) <= 2:
-                    if part not in keywords:
-                        keywords.append(part)
-                else:
-                    for i in range(len(part) - 1):
-                        piece = part[i : i + 2]
-                        if piece not in keywords:
-                            keywords.append(piece)
-        return keywords
+                print("GEMINI_API_KEY not set; using fallback reasons only.")
 
-    keyword_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system",
-             "你是關鍵字擷取助手。只輸出 JSON 陣列，元素為關鍵字字串。不要輸出其他內容。"),
-            ("user", "使用者輸入：{user_text}"),
-        ]
-    )
+            # =========================================================
+            # Step 4: 解析回傳結果與容錯處理 (Fallback)
+            # =========================================================
+            yield send_progress("正在整理最後的推薦結果出來給您...")
+            time.sleep(1) # 假裝處理時間，讓前端有機會顯示進度訊息
 
-    kw_msg = keyword_prompt.format_messages(user_text=user_query)
-    kw_resp = normalize_llm_text(llm.invoke(kw_msg))
-    kw_arr = extract_json_array(kw_resp)
-    keywords = normalize_keywords(kw_arr)
-    if not keywords:
-        keywords = fallback_keywords(user_query)
-    keywords = keywords[:8]
+            why_map = {}
+            try:
+                arr = extract_json_array(resp)
+                
+                # 如果首次解析失敗，嘗試修復 JSON
+                if not arr and llm:
+                    arr = extract_json_array(repair_json_array(llm, resp))
 
-    # 1) MySQL 硬篩選（使用關鍵字擷取結果）
-    candidates = Company.objects.search_chat_with_keywords(keywords)[:200]
-    candidate_ids = [c["company_id"] for c in candidates]
-    
-    if not candidate_ids:
-        return JsonResponse({
-            "answer": "很抱歉，無法找到符合條件的公司。",
-            "assistant_message": "很抱歉，沒有找到符合條件的公司。你可以換個條件再試試。",
-            "recommendations": [],
-        })
+                if isinstance(arr, list):
+                    for item in arr:
+                        if isinstance(item, dict) and item.get("company_id") and item.get("why"):
+                            try:
+                                why_map[int(item["company_id"])] = str(item["why"]).strip()
+                            except (TypeError, ValueError):
+                                pass
+            except Exception as e:
+                print(f"LLM 回應解析失敗: {e}, 原始回應內容: {resp}")
 
-    if keywords:
-        full_search_context = f"需求：{user_query}；關鍵字：{', '.join(keywords)}"
-    else:
-        full_search_context = f"需求：{user_query}"
+            # 依解析出來的 JSON 寫回各公司物件中，若沒匹配到則使用內建邏輯 (build_fallback_why) 產生理由
+            for r in retrieved:
+                company_id = int(r["company_id"])
+                r["why"] = why_map.get(company_id) or build_fallback_why(r, display_keywords)
 
-    # 2) LangChain Retriever
-    retriever = CompanyRetrieverLC(persist_dir="rag_data_lc")
-    retrieved = retriever.search(
-        user_query,
-        top_k=3,
-        candidate_ids=candidate_ids,
-        keywords=keywords,
-        fetch_k=25,
-    )
+            # =========================================================
+            # Step 5: 回傳最終推薦清單
+            # =========================================================
+            yield send_result({
+                "answer": "這是我為您找到的推薦公司：",
+                "assistant_message": f"收到，我已經根據「{search_context}」為您找到最適合的公司。",
+                "recommendations": retrieved,
+            })
 
-    # 3) Gemini 產生推薦理由
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system",
-             "你是公司推薦助理。根據使用者需求和提供的公司資料進行推薦。\n"
-             "請輸出 JSON 陣列，每個元素必須含以下欄位：\n"
-             "- company_id: 公司ID\n"
-             "- why: 推薦理由（1~2句，說明為什麼推薦這家公司）\n"
-             "只輸出有效的 JSON 陣列，不要輸出其他內容。"),
-            ("user",
-             "使用者條件：{search_context}\n\n"
-             "符合初步篩選的公司資料：\n{companies_json}\n\n"
-             "請根據使用者的需求和公司資料，為每家公司提供推薦理由。"),
-        ]
-    )
+        except Exception as e:
+            print(f"Streaming error: {e}")
+            yield send_error("發生未知的錯誤，未能完成推薦。")
 
-    companies_json = json.dumps(retrieved, ensure_ascii=False, indent=2)
-    msg = prompt.format_messages(search_context=full_search_context, companies_json=companies_json)
-    resp = normalize_llm_text(llm.invoke(msg))
-
-    why_map = {}
-    try:
-        # 嘗試從 JSON 回應中提取推薦理由
-        arr = extract_json_array(resp)
-        if not isinstance(arr, list):
-            raise ValueError("LLM response is not a JSON array")
-        why_map = {int(x["company_id"]): x["why"] for x in arr if "company_id" in x and "why" in x}
-    except Exception as e:
-        # 如果 JSON 解析失敗，記錄並使用默認理由
-        print(f"LLM 回應解析失敗: {e}, 回應內容: {resp}")
-
-    # 修復 3: 改進推薦理由展示，使用 evidence 補充
-    for r in retrieved:
-        company_id = int(r["company_id"])
-        if company_id in why_map:
-            r["why"] = why_map[company_id]
-        else:
-            # 使用基於 evidence 的默認理由
-            evidence = r.get("evidence", "")
-            industry = r.get("industry_category", "")
-            location = r.get("location_city", "")
-            default_why = f"符合您的條件。{industry}産業"
-            if location:
-                default_why += f"位於{location}"
-            if evidence:
-                default_why += f"，特別是{evidence[:50]}"
-            r["why"] = default_why
-
-    assistant_message = f"收到，我會根據「{full_search_context}」提供推薦。以下是較符合的公司與理由。"
-
-    return JsonResponse({
-        "answer": "以下是推薦公司與理由：",
-        "assistant_message": assistant_message,
-        "search_context": full_search_context,
-        "recommendations": retrieved,
-    })
+    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
 @ensure_csrf_cookie
 def company_chat_page(request):

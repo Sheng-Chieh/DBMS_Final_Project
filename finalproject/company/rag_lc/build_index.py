@@ -18,6 +18,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
+
 
 def fetch_companies():
     sql = """
@@ -56,7 +58,7 @@ def to_doc(c):
 
 def main():
     persist_dir = str(Path(settings.BASE_DIR) / "rag_data_lc")
-    embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embedding = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
 
     companies = fetch_companies()
     docs = [to_doc(c) for c in companies]
@@ -68,7 +70,7 @@ def main():
         collection_name="companies",
     )
     vs.persist()
-    print(f"Indexed {len(docs)} companies into {persist_dir}")
+    print(f"Indexed {len(docs)} companies into {persist_dir} using {EMBEDDING_MODEL}")
 
 
 if __name__ == "__main__":
