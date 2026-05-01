@@ -170,7 +170,7 @@
           <p class="text-slate-500 mt-2">用聊天方式描述需求，AI 會整理推薦公司與理由。</p>
         </div>
         <div class="flex items-center gap-2">
-          <a href="/search/" class="px-4 py-2 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all">
+          <a href="/search/" id="back-search-btn" class="px-4 py-2 text-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all">
             回到搜尋
           </a>
           <button id="clear-btn" class="px-4 py-2 text-sm rounded-full border border-slate-200 hover:border-slate-300">
@@ -377,6 +377,49 @@
       chatList.innerHTML = "";
       inputEl.value = "";
     });
+
+    // ======================= 漸縮回搜尋頁過場動畫 =======================
+    const backSearchBtn = document.getElementById("back-search-btn");
+    if (backSearchBtn) {
+      backSearchBtn.addEventListener("click", function(e) {
+        e.preventDefault(); // 阻止跳轉
+        const targetUrl = this.getAttribute("href");
+        
+        // 抓取「回到搜尋」按鈕的螢幕位置
+        const rect = this.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+        
+        // 設定底層背景為白色，這樣 body 縮小時底部會露出白色底，呼應上一個動畫
+        document.documentElement.style.backgroundColor = "#ffffff";
+        
+        // 計算螢幕最大對角半徑
+        const maxRadius = Math.hypot(
+            Math.max(startX, window.innerWidth - startX),
+            Math.max(startY, window.innerHeight - startY)
+        ) + 10;
+        
+        const initialClip = `circle(${maxRadius}px at ${startX}px ${startY}px)`;
+        const finalClip = `circle(0px at ${startX}px ${startY}px)`;
+        
+        // 執行動畫：讓整個 body 面板縮成一個小圓點消失在按鈕中
+        requestAnimationFrame(() => {
+            const animation = document.body.animate([
+                { clipPath: initialClip, webkitClipPath: initialClip, opacity: 1 },
+                { clipPath: finalClip, webkitClipPath: finalClip, opacity: 0 }
+            ], {
+                duration: 600, // 與上一個進場動畫一致的時間
+                easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                fill: 'forwards' // 停留在縮小不見的狀態
+            });
+            
+            // 動畫結束後再進行網址跳轉
+            animation.onfinish = () => {
+                window.location.href = targetUrl;
+            };
+        });
+      });
+    }
   </script>
 </body>
 </html>
