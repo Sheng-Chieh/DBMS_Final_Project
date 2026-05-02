@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.db import connection
+from .models import Account
 
 
 def register(request):
@@ -10,13 +10,7 @@ def register(request):
         role = request.POST.get('role', '').strip()
 
         try:
-            with connection.cursor() as cursor:
-                sql = """
-                    INSERT INTO users (name, email, password, role)
-                    VALUES (%s, %s, %s, %s)
-                """
-                cursor.execute(sql, [name, email, password, role])
-
+            Account.objects.create_user_with_raw_sql(name, email, password, role)
             return redirect('login')
 
         except Exception:
@@ -32,20 +26,13 @@ def login(request):
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '').strip()
 
-        with connection.cursor() as cursor:
-            sql = """
-                SELECT user_id, name, email, role
-                FROM users
-                WHERE email = %s AND password = %s
-            """
-            cursor.execute(sql, [email, password])
-            row = cursor.fetchone()
+        user = Account.objects.login_with_raw_sql(email, password)
 
-        if row:
-            request.session['user_id'] = row[0]
-            request.session['name'] = row[1]
-            request.session['email'] = row[2]
-            request.session['role'] = row[3]
+        if user:
+            request.session['user_id'] = user['user_id']
+            request.session['name'] = user['name']
+            request.session['email'] = user['email']
+            request.session['role'] = user['role']
 
             return redirect('search_companies')
 
