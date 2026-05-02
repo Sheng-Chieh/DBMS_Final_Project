@@ -29,4 +29,7 @@ urlpatterns = [
 
     path('login/', account_views.login, name='login'),
     path('register/', account_views.register, name='register'),
+
+    path('company/chat_lc/', views.chat_recommend_companies_lc, name='chat_recommend_companies_lc'),
+    path('company/chat/', views.company_chat_page, name='company_chat_page'),
 ]
