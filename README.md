@@ -15,5 +15,6 @@ CREATE TABLE users (
     graduation_year INT,
     current_company VARCHAR(100),
     current_job_title VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    company_id INT
 );
