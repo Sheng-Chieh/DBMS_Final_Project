@@ -19,6 +19,7 @@ from django.urls import path
 from company import views
 from microprojects import views as micro_views
 from accounts import views as account_views
+from coffeechat import views as coffee_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,4 +33,6 @@ urlpatterns = [
 
     path('company/chat_lc/', views.chat_recommend_companies_lc, name='chat_recommend_companies_lc'),
     path('company/chat/', views.company_chat_page, name='company_chat_page'),
+
+    path('coffeechat/apply/', coffee_views.apply_chat, name='apply_chat'),
 ]

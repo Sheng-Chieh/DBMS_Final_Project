@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'company',
     'microprojects',
     'accounts',
+    'coffeechat',
 ]
 
 MIDDLEWARE = [
@@ -107,7 +108,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'final_project',
         'USER': 'root',
-        'PASSWORD': '215864',
+        'PASSWORD': '111405062',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
