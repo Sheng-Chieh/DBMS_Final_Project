@@ -23,33 +23,49 @@ from langchain_core.prompts import ChatPromptTemplate
 from .rag_lc.retriever import CompanyRetrieverLC
 
 RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
-RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
-
-RAG_SYNONYMS = {
-    "單車": ["自行車", "腳踏車", "bike", "bicycle"],
-    "自行車": ["單車", "腳踏車", "bike", "bicycle"],
-    "腳踏車": ["單車", "自行車", "bike", "bicycle"],
-}
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
 
 
-def _normalize_keyword(keyword: str) -> str:
-    return (keyword or "").strip().lower()
+def search_companies(request):
+    # 從 URL GET 請求中獲取多個過濾參數
+    query = request.GET.get('q', '').strip()
+    industry_param = request.GET.get('industry', '').strip()
+    location_param = request.GET.get('location', '').strip()
+
+    has_search_criteria = bool(query or industry_param or location_param)
+    
+    # 呼叫寫在 models.py 裡的 SQL 查詢方法
+    companies_data = Company.objects.search_with_raw_sql(query, industry_param, location_param)
+
+    display_companies = companies_data if has_search_criteria else companies_data[:5]
+        
+    context = {
+        'companies': display_companies,
+        'query': query,
+        'sel_industry': industry_param,  
+        'sel_location': location_param,  
+        'has_search_criteria': has_search_criteria,
+    }
+    
+    return render(request, 'company/company_search.html', context)
 
 
-def expand_keywords(keywords):
-    expanded = []
-    for kw in keywords:
-        k = _normalize_keyword(kw)
-        if not k:
-            continue
-        if k not in expanded:
-            expanded.append(k)
-        for syn in RAG_SYNONYMS.get(k, []):
-            s = _normalize_keyword(syn)
-            if s and s not in expanded:
-                expanded.append(s)
-    return expanded
+def company_detail(request, company_id):
+    # 呼叫寫在 models.py 裡的 SQL 查詢方法
+    company_data = Company.objects.get_detail_with_raw_sql(company_id)
+        
+    # 如果回傳 None 代表找不到該公司，觸發 404
+    if not company_data:
+        raise Http404("找不到該公司資料")
+        
+    context = {
+        'company': company_data
+    }
+    
+    return render(request, 'company/company_detail.html', context)
 
+
+# ======================== RAG ==================================
 
 def extract_evidence_snippet(evidence: str) -> str:
     if not evidence:
@@ -108,44 +124,6 @@ def get_llm():
         google_api_key=api_key,
         temperature=0.2,
     )
-
-def search_companies(request):
-    # 從 URL GET 請求中獲取多個過濾參數
-    query = request.GET.get('q', '').strip()
-    industry_param = request.GET.get('industry', '').strip()
-    location_param = request.GET.get('location', '').strip()
-
-    has_search_criteria = bool(query or industry_param or location_param)
-    
-    # 呼叫寫在 models.py 裡的 SQL 查詢方法
-    companies_data = Company.objects.search_with_raw_sql(query, industry_param, location_param)
-
-    display_companies = companies_data if has_search_criteria else companies_data[:5]
-        
-    context = {
-        'companies': display_companies,
-        'query': query,
-        'sel_industry': industry_param,  
-        'sel_location': location_param,  
-        'has_search_criteria': has_search_criteria,
-    }
-    
-    return render(request, 'company/company_search.html', context)
-
-
-def company_detail(request, company_id):
-    # 呼叫寫在 models.py 裡的 SQL 查詢方法
-    company_data = Company.objects.get_detail_with_raw_sql(company_id)
-        
-    # 如果回傳 None 代表找不到該公司，觸發 404
-    if not company_data:
-        raise Http404("找不到該公司資料")
-        
-    context = {
-        'company': company_data
-    }
-    
-    return render(request, 'company/company_detail.html', context)
 
 def normalize_llm_text(text):
     """將 LLM 回傳的物件 (可能為 LangChain AIMessage、Gemini List 結構等) 正規化為純文字字串"""
@@ -239,27 +217,26 @@ def chat_recommend_companies_lc(request):
                 keywords = [word for word in jieba.lcut(user_query) if len(word.strip()) > 1]
 
             display_keywords = keywords[:]
-            expanded_keywords = expand_keywords(keywords)
 
             search_context = f"使用者查詢：{user_query} | 關鍵字：{', '.join(display_keywords)}" if display_keywords else f"使用者查詢：{user_query}"
 
             # =========================================================
             # Step 2: 向量資料庫檢索 (ChromaDB + Hybrid Search)
             # =========================================================
-            yield send_progress(f"正在資料庫中搜尋相符的公司 (分析了 {len(expanded_keywords)} 個特徵)...")
+            yield send_progress(f"正在資料庫中搜尋相符的公司 (分析了 {len(display_keywords)} 個特徵)...")
             
             retriever = get_retriever()
             
             # 使用較嚴格的門檻 (distance_threshold=0.9 或至少命中1個關鍵字) 搜尋
             retrieved = retriever.search(
-                query=user_query, top_k=3, keywords=expanded_keywords, fetch_k=30,
+                query=user_query, top_k=3, keywords=keywords, fetch_k=30,
                 min_keyword_hits=1, distance_threshold=0.9
             )
 
             # 若查無結果，放寬門檻再試一次 (distance_threshold=1.2)
-            if not retrieved and expanded_keywords:
+            if not retrieved and keywords:
                 retrieved = retriever.search(
-                    query=user_query, top_k=3, keywords=expanded_keywords, fetch_k=30,
+                    query=user_query, top_k=3, keywords=keywords, fetch_k=30,
                     min_keyword_hits=0, distance_threshold=1.2
                 )
 
