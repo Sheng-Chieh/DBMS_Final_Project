@@ -18,7 +18,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
+EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 
 
 def fetch_companies():

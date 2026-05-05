@@ -8,7 +8,7 @@ import re
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-DEFAULT_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
+DEFAULT_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 
 
 def _normalize_persist_dir(persist_dir: str) -> str:
@@ -17,7 +17,7 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    model_kwargs = {'device': 'mps'} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
+    model_kwargs = {'device': 'cuda'} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
     encode_kwargs = {'normalize_embeddings': False}
     return HuggingFaceEmbeddings(
         model_name=model_name,

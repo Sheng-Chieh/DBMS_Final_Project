@@ -23,7 +23,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from .rag_lc.retriever import CompanyRetrieverLC
 
 RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
-RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "BAAI/bge-m3")
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 
 
 def search_companies(request):
