@@ -3,12 +3,13 @@ from typing import List, Dict, Optional, Iterable, Tuple
 from functools import lru_cache
 from pathlib import Path
 import os
-import re
+from django.conf import settings
 
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-DEFAULT_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
+DEFAULT_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
+HF_TOKEN = settings.HF_TOKEN
 
 
 def _normalize_persist_dir(persist_dir: str) -> str:
@@ -17,7 +18,7 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    model_kwargs = {'device': 'cuda'} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
+    model_kwargs = {'device': 'cuda', 'token': HF_TOKEN} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
     encode_kwargs = {'normalize_embeddings': False}
     return HuggingFaceEmbeddings(
         model_name=model_name,

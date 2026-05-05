@@ -23,7 +23,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from .rag_lc.retriever import CompanyRetrieverLC
 
 RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
-RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
+RAG_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
 
 
 def search_companies(request):
@@ -116,7 +116,7 @@ def get_retriever():
 
 @lru_cache(maxsize=1)
 def get_llm():
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.GEMINI_API_KEY
     if not api_key:
         return None
     return ChatGoogleGenerativeAI(
