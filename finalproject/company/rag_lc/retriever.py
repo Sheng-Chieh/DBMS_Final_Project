@@ -17,7 +17,13 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(model_name=model_name)
+    model_kwargs = {'device': 'mps'} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
+    encode_kwargs = {'normalize_embeddings': False}
+    return HuggingFaceEmbeddings(
+        model_name=model_name,
+        model_kwargs=model_kwargs,
+        encode_kwargs=encode_kwargs
+    )
 
 
 @lru_cache(maxsize=4)
