@@ -3,17 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>模擬 Coffee Chat 預約</title>
-    <!-- 引入 Bootstrap 5 CSS 方便快速排版與呼叫浮動視窗 -->
+    <title>Coffee Chat 預約大廳</title>
+    <!-- 引入 Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        .btn-coffee {
+            background-color: #C4A484; /* 淺咖啡色 */
+            color: #ffffff; /* 白字 */
+            border: none;
+        }
+        .btn-coffee:hover {
+            background-color: #A67B5B; /* 滑鼠移過去變深一點的咖啡色 */
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
 <div class="container mt-5">
-    <h2>學生預約申請與進度追蹤 (測試用)</h2>
-    <hr>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">可預約的 Coffee Chat 時段</h2>
+            <!-- 導向我們等一下要建的「我的申請」頁面 -->
+            <a href="/coffeechat/my-applications/" class="btn btn-outline-secondary fw-bold shadow-sm">
+                我的申請進度
+            </a>
+        </div>
+        <hr>
     
-    <!-- 若表單送出成功，顯示成功訊息 -->
     {% if message %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ message }}
@@ -21,72 +38,84 @@
         </div>
     {% endif %}
 
-    <!-- 模擬前端網頁上已經選好校友與時段的狀態，點擊後觸發 Modal -->
-    <button type="button" class="btn btn-warning btn-lg shadow-sm mt-3" data-bs-toggle="modal" data-bs-target="#applyModal">
-        ☕ 模擬送出預約表單
-    </button>
-</div>
-
-<!-- ================= 浮動視窗 (Modal) 結構 ================= -->
-<div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-primary fw-bold" id="applyModalLabel">
-            填寫 Coffee Chat 預約申請
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <!-- 表單開始 -->
-      <form method="POST" action="{% url 'apply_chat' %}">
-          <!-- Django 規定 POST 表單必須加上 csrf_token 防護 -->
-          {% csrf_token %}
-          
-          <div class="modal-body p-4">
-            
-            <!-- 唯讀資訊：告知學生目前預約的對象和時段 -->
-            <div class="row mb-4 bg-light p-3 rounded">
-                <div class="col-md-6">
-                    <label class="form-label text-muted fw-bold">預約校友</label>
-                    <!-- 從後端 View 傳過來的假資料 -->
-                    <input type="text" class="form-control" value="{{ alumni_name }}" readonly>
+    <div class="row mt-4">
+        {% for ts in timeslots %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary fw-bold">{{ ts.coffee_chat.alumni_name }}</h5>
+                    <p class="card-text mb-1">
+                        <strong>地點：</strong> {{ ts.coffee_chat.location_type }} ({{ ts.coffee_chat.location_detail }})<br>
+                        <strong>時長：</strong> {{ ts.coffee_chat.duration }} 分鐘<br>
+                        <strong>目標科系：</strong> {{ ts.coffee_chat.target_departments }}<br>
+                        <hr>
+                        <strong>開放時段：</strong><br>
+                        <span class="text-success fw-bold">{{ ts.chat_date|date:"Y/m/d" }} {{ ts.start_time|time:"H:i" }} - {{ ts.end_time|time:"H:i" }}</span>
+                    </p>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label text-muted fw-bold">預約時段</label>
-                    <input type="text" class="form-control" value="{{ reserved_time }}" readonly>
+                <div class="card-footer bg-transparent border-top-0">
+                    <button type="button" class="btn btn-coffee w-100 shadow-sm" data-bs-toggle="modal" data-bs-target="#applyModal{{ ts.id }}">
+                        預約
+                    </button>
                 </div>
             </div>
-            
-            <!-- 學生自行填寫的經歷大綱 -->
-            <div class="mb-3">
-                <label for="experience_summary" class="form-label fw-bold">你的經歷簡述與自我推薦信 <span class="text-danger">*</span></label>
-                <div class="form-text mb-2 text-secondary">請簡短介紹你的背景、專長，讓校友能快速認識你。</div>
-                <textarea class="form-control" id="experience_summary" name="experience_summary" rows="4" required placeholder="例如：您好，我是資管系的學生，近期對資料工程很有興趣..."></textarea>
+        </div>
+
+        <!-- 浮動視窗 (Modal) 結構 -->
+        <div class="modal fade" id="applyModal{{ ts.id }}" tabindex="-1" aria-labelledby="applyModalLabel{{ ts.id }}" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title text-primary fw-bold" id="applyModalLabel{{ ts.id }}">
+                    填寫 Coffee Chat 預約申請
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <form method="POST">
+                  {% csrf_token %}
+                  
+                  <input type="hidden" name="alumni_name" value="{{ ts.coffee_chat.alumni_name }}">
+                  <input type="hidden" name="scheduled_time" value="{{ ts.chat_date|date:'Y/m/d' }} {{ ts.start_time|time:'H:i' }}-{{ ts.end_time|time:'H:i' }}">
+
+                  <div class="modal-body p-4">
+                    <div class="row mb-4 bg-light p-3 rounded border">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold">預約校友</label>
+                            <input type="text" class="form-control" value="{{ ts.coffee_chat.alumni_name }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold">預約時段</label>
+                            <input type="text" class="form-control" value="{{ ts.chat_date|date:'Y/m/d' }} {{ ts.start_time|time:'H:i' }}-{{ ts.end_time|time:'H:i' }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="experience_summary{{ ts.id }}" class="form-label fw-bold">經歷簡述與自我推薦信 <span class="text-danger">*</span></label>
+                        <div class="form-text mb-2 text-secondary">請簡短介紹你的背景、專長，讓校友能快速認識你。</div>
+                        <textarea class="form-control" id="experience_summary{{ ts.id }}" name="experience_summary" rows="4" required placeholder="例如：您好，我是資管系的學生，近期對資料工程很有興趣..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="questions_outline{{ ts.id }}" class="form-label fw-bold">提問大綱 <span class="text-danger">*</span></label>
+                        <div class="form-text mb-2 text-secondary">請列出你這次 Coffee Chat 想討論的問題。</div>
+                        <textarea class="form-control" id="questions_outline{{ ts.id }}" name="questions_outline" rows="4" required placeholder="1. 請問當時從學校跨足業界的心路歷程？&#10;2. 面試貴公司時最看重什麼能力？"></textarea>
+                    </div>
+
+                  </div>
+                  
+                  <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-coffee px-4">確認送出</button>
+                  </div>
+              </form>
             </div>
-
-            <!-- 學生自行填寫的提問大綱 -->
-            <div class="mb-4">
-                <label for="questions_outline" class="form-label fw-bold">具體提問大綱 <span class="text-danger">*</span></label>
-                <div class="form-text mb-2 text-secondary">請列出你這次 Coffee Chat 想討論的幾個重點問題。</div>
-                <textarea class="form-control" id="questions_outline" name="questions_outline" rows="4" required placeholder="1. 請問當時從學校跨足業界的心路歷程？&#10;2. 面試貴公司時最看重什麼能力？"></textarea>
-            </div>
-
           </div>
-          
-          <div class="modal-footer bg-light">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
-            <button type="submit" class="btn btn-primary px-4">確認送出</button>
-          </div>
-      </form>
-      <!-- 表單結束 -->
-
+        </div>
+        {% endfor %}
     </div>
-  </div>
 </div>
-<!-- ================ 浮動視窗 (Modal) 結束 ================= -->
 
-<!-- 引入 Bootstrap 5 JS (負責彈窗動作) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

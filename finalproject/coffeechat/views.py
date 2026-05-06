@@ -1,18 +1,19 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import HttpResponse
-from .models import CoffeeChatApplication
+from .models import CoffeeChatApplication, CoffeeChatConfiguration, CoffeeChatTime
 from accounts.models import Account
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def apply_chat(request):
-    # 學生是自己登入的狀態(id=1), 想預約的校友(id=2)
-    fake_student_id = 1
-    fake_alumni_id = 2
-    fake_reserved_time = "2026/05/20 14:00-15:00"
+    # 學生依然是自己登入的狀態(id=1)
+    fake_student_id = 1 
 
     if request.method == 'POST':
-        # ====== 1. 從請求(Request)中抓出前端輸入的資料 ======
+        # ====== 1. 從前端 Modal 表單抓出資料 ======
+        # 這裡我們改成抓取隱藏欄位傳過來的真實校友和時段字串
+        alumni_name = request.POST.get('alumni_name', '未知校友')
+        scheduled_time = request.POST.get('scheduled_time', '未知時段')
         experience_summary = request.POST.get('experience_summary', '未填寫')
         questions_outline = request.POST.get('questions_outline', '未填寫')
         
@@ -20,33 +21,41 @@ def apply_chat(request):
             student = Account.objects.get(id=fake_student_id)
         except Account.DoesNotExist:
             return HttpResponse(f"請先確保你在資料庫 `users` 有 id={fake_student_id} 的假帳號資料！")
-            
-        try:
-            alumni = Account.objects.get(id=fake_alumni_id)
-        except Account.DoesNotExist:
-            return HttpResponse(f"請先確保你在資料庫 `users` 有 id={fake_alumni_id} 的假帳號資料！")
 
-        # ====== 3. 將資料存進資料庫 (相當於 INSERT INTO) ======
+        # ====== 2. 將資料存進 Application 資料表 ======
         CoffeeChatApplication.objects.create(
             student_name=getattr(student, 'name', f'學生_{fake_student_id}'),
-            alumni_name=getattr(alumni, 'name', f'校友_{fake_alumni_id}'),
-            scheduled_time=fake_reserved_time,
+            alumni_name=alumni_name,        # 直接存入前端傳來的校友名字
+            scheduled_time=scheduled_time,  # 直接存入前端傳來的預約時段
             experience_summary=experience_summary,
             question_outline=questions_outline,
-            status='pending' # 預設是待確認
+            status='待確認'
         )
         
-        # ====== 4. 送出後返回原頁面並帶上成功訊息 ======
+        # ====== 3. 送出後返回原頁面並帶上成功訊息 ======
+        # 重新撈取所有時段供畫面渲染
+        all_timeslots = CoffeeChatTime.objects.select_related('coffee_chat').all()
         context = {
-            'alumni_name': getattr(alumni, 'name', '測試校友'),
-            'reserved_time': fake_reserved_time,
-            'message': '✅ 預約申請已成功送出！請去 TablePlus 檢查！'
+            'timeslots': all_timeslots,
+            'message': f'✅ 已成功向【{alumni_name}】送出預約申請！追蹤進度請按【我的申請】！'
         }
         return render(request, 'coffeechat/apply.html', context)
     
-    # ====== GET 請求：只負責把裝有 Modal 的畫面渲染出來 ======
+    # ====== GET 請求：撈出所有可預約時段並渲染畫面 ======
+    # 使用 select_related('coffee_chat') 可以把 Time 表和 Configuration 表關聯起來一起撈出
+    all_timeslots = CoffeeChatTime.objects.select_related('coffee_chat').all()
+    
     context = {
-        'alumni_name': '測試校友 (王大明)',
-        'reserved_time': fake_reserved_time,
+        'timeslots': all_timeslots,
     }
     return render(request, 'coffeechat/apply.html', context)
+
+def my_applications(request):
+    # 測試階段：我們先把資料庫裡所有的申請單都撈出來
+    # order_by('-created_at') 代表依照建立時間「反向(最新)」排序
+    applications = CoffeeChatApplication.objects.all().order_by('-created_at')
+    
+    context = {
+        'applications': applications
+    }
+    return render(request, 'coffeechat/my_applications.html', context)
