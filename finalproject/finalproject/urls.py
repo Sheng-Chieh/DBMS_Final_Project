@@ -35,4 +35,5 @@ urlpatterns = [
     path('company/chat/', views.company_chat_page, name='company_chat_page'),
 
     path('coffeechat/apply/', coffee_views.apply_chat, name='apply_chat'),
+    path('coffeechat/my-applications/', coffee_views.my_applications, name='my_applications'),
 ]
