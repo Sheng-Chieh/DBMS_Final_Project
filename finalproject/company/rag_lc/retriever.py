@@ -10,6 +10,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 
 DEFAULT_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
 HF_TOKEN = settings.HF_TOKEN
+RAG_DEVICE = settings.RAG_DEVICE
 
 
 def _normalize_persist_dir(persist_dir: str) -> str:
@@ -18,7 +19,7 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    model_kwargs = {'device': 'cuda', 'token': HF_TOKEN} # 'cuda' for NVIDIA GPU, 'mps' for Apple Silicon
+    model_kwargs = {'device': RAG_DEVICE, 'token': HF_TOKEN}
     encode_kwargs = {'normalize_embeddings': False}
     return HuggingFaceEmbeddings(
         model_name=model_name,

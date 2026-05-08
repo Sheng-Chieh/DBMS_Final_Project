@@ -23,6 +23,7 @@ load_dotenv(BASE_DIR / ".env")
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
+RAG_DEVICE = os.getenv("RAG_DEVICE")
 
 
 # Quick-start development settings - unsuitable for production
@@ -111,7 +112,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'final_project',
         'USER': 'root',
-        'PASSWORD': '0000',
+        'PASSWORD': '',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
