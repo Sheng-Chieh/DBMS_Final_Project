@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'microprojects',
     'accounts',
     'coffeechat',
+    'coffeechat_alumni',
 ]
 
 MIDDLEWARE = [

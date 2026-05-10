@@ -36,4 +36,14 @@ urlpatterns = [
 
     path('coffeechat/apply/', coffee_views.apply_chat, name='apply_chat'),
     path('coffeechat/my-applications/', coffee_views.my_applications, name='my_applications'),
+
+    path('', coffee_views.homepage, name='homepage'),
+    path('create-coffee-chat/', coffee_views.create_coffee_chat, name='create_coffee_chat'),
+    path('edit-coffee-chat/<int:chat_id>/', coffee_views.edit_coffee_chat, name='edit_coffee_chat'),
+    path('manage-reservations/', coffee_views.list_manage_reservation, name='list_manage_reservation'),
+    path('homepage/', coffee_views.homepage, name='homepage'),
+    path('applicant/<int:applicant_id>/accept/', coffee_views.accept_applicant, name='accept_applicant'),
+    path('manage-reservation/<int:chat_id>/', coffee_views.manage_reservation, name='manage_reservation'),
+    path('toggle-coffee-chat-status/<int:chat_id>/', coffee_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
+    path('delete_chat/<int:chat_id>/', coffee_views.delete_coffee_chat, name='delete_coffee_chat'),
 ]

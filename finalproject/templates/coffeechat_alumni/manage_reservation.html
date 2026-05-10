@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理 Coffee Chat 預約</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #ffffff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .mockup-frame { background-color: #ffffff; width: 100%; max-width: 900px; padding: 60px 80px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .chat-title { font-size: 28px; font-weight: 500; margin: 0; }
+        .divider { border-top: 2px solid #000; opacity: 1; margin: 15px 0 40px 0; }
+        
+        /* 編輯與狀態按鈕 */
+        .custom-btn { border: 1px solid #000; background-color: #e0e0e0; padding: 4px 16px; font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .custom-btn:hover { background-color: #d0d0d0; }
+        .status-btn { border: 1px solid #000; background-color: #e0e0e0; padding: 4px 16px; font-weight: 500; width: 80px; transition: 0.3s; }
+        .status-closed { background-color: #6c757d; color: white; border-color: #6c757d; }
+        
+        /* 專屬刪除按鈕 (還原你的設計圖) */
+        .delete-btn { background-color: #f28b82; border: 1px solid #000; color: #000; padding: 4px 16px; font-weight: 500; font-size: 16px; transition: 0.2s; border-radius: 0; }
+        .delete-btn:hover { background-color: #e57368; color: #000; }
+
+        .gray-box { background-color: #d9d9d9; padding: 20px; min-height: 250px; }
+        .applicant-row { border: 1px solid #000; padding: 10px 15px; margin-bottom: 10px; background-color: transparent; }
+    </style>
+</head>
+<body>
+    <div class="position-fixed top-0 start-0 p-3">
+        <a href="javascript:history.back()" class="text-dark">
+            <i class="bi bi-arrow-left fs-4"></i>
+        </a>
+    </div>
+    <div class="position-fixed top-0 end-0 p-3">
+        <a href="{% url 'homepage' %}" class="text-dark">
+            <i class="bi bi-house-door-fill fs-4"></i>
+        </a>
+    </div>
+
+    <div class="mockup-frame">
+        
+        <div class="d-flex justify-content-between align-items-end">
+            <h1 class="chat-title">管理 Coffee Chat 預約</h1>
+            
+            <form method="POST" action="{% url 'delete_coffee_chat' chat_info.id %}" class="m-0"
+                  onsubmit="return confirm('確定要刪除這個 Coffee Chat 嗎？');">
+                {% csrf_token %}
+                <button type="submit" class="btn delete-btn">
+                    刪除Coffee Chat
+                </button>
+            </form>
+        </div>
+        
+        <hr class="divider">
+
+        <div class="mb-5 ms-4">
+            <div class="d-flex align-items-center mb-3">
+                <span class="fs-5 me-4">Coffee Chat 狀態</span>
+                {% if chat_info.is_published %}
+                    <button type="button" id="statusBtn" class="custom-btn" onclick="toggleStatus()">開啟</button>
+                {% else %}
+                    <button type="button" id="statusBtn" class="custom-btn status-closed" onclick="toggleStatus()">關閉</button>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <span class="fs-5 me-4">Coffee Chat 內容</span>
+                <a href="{% url 'edit_coffee_chat' chat_info.id %}" class="custom-btn text-decoration-none text-dark">編輯</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h5 class="mb-3">預約申請審核</h5>
+                <div class="gray-box" style="max-height: 400px; overflow-y: auto;">
+                    
+                    {% for applicant in applicants %}
+                    <div class="applicant-row d-flex justify-content-between align-items-center">
+                        <span>#{{ forloop.counter }} {{ applicant.name }} |</span>
+                        <div>
+                            <button type="button" class="custom-btn me-2" onclick="showLetter('{{ applicant.name|escapejs }}', '{{ applicant.message|escapejs }}')">查看申請信</button>
+                            
+                            <form action="{% url 'accept_applicant' applicant.id %}" method="POST" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="custom-btn">接受預約</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                        <div class="text-muted">目前還沒有收到申請信喔！</div>
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h5 class="mb-3">申請信內容</h5>
+                <div id="letterContentBox" class="gray-box" style="max-height: 400px; overflow-y: auto;">
+                    (點擊左側「查看申請信」以顯示內容)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 顯示申請信
+        function showLetter(name, content) {
+            const contentBox = document.getElementById('letterContentBox');
+            contentBox.style.whiteSpace = 'pre-wrap';
+            contentBox.innerText = `【${name} 的申請信】\n\n${content}`;
+        }
+
+        // 切換狀態 (連線到後端 API)
+        function toggleStatus() {
+            const btn = document.getElementById('statusBtn');
+
+            fetch("{% url 'toggle_coffee_chat_status' chat_info.id %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.new_status === 1) {
+                        btn.innerText = "開啟";
+                        btn.classList.remove("status-closed");
+                    } else {
+                        btn.innerText = "關閉";
+                        btn.classList.add("status-closed");
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
