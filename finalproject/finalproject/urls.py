@@ -46,4 +46,18 @@ urlpatterns = [
     path('manage-reservation/<int:chat_id>/', coffee_views.manage_reservation, name='manage_reservation'),
     path('toggle-coffee-chat-status/<int:chat_id>/', coffee_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
     path('delete_chat/<int:chat_id>/', coffee_views.delete_coffee_chat, name='delete_coffee_chat'),
+
+    path('resume/', account_views.resume, name='resume'),
+    path('add-activity/', account_views.add_activity, name='add_activity'),
+    path('add-work/', account_views.add_work, name='add_work'),
+    path('add-course/', account_views.add_course, name='add_course'),
+    path('onboarding/', account_views.onboarding, name='onboarding'),
+    path('activity/delete/<int:activity_id>/', account_views.delete_activity, name='delete_activity'),
+    path('work/delete/<int:work_id>/', account_views.delete_work, name='delete_work'),
+    path('course/delete/<int:course_record_id>/', account_views.delete_course, name='delete_course'),
+    path('activity/update/<int:activity_id>/', account_views.update_activity, name='update_activity'),
+    path('work/update/<int:work_id>/', account_views.update_work, name='update_work'),
+    path('course/update/<int:course_record_id>/', account_views.update_course, name='update_course'),
+    path('logout/', account_views.logout, name='logout'),
+
 ]
