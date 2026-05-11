@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>建立基本資料｜校園職涯媒合平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+        }
+
+        .onboarding-card {
+            width: 100%;
+            max-width: 760px;
+            background: white;
+            border-radius: 28px;
+            padding: 42px;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+        }
+
+        .badge-role {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .title {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            line-height: 1.8;
+        }
+
+        .form-control {
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+
+        .btn {
+            border-radius: 14px;
+            padding: 12px 18px;
+        }
+
+        .hint-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            color: #64748b;
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="onboarding-card">
+
+    <div class="mb-4">
+        {% if role == 'student' %}
+            <span class="badge-role">學生資料建立</span>
+        {% elif role == 'alumni' %}
+            <span class="badge-role">校友資料建立</span>
+        {% endif %}
+    </div>
+
+    <h1 class="title mb-3">歡迎加入校園職涯媒合平台</h1>
+
+    <p class="subtitle mb-4">
+        請先完成基本資料，系統將根據你的學習背景與職涯資訊，
+        協助建立更準確的校友媒合與職涯參考。
+    </p>
+
+    <div class="hint-box mb-4">
+        {% if role == 'student' %}
+            你填寫的資料將用來建立「現在的自己」，幫助系統尋找背景相似的校友。
+        {% elif role == 'alumni' %}
+            你填寫的資料將形成你的職涯軌跡，幫助學弟妹看見從校園到職場的可能路徑。
+        {% endif %}
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if role == 'student' %}
+            <h4 class="fw-bold mb-3">學生基本資料</h4>
+
+            <div class="mb-3">
+                <label class="form-label">系所</label>
+                <select name="department_id" class="form-select" required>
+                    <option value="">請選擇系所</option>
+                    {% for department in departments %}
+                        <option value="{{ department.department_id }}">
+                            {{ department.department_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">入學年</label>
+                <input type="number" name="enrollment_year" class="form-control" placeholder="例如：2023">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">預計畢業年</label>
+                <input type="number" name="graduation_year" class="form-control" placeholder="例如：2027">
+            </div>
+            <hr class="my-4">
+            <h4 class="fw-bold mb-3">快速建立第一筆經歷（選填）</h4>
+            <p class="subtitle mb-4">你可以先填一兩筆代表性資料，之後也可以到履歷管理頁再新增或修改。</p>
+
+        {% elif role == 'alumni' %}
+            <h4 class="fw-bold mb-3">校友職涯資料</h4>
+            <div class="mb-3">
+                <label class="form-label">系所</label>
+                <select name="department_id" class="form-select" required>
+                    <option value="">請選擇系所</option>
+                    {% for department in departments %}
+                        <option value="{{ department.department_id }}">
+                            {{ department.department_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">畢業年</label>
+                <input type="number" name="graduation_year" class="form-control" placeholder="例如：2021">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">目前公司</label>
+                <select name="current_company" class="form-select">
+                    <option value="">請選擇目前公司</option>
+                    {% for company in companies %}
+                        <option value="{{ company.name }}">
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">目前職稱</label>
+                <input type="text" name="current_job_title" class="form-control" placeholder="例如：Software Engineer">
+            </div>
+        {% endif %}
+
+{% if role == 'student' %}
+    <div class="mb-3">
+        <label class="form-label">一門重要課程</label>
+        <input type="text" name="course_name" class="form-control" placeholder="例如：資料庫管理">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">課程類別</label>
+        <select name="course_category" class="form-select">
+            <option value="">請選擇課程類別</option>
+            <option value="程式設計與軟體開發">程式設計與軟體開發</option>
+            <option value="資料庫與資料管理">資料庫與資料管理</option>
+            <option value="資料科學與人工智慧">資料科學與人工智慧</option>
+            <option value="商業與管理">商業與管理</option>
+            <option value="其他">其他</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">一個代表性活動</label>
+        <input type="text" name="activity_title" class="form-control" placeholder="例如：資管系學會、黑客松競賽">
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label">活動類型</label>
+        <select name="activity_category" class="form-select">
+            <option value="">請選擇活動類型</option>
+            <option value="社團">社團</option>
+            <option value="競賽">競賽</option>
+            <option value="專案">專案</option>
+            <option value="志工">志工</option>
+            <option value="其他">其他</option>
+        </select>
+    </div>
+{% endif %}
+
+        <div class="d-flex gap-3 flex-wrap">
+            <button type="submit" class="btn btn-primary">
+                儲存並建立履歷
+            </button>
+
+            <a href="/resume/" class="btn btn-outline-secondary">
+                稍後再填
+            </a>
+        </div>
+    </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
