@@ -81,7 +81,7 @@ def project_create(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
-        company_id = request.POST.get('company_id') # 🚀 接收選單選中的公司 ID
+        company_id = request.POST.get('company_id') 
         selected_tags = request.POST.getlist('tags') 
         
         alumni_id = 1 # 暫時寫死
@@ -120,7 +120,7 @@ def project_create(request):
         
     return render(request, 'microproject/microproject_create.html', {
         'tags': all_tags,
-        'industries': industries,   # 🚀 記得把產業清單也傳給 HTML
+        'industries': industries,  
         'companies': all_companies
 
     })
