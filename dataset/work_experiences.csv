@@ -1,0 +1,8 @@
+user_id,company_id,job_type,job_title,start_date,end_date,description
+1,2,實習,Software Intern,2025-07-01,2025-08-31,協助開發內部工具
+2,1,實習,Data Analyst Intern,2025-06-01,2025-08-31,進行資料分析與視覺化
+3,2,工讀生,IT Assistant,2024-09-01,2025-06-30,協助處理校內設備問題
+5,2,全職,Software Engineer,2022-07-01,,負責後端系統開發
+6,1,全職,Data Engineer,2021-08-01,,建立資料管線與 ETL 系統
+7,8,全職,Backend Engineer,2020-09-01,,開發 API 與資料庫系統
+8,3,全職,Business Analyst,2021-03-01,,進行金融數據分析

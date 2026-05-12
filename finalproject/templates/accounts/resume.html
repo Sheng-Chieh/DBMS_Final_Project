@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的履歷｜校園職涯媒合平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            color: #1f2937;
+        }
+
+        .page-wrap {
+            max-width: 1080px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .profile-card,
+        .section-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+        }
+
+        .profile-card {
+            padding: 32px;
+            margin-bottom: 28px;
+        }
+
+        .avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .section-card {
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .section-title {
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .section-subtitle {
+            color: #64748b;
+            margin-bottom: 0;
+        }
+
+        .item-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 22px;
+            margin-bottom: 16px;
+            background: #ffffff;
+            transition: 0.2s;
+        }
+
+        .item-card:hover {
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .edit-box {
+            background: #f8fafc;
+            border: 1px solid #bfdbfe;
+            border-radius: 18px;
+            padding: 22px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .meta {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .empty-box {
+            border: 1px dashed #cbd5e1;
+            border-radius: 18px;
+            padding: 24px;
+            color: #64748b;
+            background: #f8fafc;
+        }
+
+        .btn {
+            border-radius: 12px;
+        }
+        .roadmap-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            overflow-x: auto;
+            padding: 10px 4px 20px;
+        }
+
+        .roadmap-item {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .roadmap-item:not(:last-child)::after {
+            content: "";
+            width: 50px;
+            height: 3px;
+            background: #bfdbfe;
+            margin: 0 16px;
+            border-radius: 999px;
+        }
+
+        .roadmap-dot {
+            width: 14px;
+            height: 14px;
+            background: #2563eb;
+            border-radius: 50%;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+
+        .roadmap-card {
+            min-width: 220px;
+            background: #f8fafc;
+            border: 1px solid #dbeafe;
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .roadmap-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .roadmap-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }    
+    </style>
+</head>
+
+<body>
+
+<div class="page-wrap">
+
+    <div class="topbar">
+        <div>
+            <h2 class="brand-title mb-1">我的履歷</h2>
+            <p class="text-secondary mb-0">
+                {% if user.role == 'student' %}
+                    建立你的學習與經歷資料，讓系統找到相似背景的校友。
+                {% elif user.role == 'alumni' %}
+                    分享你的職涯軌跡，幫助學弟妹看見未來可能的方向。
+                {% endif %}
+            </p>
+        </div>
+
+        <a href="/logout/" class="btn btn-outline-secondary">登出</a>
+    </div>
+
+    <!-- 個人資料 -->
+    <div class="profile-card">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div class="avatar">
+                {{ user.name|slice:":1" }}
+            </div>
+
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <h3 class="fw-bold mb-0">{{ user.name }}</h3>
+
+                    {% if user.role == 'student' %}
+                        <span class="tag">學生</span>
+                    {% elif user.role == 'alumni' %}
+                        <span class="tag">校友</span>
+                    {% endif %}
+                </div>
+
+                <p class="meta mb-1">Email：{{ user.email }}</p>
+                <p class="meta mb-1">
+                    系所：{{ user.department_name|default:"尚未填寫" }}
+                </p>
+                {% if user.role == 'student' %}
+                    <p class="meta mb-1">入學年：{{ user.enrollment_year|default:"尚未填寫" }}</p>
+                    <p class="meta mb-1">預計畢業年：{{ user.graduation_year|default:"尚未填寫" }}</p>
+                {% endif %}
+
+                {% if user.role == 'alumni' %}
+                    <p class="meta mb-1">畢業年：{{ user.graduation_year|default:"尚未填寫" }}</p>
+                    <p class="meta mb-1">目前公司：{{ user.current_company|default:"尚未填寫" }}</p>
+                    <p class="meta mb-0">目前職稱：{{ user.current_job_title|default:"尚未填寫" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 發展歷程 Timeline -->
+<div class="section-card">
+
+    <div class="section-header">
+        <div>
+            <h3 class="section-title">
+                學習與職涯發展軌跡
+            </h3>
+
+            <p class="section-subtitle">
+                從課程、活動到工作經歷的成長歷程。
+            </p>
+        </div>
+    </div>
+
+    <div class="roadmap-wrapper">
+
+        {% for item in timeline_items %}
+
+            <div class="roadmap-item">
+
+                <div class="roadmap-dot"></div>
+
+                <div class="roadmap-card">
+
+                    <span class="tag">
+                        {{ item.type_label }}
+                    </span>
+
+                    <h5 class="fw-bold mt-3 mb-1">
+                        {{ item.title }}
+                    </h5>
+
+                    <p class="meta mb-0">
+                        {{ item.time }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+    <!-- 學生：課程經歷 -->
+    {% if user.role == 'student' %}
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h3 class="section-title">課程經歷</h3>
+                <p class="section-subtitle">記錄你已修習的重要課程。</p>
+            </div>
+            <a href="/add-course/" class="btn btn-primary">新增課程</a>
+        </div>
+
+        {% for course in courses %}
+            <div class="item-card" id="course-display-{{ course.course_record_id }}">
+                <h5 class="fw-bold">{{ course.course_name }}</h5>
+                <p class="mb-1">類別：{{ course.course_category }}</p>
+                <p class="mb-1">學期：{{ course.semester }}</p>
+                <p class="mb-3">成績：{{ course.grade }}</p>
+
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="showCourseEditForm('{{ course.course_record_id }}')">編輯</button>
+                <a href="{% url 'delete_course' course.course_record_id %}" class="btn btn-outline-danger btn-sm">刪除</a>
+            </div>
+
+            <form class="edit-box" id="course-form-{{ course.course_record_id }}" method="POST" action="{% url 'update_course' course.course_record_id %}" style="display:none;">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">課程名稱</label>
+                    <input type="text" name="course_name" class="form-control" value="{{ course.course_name }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">課程類別</label>
+                    <input type="text" name="course_category" class="form-control" value="{{ course.course_category }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">學期</label>
+                    <input type="text" name="semester" class="form-control" value="{{ course.semester }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">成績</label>
+                    <input type="text" name="grade" class="form-control" value="{{ course.grade }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">儲存修改</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="hideCourseEditForm('{{ course.course_record_id }}')">取消</button>
+            </form>
+        {% empty %}
+            <div class="empty-box">目前沒有課程紀錄。</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 活動經歷 -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h3 class="section-title">
+                    {% if user.role == 'student' %}
+                        活動經歷
+                    {% else %}
+                        活動 / 學術背景
+                    {% endif %}
+                </h3>
+                <p class="section-subtitle">社團、競賽、志工、專案等經歷。</p>
+            </div>
+            <a href="/add-activity/" class="btn btn-primary">新增活動</a>
+        </div>
+
+        {% for activity in activities %}
+            <div class="item-card" id="activity-display-{{ activity.activity_id }}">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <h5 class="fw-bold mb-1">{{ activity.title }}</h5>
+                    <span class="tag">{{ activity.category }}</span>
+                </div>
+
+                <p class="mb-1">角色：{{ activity.role }}</p>
+                <p class="mb-1">時間：{{ activity.start_date }} ~ {{ activity.end_date }}</p>
+                <p class="mb-3">描述：{{ activity.description }}</p>
+
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="showActivityEditForm('{{ activity.activity_id }}')">編輯</button>
+                <a href="{% url 'delete_activity' activity.activity_id %}" class="btn btn-outline-danger btn-sm">刪除</a>
+            </div>
+
+            <form class="edit-box" id="activity-form-{{ activity.activity_id }}" method="POST" action="{% url 'update_activity' activity.activity_id %}" style="display:none;">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">活動類型</label>
+
+                    <select name="category" class="form-select" required>
+                        <option value="">請選擇活動類型</option>
+
+                        <option value="社團" {% if activity.category == "社團" %}selected{% endif %}>社團</option>
+                        <option value="競賽" {% if activity.category == "競賽" %}selected{% endif %}>競賽</option>
+                        <option value="專案" {% if activity.category == "專案" %}selected{% endif %}>專案</option>
+                        <option value="志工" {% if activity.category == "志工" %}selected{% endif %}>志工</option>
+                        <option value="活動籌辦" {% if activity.category == "活動籌辦" %}selected{% endif %}>活動籌辦</option>
+                        <option value="研究計畫" {% if activity.category == "研究計畫" %}selected{% endif %}>研究計畫</option>
+                        <option value="課外學習" {% if activity.category == "課外學習" %}selected{% endif %}>課外學習</option>
+                        <option value="其他" {% if activity.category == "其他" %}selected{% endif %}>其他</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">標題</label>
+                    <input type="text" name="title" class="form-control" value="{{ activity.title }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">角色</label>
+                    <input type="text" name="role" class="form-control" value="{{ activity.role }}">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">開始日期</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ activity.start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">結束日期</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ activity.end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">描述</label>
+                    <textarea name="description" class="form-control" rows="3">{{ activity.description }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">儲存修改</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="hideActivityEditForm('{{ activity.activity_id }}')">取消</button>
+            </form>
+        {% empty %}
+            <div class="empty-box">目前沒有活動資料。</div>
+        {% endfor %}
+    </div>
+
+    <!-- 工作經歷 -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h3 class="section-title">
+                    {% if user.role == 'student' %}
+                        實習 / 工作經歷
+                    {% else %}
+                        職涯工作經歷
+                    {% endif %}
+                </h3>
+                <p class="section-subtitle">
+                    {% if user.role == 'student' %}
+                        紀錄你的實習、工讀或兼職經驗。
+                    {% else %}
+                        依時間順序建立你的職涯發展歷程。
+                    {% endif %}
+                </p>
+            </div>
+            <a href="/add-work/" class="btn btn-primary">新增工作經歷</a>
+        </div>
+
+        {% for work in works %}
+            <div class="item-card" id="work-display-{{ work.work_id }}">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <h5 class="fw-bold mb-1">{{ work.company_name }}</h5>
+                    <span class="tag">{{ work.job_type }}</span>
+                </div>
+
+                <p class="mb-1">職稱：{{ work.job_title }}</p>
+                <p class="mb-1">時間：{{ work.start_date }} ~ {{ work.end_date }}</p>
+                <p class="mb-3">描述：{{ work.description }}</p>
+
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="showWorkEditForm('{{ work.work_id }}')">編輯</button>
+                <a href="{% url 'delete_work' work.work_id %}" class="btn btn-outline-danger btn-sm">刪除</a>
+            </div>
+
+            <form class="edit-box" id="work-form-{{ work.work_id }}" method="POST" action="{% url 'update_work' work.work_id %}" style="display:none;">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">工作類型</label>
+                    <input type="text" name="job_type" class="form-control" value="{{ work.job_type }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">公司名稱</label>
+                    <input class="form-control"
+                            list="company-list-{{ work.work_id }}"
+                            value="{{ work.company_name }}"
+                            placeholder="輸入公司名稱搜尋"
+                            oninput="setCompanyId('{{ work.work_id }}', this.value)">
+
+                    <input type="hidden"
+                            name="company_id"
+                            id="company-id-{{ work.work_id }}"
+                            value="{{ work.company_id }}">
+
+                    <datalist id="company-list-{{ work.work_id }}">
+                        {% for company in companies %}
+                            <option value="{{ company.name }}" data-id="{{ company.company_id }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">職稱</label>
+                    <input type="text" name="job_title" class="form-control" value="{{ work.job_title }}">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">開始日期</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ work.start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">結束日期</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ work.end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">描述</label>
+                    <textarea name="description" class="form-control" rows="3">{{ work.description }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">儲存修改</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="hideWorkEditForm('{{ work.work_id }}')">取消</button>
+            </form>
+        {% empty %}
+            <div class="empty-box">目前沒有工作經歷。</div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+function showActivityEditForm(id) {
+    document.getElementById("activity-display-" + id).style.display = "none";
+    document.getElementById("activity-form-" + id).style.display = "block";
+}
+
+function hideActivityEditForm(id) {
+    document.getElementById("activity-form-" + id).style.display = "none";
+    document.getElementById("activity-display-" + id).style.display = "block";
+}
+
+function showWorkEditForm(id) {
+    document.getElementById("work-display-" + id).style.display = "none";
+    document.getElementById("work-form-" + id).style.display = "block";
+}
+
+function hideWorkEditForm(id) {
+    document.getElementById("work-form-" + id).style.display = "none";
+    document.getElementById("work-display-" + id).style.display = "block";
+}
+
+function showCourseEditForm(id) {
+    document.getElementById("course-display-" + id).style.display = "none";
+    document.getElementById("course-form-" + id).style.display = "block";
+}
+
+function hideCourseEditForm(id) {
+    document.getElementById("course-form-" + id).style.display = "none";
+    document.getElementById("course-display-" + id).style.display = "block";
+}
+function setCompanyId(workId, companyName) {
+    const datalist = document.getElementById("company-list-" + workId);
+    const hiddenInput = document.getElementById("company-id-" + workId);
+
+    hiddenInput.value = "";
+
+    for (let option of datalist.options) {
+        if (option.value === companyName) {
+            hiddenInput.value = option.dataset.id;
+            break;
+        }
+    }
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
