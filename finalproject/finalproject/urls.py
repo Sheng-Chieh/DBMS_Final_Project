@@ -19,7 +19,8 @@ from django.urls import path
 from company import views
 from microprojects import views as micro_views
 from accounts import views as account_views
-from coffeechat import views as coffee_views
+from coffeechat import views as coffeechat_student_views
+from coffeechat_alumni import views as coffeechat_alumni_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,19 +35,23 @@ urlpatterns = [
     path('company/chat_lc/', views.chat_recommend_companies_lc, name='chat_recommend_companies_lc'),
     path('company/chat/', views.company_chat_page, name='company_chat_page'),
 
-    path('coffeechat/apply/', coffee_views.apply_chat, name='apply_chat'),
-    path('coffeechat/my-applications/', coffee_views.my_applications, name='my_applications'),
+    # 學生端 (coffeechat_student_views)
+    path('coffeechat/apply/', coffeechat_student_views.apply_chat, name='apply_chat'),
+    path('coffeechat/my-applications/', coffeechat_student_views.my_applications, name='my_applications'),
 
-    path('', coffee_views.homepage, name='homepage'),
-    path('create-coffee-chat/', coffee_views.create_coffee_chat, name='create_coffee_chat'),
-    path('edit-coffee-chat/<int:chat_id>/', coffee_views.edit_coffee_chat, name='edit_coffee_chat'),
-    path('manage-reservations/', coffee_views.list_manage_reservation, name='list_manage_reservation'),
-    path('homepage/', coffee_views.homepage, name='homepage'),
-    path('applicant/<int:applicant_id>/accept/', coffee_views.accept_applicant, name='accept_applicant'),
-    path('manage-reservation/<int:chat_id>/', coffee_views.manage_reservation, name='manage_reservation'),
-    path('toggle-coffee-chat-status/<int:chat_id>/', coffee_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
-    path('delete_chat/<int:chat_id>/', coffee_views.delete_coffee_chat, name='delete_coffee_chat'),
-
+    # 校友端 (coffeechat_alumni_views)
+    path('', coffeechat_alumni_views.homepage, name='homepage'),
+    path('homepage/', coffeechat_alumni_views.homepage, name='homepage_alt'),
+    
+    path('create-coffee-chat/', coffeechat_alumni_views.create_coffee_chat, name='create_coffee_chat'),
+    path('edit-coffee-chat/<int:chat_id>/', coffeechat_alumni_views.edit_coffee_chat, name='edit_coffee_chat'),
+    path('manage-reservations/', coffeechat_alumni_views.list_manage_reservation, name='list_manage_reservation'),
+    
+    path('applicant/<int:applicant_id>/accept/', coffeechat_alumni_views.accept_applicant, name='accept_applicant'),
+    path('manage-reservation/<int:chat_id>/', coffeechat_alumni_views.manage_reservation, name='manage_reservation'),
+    path('toggle-coffee-chat-status/<int:chat_id>/', coffeechat_alumni_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
+    path('delete_chat/<int:chat_id>/', coffeechat_alumni_views.delete_coffee_chat, name='delete_coffee_chat'),
+    
     path('resume/', account_views.resume, name='resume'),
     path('add-activity/', account_views.add_activity, name='add_activity'),
     path('add-work/', account_views.add_work, name='add_work'),
