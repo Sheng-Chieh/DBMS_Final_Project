@@ -135,8 +135,8 @@ def edit_coffee_chat(request, chat_id):
         'chat': chat
     })
 
-def homepage(request):
-    return render(request, 'coffeechat_alumni/homepage.html')
+def ca_homepage(request):
+    return render(request, 'coffeechat_alumni/ca_homepage.html')
 
 def list_manage_reservation(request):
     chats = CoffeeChatDatabase.get_all_chats()  # 你可能還沒寫

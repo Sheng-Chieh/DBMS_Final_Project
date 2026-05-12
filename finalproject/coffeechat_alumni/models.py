@@ -1,15 +1,17 @@
 import mysql.connector
 from mysql.connector import Error
+from django.conf import settings
 
 class CoffeeChatDatabase:
     @staticmethod
     def get_connection():
         try:
             return mysql.connector.connect(
-                host='127.0.0.1',
-                database='final_project',
-                user='root',
-                password='111405062' 
+                host=settings.DATABASES['default']['HOST'],
+                database=settings.DATABASES['default']['NAME'],
+                user=settings.DATABASES['default']['USER'],
+                password=settings.DATABASES['default']['PASSWORD'],
+                port=settings.DATABASES['default'].get('PORT', 3306)
             )
         except Error as e:
             print(f"資料庫連線失敗: {e}")

@@ -42,8 +42,7 @@ urlpatterns = [
     path('coffeechat/my-applications/', coffeechat_student_views.my_applications, name='my_applications'),
 
     # 校友端 (coffeechat_alumni_views)
-    path('', coffeechat_alumni_views.homepage, name='homepage'),
-    path('homepage/', coffeechat_alumni_views.homepage, name='homepage_alt'),
+    path('ca_homepage/', coffeechat_alumni_views.ca_homepage, name='ca_homepage'),
     
     path('create-coffee-chat/', coffeechat_alumni_views.create_coffee_chat, name='create_coffee_chat'),
     path('edit-coffee-chat/<int:chat_id>/', coffeechat_alumni_views.edit_coffee_chat, name='edit_coffee_chat'),
