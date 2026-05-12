@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>發布新微任務</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, '微軟正黑體'; 
+            background-color: #f4f7f6; margin: 0; padding: 40px; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; 
+        }
+        
+        .form-container { 
+            background: white; max-width: 550px; width: 100%; 
+            padding: 40px; border-radius: 16px; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); 
+        }
+        h2 { margin-top: 0; color: #1e293b; text-align: center; margin-bottom: 30px; font-size: 26px; }
+        
+        .form-group { margin-bottom: 24px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #475569; font-size: 14px; }
+        
+        /* 一般輸入框樣式 */
+        input[type="text"], textarea, select { 
+            width: 100%; padding: 14px; border: 1px solid #cbd5e1; 
+            border-radius: 8px; box-sizing: border-box; font-family: inherit; 
+            font-size: 15px; background-color: #f8fafc; transition: all 0.3s ease; 
+        }
+        input[type="text"]:focus, textarea:focus, select:focus { 
+            outline: none; border-color: #10b981; background-color: white;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); 
+        }
+        select:disabled { background-color: #e2e8f0; cursor: not-allowed; color: #94a3b8; }
+
+        /* 🚀 2. 幫 Tom Select 套件加上我們的主題色 (綠色外框 + 靛青色膠囊) */
+        .ts-control { padding: 12px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 15px; background-color: #f8fafc; }
+        .ts-control.focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); background-color: white; }
+        .ts-wrapper.multi .ts-control > div { 
+            background: #e0e7ff; color: #4f46e5; border: none; 
+            border-radius: 20px; padding: 4px 10px; font-weight: 600; font-size: 13px; margin-right: 6px; 
+        }
+
+        .btn-submit { 
+            width: 100%; padding: 16px; background-color: #10b981; color: white; 
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold; 
+            cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease; margin-top: 10px;
+        }
+        .btn-submit:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3); }
+        
+        .back-link { 
+            display: block; text-align: center; margin-top: 20px; 
+            color: #64748b; text-decoration: none; font-size: 14px; transition: color 0.3s; 
+        }
+        .back-link:hover { color: #0f172a; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>發布新微任務</h2>
+        
+        <form method="POST" action="">
+            {% csrf_token %} 
+            
+            <div class="form-group">
+                <label>微任務名稱</label>
+                <input type="text" name="title" required placeholder="請輸入任務名稱..." />
+            </div>
+
+            <div class="form-group">
+                <label>選擇產業類別</label>
+                <select id="industry-select" required>
+                    <option value="" disabled selected>--- 請先選擇產業類別 ---</option>
+                    {% for industry in industries %}
+                        <option value="{{ industry }}">{{ industry }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>選擇企業</label>
+                <select name="company_id" id="company-select" required disabled>
+                    <option value="" disabled selected>--- 請先選擇上方的產業 ---</option>
+                    {% for comp in companies %}
+                        <option value="{{ comp.0 }}" data-industry="{{ comp.2 }}">{{ comp.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>任務描述</label>
+                <textarea name="description" rows="5" required placeholder="請詳細描述任務內容與需求技能..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>所需技能（可搜尋、可複選）</label>
+                <select name="tags" id="tags-select" multiple placeholder="請輸入關鍵字搜尋或選擇標籤..." autocomplete="off">
+                    {% for tag in tags %}
+                        <option value="{{ tag.0 }}">{{ tag.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit">確認發布</button>
+            <a href="/projects/" class="back-link">← 取消並返回列表</a>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // --- A. 產業與公司連動邏輯 (保留不變) ---
+            const industrySelect = document.getElementById('industry-select');
+            const companySelect = document.getElementById('company-select');
+            const allCompanyOptions = Array.from(companySelect.options).slice(1);
+            
+            companySelect.innerHTML = '<option value="" disabled selected>--- 請先選擇上方的產業 ---</option>';
+
+            industrySelect.addEventListener('change', function() {
+                const selectedIndustry = this.value;
+                companySelect.disabled = false;
+                companySelect.innerHTML = '<option value="" disabled selected>--- 請選擇發布任務的公司 ---</option>';
+
+                let matchCount = 0;
+                allCompanyOptions.forEach(option => {
+                    if (option.getAttribute('data-industry') === selectedIndustry) {
+                        companySelect.appendChild(option.cloneNode(true));
+                        matchCount++;
+                    }
+                });
+
+                if (matchCount === 0) {
+                    companySelect.innerHTML = '<option value="" disabled selected>--- 該產業目前無公司資料 ---</option>';
+                    companySelect.disabled = true;
+                }
+            });
+
+            // --- 🚀 B. 啟動 Tom Select 搜尋標籤邏輯 ---
+            new TomSelect("#tags-select", {
+                plugins: ['remove_button'], // 讓選取的標籤旁邊出現 [X] 按鈕可以取消
+                create: false,              // 設定不允許使用者自己輸入不存在的標籤
+                placeholder: "請輸入關鍵字搜尋或點擊選擇標籤..."
+            });
+
+        });
+    </script>
+</body>
+</html>
