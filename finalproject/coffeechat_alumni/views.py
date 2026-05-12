@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 
 def create_coffee_chat(request):
 
+    # 測試階段固定校友名稱
+    fake_alumni_name = "測試校友_陳大頭"
+
     if request.method == "POST":
         try:
             # 1. 接收地點相關資料
@@ -56,6 +59,7 @@ def create_coffee_chat(request):
                 return render(request, 'coffeechat_alumni/create_coffeechat.html')
             # 5. 呼叫 models.py 寫入資料庫
             success = CoffeeChatDatabase.create_chat(
+                alumni_name=fake_alumni_name,
                 loc_type=location_type,
                 loc_detail=location_detail,
                 duration=duration,
