@@ -24,7 +24,7 @@
         </a>
     </div>
     <div class="position-fixed top-0 end-0 p-3">
-        <a href="{% url 'homepage' %}" class="text-dark">
+        <a href="{% url 'ca_homepage' %}" class="text-dark">
             <i class="bi bi-house-door-fill fs-4"></i>
         </a>
     </div>
@@ -154,6 +154,45 @@
         }
     </script>
 
-    
+    <script>
+        // 等待網頁載入完成
+        document.addEventListener('DOMContentLoaded', function() {
+            const durationSelect = document.querySelector('select[name="duration"]');
+            const startTimeInput = document.querySelector('input[name="start_time"]');
+            const endTimeInput = document.querySelector('input[name="end_time"]');
+
+            // 自動計算結束時間的函數
+            function calculateEndTime() {
+                // 確保兩個欄位都有值才計算
+                if (startTimeInput.value && durationSelect.value) {
+                    // 取得時長 (轉成整數)
+                    const durationMinutes = parseInt(durationSelect.value, 10);
+                    
+                    // 解析開始時間 (HH:MM)
+                    const [hours, minutes] = startTimeInput.value.split(':').map(Number);
+                    
+                    // 計算總分鐘數
+                    const totalMinutes = (hours * 60) + minutes + durationMinutes;
+                    
+                    // 換算回新的小時與分鐘 (處理跨日的情況，例如 23:30 + 60分 = 00:30)
+                    const newHours = Math.floor(totalMinutes / 60) % 24;
+                    const newMinutes = totalMinutes % 60;
+                    
+                    // 補零格式化 (確保是 HH:MM，例如 9:5 會變成 09:05)
+                    const formattedHours = String(newHours).padStart(2, '0');
+                    const formattedMinutes = String(newMinutes).padStart(2, '0');
+                    
+                    // 自動填入結束時間
+                    endTimeInput.value = `${formattedHours}:${formattedMinutes}`;
+                }
+            }
+
+            // 監聽器：當「對談時長」或「開始時間」被改變時，就自動觸發計算
+            if (durationSelect && startTimeInput && endTimeInput) {
+                durationSelect.addEventListener('change', calculateEndTime);
+                startTimeInput.addEventListener('change', calculateEndTime);
+            }
+        });
+    </script>
 </body>
 </html>
