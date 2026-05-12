@@ -6,20 +6,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
-        /* 自訂 104 風格的進度條 CSS */
         .timeline-container { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; margin: 20px 0;}
-        /* 背後的灰色橫線 */
         .timeline-line { position: absolute; top: 20px; left: 50px; right: 50px; height: 3px; background-color: #e0e0e0; z-index: 1;}
-        /* 每一個圓圈的區塊 */
         .timeline-step { position: relative; z-index: 2; background-color: #f8f9fa; padding: 0 10px; text-align: center; width: 100px;}
         .step-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; margin: 0 auto 10px; color: white; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
         .step-text { font-size: 0.85rem; font-weight: bold; }
         
-        /* 狀態顏色 */
-        .bg-coffee { background-color: #C4A484; } /* 完成或當前狀態 */
-        .bg-gray { background-color: #d3d3d3; }   /* 尚未到達 */
-        
-        /* 卡片滑過特效 */
+        .bg-coffee { background-color: #C4A484; }
+        .bg-gray { background-color: #d3d3d3; }   
         .hover-card:hover { border-color: #C4A484; transition: 0.3s; }
     </style>
 </head>
@@ -36,13 +30,11 @@
         <div class="col-md-8 mx-auto">
             
             {% for app in applications %}
-            <!-- 每一筆申請的卡片 -->
             <div class="card mb-4 shadow-sm hover-card bg-light">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                     <h5 class="mb-0 fw-bold text-dark">
                         {{ app.alumni_name }} <span class="text-muted" style="font-size: 1rem;">| {{ app.scheduled_time }}</span>
                     </h5>
-                    <!-- 展開看詳細內容的按鈕 (利用 Bootstrap 的 Collapse 功能) -->
                     <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#snapshot{{ app.id }}">
                         申請快照 ▼
                     </button>
@@ -52,36 +44,30 @@
                     <div class="timeline-container">
                         <div class="timeline-line"></div>
                         
-                        <!-- Step 1: 申請已送出 (永遠是完成的狀態) -->
                         <div class="timeline-step">
                             <div class="step-circle bg-coffee">✓</div>
                             <div class="step-text text-dark">申請已送出</div>
                             <div class="text-muted" style="font-size: 0.75rem;">{{ app.created_at|date:"m/d H:i" }}</div>
                         </div>
 
-                        <!-- Step 2: 校友審核中 -->
                         <div class="timeline-step">
-                            {% if app.status == '待確認' or app.status == 'pending' %}
-                                <!-- 停留在這步 -->
+                            {% if app.status == 'pending' %}
                                 <div class="step-circle bg-warning text-dark"></div>
                                 <div class="step-text text-dark">校友審核中</div>
                             {% else %}
-                                <!-- 已經進入下一步了，這步打勾 -->
                                 <div class="step-circle bg-coffee">✓</div>
                                 <div class="step-text text-dark">校友已讀取</div>
                             {% endif %}
                         </div>
 
-                        <!-- Step 3: 最終結果 -->
                         <div class="timeline-step">
-                            {% if app.status == '已同意' %}
+                            {% if app.status == 'accepted' %}
                                 <div class="step-circle bg-success">✓</div>
                                 <div class="step-text text-success">已同意</div>
-                            {% elif app.status == '已婉拒' %}
+                            {% elif app.status == 'rejected' %}
                                 <div class="step-circle bg-secondary">✗</div>
                                 <div class="step-text text-secondary">已婉拒</div>
                             {% else %}
-                                <!-- 還沒處理，呈現灰色 -->
                                 <div class="step-circle bg-gray"></div>
                                 <div class="step-text text-muted">尚未回覆</div>
                             {% endif %}
@@ -89,12 +75,9 @@
                     </div>
                 </div>
 
-                <!-- ================= 申請快照 (摺疊展開區) ================= -->
-                <!-- id 必須對應上面按鈕的 data-bs-target -->
                 <div class="collapse" id="snapshot{{ app.id }}">
                     <div class="card-footer bg-white p-4 border-top">
                         <h6 class="fw-bold text-secondary">你的經歷簡述與自我推薦信</h6>
-                        <!-- linebreaksbr 可以讓存進資料庫的換行符號正常顯示在網頁上 -->
                         <p class="text-dark bg-light p-3 rounded border">{{ app.experience_summary|linebreaksbr }}</p>
                         
                         <h6 class="fw-bold text-secondary mt-3">具體提問大綱</h6>
@@ -103,7 +86,6 @@
                 </div>
             </div>
             {% empty %}
-                <!-- 如果資料庫完全沒有申請紀錄 -->
                 <div class="text-center mt-5 text-muted">
                     <h4>目前還沒有任何申請紀錄喔！</h4>
                     <a href="/coffeechat/apply/" class="btn btn-coffee mt-3" style="background-color: #C4A484; color: white;">去預約第一個 Coffee Chat 吧</a>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee Chat 預約大廳</title>
-    <!-- 引入 Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
@@ -14,7 +13,7 @@
             border: none;
         }
         .btn-coffee:hover {
-            background-color: #A67B5B; /* 滑鼠移過去變深一點的咖啡色 */
+            background-color: #A67B5B; 
             color: #ffffff;
         }
     </style>
@@ -23,13 +22,12 @@
 
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0">可預約的 Coffee Chat 時段</h2>
-            <!-- 導向我們等一下要建的「我的申請」頁面 -->
-            <a href="/coffeechat/my-applications/" class="btn btn-outline-secondary fw-bold shadow-sm">
-                我的申請進度
-            </a>
-        </div>
-        <hr>
+        <h2 class="mb-0">可預約的 Coffee Chat 時段</h2>
+        <a href="/coffeechat/my-applications/" class="btn btn-outline-secondary fw-bold shadow-sm">
+            我的申請進度
+        </a>
+    </div>
+    <hr>
     
     {% if message %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -43,14 +41,14 @@
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h5 class="card-title text-primary fw-bold">{{ ts.coffee_chat.alumni_name }}</h5>
+                    <h5 class="card-title text-primary fw-bold">{{ ts.alumni_name }}</h5>
                     <p class="card-text mb-1">
-                        <strong>地點：</strong> {{ ts.coffee_chat.location_type }} ({{ ts.coffee_chat.location_detail }})<br>
-                        <strong>時長：</strong> {{ ts.coffee_chat.duration }} 分鐘<br>
-                        <strong>目標科系：</strong> {{ ts.coffee_chat.target_departments }}<br>
+                        <strong>地點：</strong> {{ ts.location_type }} ({{ ts.location_detail }})<br>
+                        <strong>時長：</strong> {{ ts.duration }} 分鐘<br>
+                        <strong>目標科系：</strong> {{ ts.target_departments }}<br>
                         <hr>
                         <strong>開放時段：</strong><br>
-                        <span class="text-success fw-bold">{{ ts.chat_date|date:"Y/m/d" }} {{ ts.start_time|time:"H:i" }} - {{ ts.end_time|time:"H:i" }}</span>
+                        <span class="text-success fw-bold">{{ ts.chat_date_str }} {{ ts.start_time_str }} - {{ ts.end_time_str }}</span>
                     </p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0">
@@ -61,12 +59,11 @@
             </div>
         </div>
 
-        <!-- 浮動視窗 (Modal) 結構 -->
-        <div class="modal fade" id="applyModal{{ ts.id }}" tabindex="-1" aria-labelledby="applyModalLabel{{ ts.id }}" aria-hidden="true">
+        <div class="modal fade" id="applyModal{{ ts.id }}" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title text-primary fw-bold" id="applyModalLabel{{ ts.id }}">
+                <h5 class="modal-title text-primary fw-bold">
                     填寫 Coffee Chat 預約申請
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -75,31 +72,30 @@
               <form method="POST">
                   {% csrf_token %}
                   
-                  <input type="hidden" name="alumni_name" value="{{ ts.coffee_chat.alumni_name }}">
-                  <input type="hidden" name="scheduled_time" value="{{ ts.chat_date|date:'Y/m/d' }} {{ ts.start_time|time:'H:i' }}-{{ ts.end_time|time:'H:i' }}">
+                  <input type="hidden" name="coffee_chat_id" value="{{ ts.id }}">
 
                   <div class="modal-body p-4">
                     <div class="row mb-4 bg-light p-3 rounded border">
                         <div class="col-md-6">
                             <label class="form-label text-muted fw-bold">預約校友</label>
-                            <input type="text" class="form-control" value="{{ ts.coffee_chat.alumni_name }}" readonly>
+                            <input type="text" class="form-control" value="{{ ts.alumni_name }}" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-muted fw-bold">預約時段</label>
-                            <input type="text" class="form-control" value="{{ ts.chat_date|date:'Y/m/d' }} {{ ts.start_time|time:'H:i' }}-{{ ts.end_time|time:'H:i' }}" readonly>
+                            <input type="text" class="form-control" value="{{ ts.chat_date_str }} {{ ts.start_time_str }}-{{ ts.end_time_str }}" readonly>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="experience_summary{{ ts.id }}" class="form-label fw-bold">經歷簡述與自我推薦信 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">經歷簡述與自我推薦信 <span class="text-danger">*</span></label>
                         <div class="form-text mb-2 text-secondary">請簡短介紹你的背景、專長，讓校友能快速認識你。</div>
-                        <textarea class="form-control" id="experience_summary{{ ts.id }}" name="experience_summary" rows="4" required placeholder="例如：您好，我是資管系的學生，近期對資料工程很有興趣..."></textarea>
+                        <textarea class="form-control" name="experience_summary" rows="4" required placeholder="例如：您好，我是資管系的學生..."></textarea>
                     </div>
 
                     <div class="mb-4">
-                        <label for="questions_outline{{ ts.id }}" class="form-label fw-bold">提問大綱 <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">提問大綱 <span class="text-danger">*</span></label>
                         <div class="form-text mb-2 text-secondary">請列出你這次 Coffee Chat 想討論的問題。</div>
-                        <textarea class="form-control" id="questions_outline{{ ts.id }}" name="questions_outline" rows="4" required placeholder="1. 請問當時從學校跨足業界的心路歷程？&#10;2. 面試貴公司時最看重什麼能力？"></textarea>
+                        <textarea class="form-control" name="questions_outline" rows="4" required placeholder="1. 請問當時從學校跨足業界的心路歷程？"></textarea>
                     </div>
 
                   </div>

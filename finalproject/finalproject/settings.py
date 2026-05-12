@@ -23,6 +23,7 @@ load_dotenv(BASE_DIR / ".env")
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
+RAG_DEVICE = os.getenv("RAG_DEVICE")
 
 
 # Quick-start development settings - unsuitable for production
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'microprojects',
     'accounts',
     'coffeechat',
+    'coffeechat_alumni',
 ]
 
 MIDDLEWARE = [

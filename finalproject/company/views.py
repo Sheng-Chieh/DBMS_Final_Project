@@ -3,9 +3,6 @@ from django.http import Http404
 from django.conf import settings
 from .models import Company
 
-import jieba
-import jieba.analyse
-
 from functools import lru_cache
 from pathlib import Path
 import json
@@ -159,6 +156,26 @@ def extract_json_array(text):
         return []
 
 
+def extract_string_list_from_json_array(text):
+    parsed = extract_json_array(text)
+    if not isinstance(parsed, list):
+        return []
+
+    items = []
+    for item in parsed:
+        if isinstance(item, str):
+            value = item.strip()
+        elif isinstance(item, dict):
+            value = str(item.get("keyword") or item.get("text") or "").strip()
+        else:
+            value = str(item).strip()
+
+        if value and value not in items:
+            items.append(value)
+
+    return items
+
+
 def repair_json_array(llm, raw_text: str) -> str:
     if not llm:
         return "[]"
@@ -173,6 +190,57 @@ def repair_json_array(llm, raw_text: str) -> str:
     )
     msg = prompt.format_messages(raw_text=raw_text)
     return normalize_llm_text(llm.invoke(msg))
+
+
+def fallback_query_keywords(user_query: str):
+    parts = [
+        part.strip()
+        for part in re.split(r"[\s,，、/|;；\n\t]+", user_query or "")
+        if part.strip()
+    ]
+
+    if parts:
+        keywords = []
+        for part in parts:
+            if part not in keywords:
+                keywords.append(part)
+        return keywords[:5]
+
+    cleaned = (user_query or "").strip()
+    return [cleaned] if cleaned else []
+
+
+def extract_query_keywords(llm, user_query: str):
+    fallback_keywords = fallback_query_keywords(user_query)
+    if not llm:
+        return fallback_keywords
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "你是一個查詢關鍵字分析 agent。請根據使用者輸入抽取最重要的搜尋關鍵字，"
+                "只輸出純 JSON 陣列，陣列元素必須是字串，不要輸出 markdown 或解釋文字。"
+                "請優先保留公司類型、產業、地點、需求條件等詞彙，最多 5 個。",
+            ),
+            (
+                "user",
+                "使用者查詢：{user_query}\n\n請輸出關鍵字 JSON 陣列：",
+            ),
+        ]
+    )
+
+    try:
+        msg = prompt.format_messages(user_query=user_query)
+        raw_text = normalize_llm_text(llm.invoke(msg))
+        keywords = extract_string_list_from_json_array(raw_text)
+
+        if keywords:
+            return keywords[:5]
+    except Exception as e:
+        print(f"關鍵字 agent 解析失敗: {e}")
+
+    return fallback_keywords
 
 @csrf_exempt
 def chat_recommend_companies_lc(request):
@@ -196,25 +264,24 @@ def chat_recommend_companies_lc(request):
     def event_stream():
         def send_progress(text):
             """回傳當前處理進度給前端 (SSE 格式)"""
-            return f"data: {json.dumps({'type': 'progress', 'text': text}, ensure_ascii=False)}\n\n"
+            return f"data: {json.dumps({'type': 'progress', 'text': text}, ensure_ascii=False)}\n\n".encode("utf-8")
 
         def send_result(payload):
             """回傳最終處理結果給前端 (SSE 格式)"""
-            return f"data: {json.dumps({'type': 'result', 'payload': payload}, ensure_ascii=False)}\n\n"
+            return f"data: {json.dumps({'type': 'result', 'payload': payload}, ensure_ascii=False)}\n\n".encode("utf-8")
 
         def send_error(text):
             """回傳錯誤訊息給前端 (SSE 格式)"""
-            return f"data: {json.dumps({'type': 'error', 'text': text}, ensure_ascii=False)}\n\n"
+            return f"data: {json.dumps({'type': 'error', 'text': text}, ensure_ascii=False)}\n\n".encode("utf-8")
 
         try:
             # =========================================================
-            # Step 1: 需求分析與關鍵字擷取 (Jieba)
+            # Step 1: 需求分析與關鍵字擷取 (LLM Agent)
             # =========================================================
             yield send_progress("正在分析您的需求與擷取關鍵字...")
-            
-            keywords = jieba.analyse.extract_tags(user_query, topK=5)
-            if not keywords:
-                keywords = [word for word in jieba.lcut(user_query) if len(word.strip()) > 1]
+
+            llm = get_llm()
+            keywords = extract_query_keywords(llm, user_query)
 
             display_keywords = keywords[:]
 
