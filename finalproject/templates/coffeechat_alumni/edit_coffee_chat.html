@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建立 Coffee Chat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #ffffff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .mockup-frame { background-color: #ffffff; width: 100%; max-width: 800px; padding: 60px 80px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .chat-title { font-size: 28px; font-weight: 500; }
+        .divider { border-top: 2px solid #000; opacity: 1; margin: 20px 0 40px 0; }
+        .custom-btn { background-color: #e0e0e0; border: none; font-weight: 500; }
+        .custom-btn:hover { background-color: #d0d0d0; }
+        /* 隱藏輔助輸入框，透過 JS 控制顯示 */
+        .dynamic-input { display: none; } 
+    </style>
+</head>
+<body>
+    <div class="position-fixed top-0 start-0 p-3">
+        <a href="javascript:history.back()" class="text-dark">
+            <i class="bi bi-arrow-left fs-4"></i>
+        </a>
+    </div>
+    <div class="position-fixed top-0 end-0 p-3">
+        <a href="{% url 'homepage' %}" class="text-dark">
+            <i class="bi bi-house-door-fill fs-4"></i>
+        </a>
+    </div>
+    <div class="mockup-frame">
+        <h1 class="chat-title">編輯 Coffee Chat</h1>
+        <hr class="divider">
+
+        <!-- 這裡的 action 記得改成你 Django 接收 POST 的 url -->
+        <form id="coffeeChatForm" action="{% url 'edit_coffee_chat' chat.id %}" method="POST">
+            {% csrf_token %}
+            
+            <!-- 偏好對談地點 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">偏好對談地點</label>
+                <div class="d-flex gap-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="location_type" id="locOnline" value="online" {% if chat.location_type == "online" %}checked{% endif %} onchange="toggleLocationInput()">
+                        <label class="form-check-label" for="locOnline">線上</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="location_type" id="locOffline" value="offline" {% if chat.location_type == "offline" %}checked{% endif %} onchange="toggleLocationInput()">
+                        <label class="form-check-label" for="locOffline">實體</label>
+                    </div>
+                </div>
+                
+                <!-- 線上：選擇工具 -->
+                <div class="mt-2 dynamic-input" id="onlineInputDiv">
+                    <input type="text" class="form-control w-50" name="online_tool" value="{{ chat.location_detail }}" placeholder="選擇使用工具？ (例如：Google Meet)">
+                </div>
+                <!-- 實體：輸入位置 -->
+                <div class="mt-2 dynamic-input" id="offlineInputDiv">
+                    <input type="text" class="form-control w-50" name="offline_location" value="{{ chat.location_detail }}" placeholder="輸入預計地點 (例如：校內咖啡廳)">
+                </div>
+            </div>
+
+            <!-- 對談時長 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">對談時長</label>
+                <select class="form-select w-50" name="duration">
+                    <option value="30" {% if chat.duration == 30 %}selected{% endif %}>30 分鐘</option>
+                    <option value="60" {% if chat.duration == 60 %}selected{% endif %}>60 分鐘</option>
+                    <option value="90" {% if chat.duration == 90 %}selected{% endif %}>90 分鐘</option>
+                    <option value="120" {% if chat.duration == 120 %}selected{% endif %}>120 分鐘</option>
+                    <option value="150" {% if chat.duration == 150 %}selected{% endif %}>150 分鐘</option>
+                    <option value="180" {% if chat.duration == 180 %}selected{% endif %}>180 分鐘</option>
+                </select>
+            </div>
+
+            <!-- 每個月可接受時段 (動態新增) -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">可接受時間</label>
+                <div class="d-flex gap-2 mb-2 timeslot-row">
+                    <input type="date" class="form-control" name="date" value="{{ chat.date|date:'Y-m-d' }}">
+                    <input type="time" class="form-control" name="start_time" value="{{ chat.start_time }}">
+                    <span class="align-self-center">至</span>
+                    <input type="time" class="form-control" name="end_time" value="{{ chat.end_time }}">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">特定科系要求 (選填)</label>
+                <input type="text" class="form-control w-50" name="target_departments" value="{{ chat.target_departments }}" placeholder="例如：資訊管理學系 (若有多個請用逗號隔開)">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">最低履歷配對度 (選填)</label>
+                <select class="form-select w-50" name="resume_match_rate">
+                    <option value="0" {% if chat.resume_match_rate == 0 %}selected{% endif %}>無限制</option>
+                    <option value="50" {% if chat.resume_match_rate == 50 %}selected{% endif %}>50%</option>
+                    <option value="60" {% if chat.resume_match_rate == 60 %}selected{% endif %}>60%</option>
+                    <option value="70" {% if chat.resume_match_rate == 70 %}selected{% endif %}>70%</option>
+                    <option value="80" {% if chat.resume_match_rate == 80 %}selected{% endif %}>80%</option>
+                    <option value="90" {% if chat.resume_match_rate == 90 %}selected{% endif %}>90%</option>
+                    <option value="100" {% if chat.resume_match_rate == 100 %}selected{% endif %}>100%</option>
+                </select>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-3 mt-5">
+                <button type="submit" class="btn custom-btn px-4">儲存</button>
+            </div>
+        </form>
+    </div>
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == "success" %}
+
+    <div class="modal fade show" id="successModal" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+        
+        <div class="modal-header">
+            <h5 class="modal-title"></h5>
+        </div>
+        <div class="modal-body text-center">
+            Coffee Chat 已更新資料！
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="goHome()" class="btn btn-primary">
+            確定
+            </button>
+        </div>
+
+        </div>
+    </div>
+    </div>
+
+    <div class="modal-backdrop fade show"></div>
+
+    <script>
+    function goHome(){
+        window.location.href="{% url 'list_manage_reservation' %}";
+    }
+    </script>
+
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    <script>
+        // 控制「線上/實體」輸入框的顯示與隱藏
+        function toggleLocationInput() {
+            const isOnline = document.getElementById('locOnline').checked;
+            const isOffline = document.getElementById('locOffline').checked;
+            
+            document.getElementById('onlineInputDiv').style.display = isOnline ? 'block' : 'none';
+            document.getElementById('offlineInputDiv').style.display = isOffline ? 'block' : 'none';
+        }
+    </script>
+
+    
+</body>
+</html>

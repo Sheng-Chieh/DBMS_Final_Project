@@ -66,31 +66,6 @@ class CompanyManager(models.Manager["Company"]):
             cursor.execute(sql, params)
             return dictfetchall(cursor)
 
-    def search_chat_with_keywords(self, keywords):
-        """聊天用搜尋：關鍵字 OR 比對，多欄位擴大命中範圍"""
-        with connection.cursor() as cursor:
-            sql = """
-                SELECT company_id, name, industry_category, industry_subcategory, description, description_detail,
-                       location_city, location_district, website
-                FROM companies
-                WHERE 1=1
-            """
-            params = []
-
-            if keywords:
-                keyword_conditions = []
-                for kw in keywords:
-                    keyword_conditions.append(
-                        "(name LIKE %s OR description LIKE %s OR description_detail LIKE %s OR location_city LIKE %s "
-                        "OR location_district LIKE %s OR industry_category LIKE %s OR industry_subcategory LIKE %s)"
-                    )
-                    like = f"%{kw}%"
-                    params.extend([like, like, like, like, like, like, like])
-
-                sql += f" AND ({' OR '.join(keyword_conditions)})"
-
-            cursor.execute(sql, params)
-            return dictfetchall(cursor)
 
     def get_detail_with_raw_sql(self, company_id):
         """處理單一公司詳細資料的 SQL 邏輯"""

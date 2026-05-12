@@ -3,14 +3,12 @@ from typing import List, Dict, Optional, Iterable, Tuple
 from functools import lru_cache
 from pathlib import Path
 import os
-from django.conf import settings
+import re
 
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-DEFAULT_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
-HF_TOKEN = settings.HF_TOKEN
-RAG_DEVICE = settings.RAG_DEVICE
+DEFAULT_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "shibing624/text2vec-base-chinese")
 
 
 def _normalize_persist_dir(persist_dir: str) -> str:
@@ -19,13 +17,7 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    model_kwargs = {'device': RAG_DEVICE, 'token': HF_TOKEN}
-    encode_kwargs = {'normalize_embeddings': False}
-    return HuggingFaceEmbeddings(
-        model_name=model_name,
-        model_kwargs=model_kwargs,
-        encode_kwargs=encode_kwargs
-    )
+    return HuggingFaceEmbeddings(model_name=model_name)
 
 
 @lru_cache(maxsize=4)

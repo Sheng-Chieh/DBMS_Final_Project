@@ -17,9 +17,14 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 
-load_dotenv(BASE_DIR / ".env")
+RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
+RAG_DEVICE = os.getenv("RAG_DEVICE")
 
 
 # Quick-start development settings - unsuitable for production
@@ -47,6 +52,7 @@ INSTALLED_APPS = [
     'microprojects',
     'accounts',
     'coffeechat',
+    'coffeechat_alumni',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +88,16 @@ WSGI_APPLICATION = 'finalproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-
+DATABASES = {
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
+    }
+}
 
 
 # Password validation
@@ -108,7 +123,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'final_project',
         'USER': 'root',
-        'PASSWORD': '0000',
+        'PASSWORD': '111405062',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
