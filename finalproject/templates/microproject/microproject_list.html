@@ -1,31 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
+    <meta charset="UTF-8">
     <title>微任務列表</title>
     <style>
-        table { border-collapse: collapse; width: 80%; margin: 20px auto; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f4f4f4; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, '微軟正黑體'; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            padding: 40px; 
+            color: #333; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* 頂部標題與按鈕區塊 */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { margin: 0; color: #2c3e50; font-size: 28px; font-weight: 800; letter-spacing: 1px;}
+        .btn-primary { 
+            background-color: #10b981; color: white; padding: 12px 24px; 
+            text-decoration: none; border-radius: 8px; font-weight: bold; 
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease; 
+        }
+        .btn-primary:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3); }
+        
+        /* Filter Bar 設計 */
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid #f1f5f9;
+        }
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #475569;
+            background-color: #f8fafc;
+            flex: 1; 
+            cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .btn-search {
+            background-color: #3b82f6; 
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-search:hover { background-color: #2563eb; }
+        .btn-clear {
+            background-color: #f1f5f9;
+            color: #64748b;
+            padding: 10px 16px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-clear:hover { background-color: #e2e8f0; color: #334155; }
+
+        /* 卡片網格佈局 (Grid) */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 24px;
+        }
+
+        /* 單一卡片設計 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #f1f5f9;
+        }
+        .card:hover {
+            transform: translateY(-5px); 
+            box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+        }
+
+        /* 卡片頭部：標題 */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        /* 產業類別 */
+        .industry-capsule {
+            background-color: #e0e7ff; 
+            color: #4f46e5; 
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        /* 公司名稱 */
+        .company-name {
+            color: #64748b;
+            font-size: 14.5px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 任務描述 */
+        .card-desc {
+            color: #475569;
+            font-size: 14.5px;
+            line-height: 1.6;
+            flex-grow: 1; 
+            margin-bottom: 20px;
+        }
+
+        /* 底部標籤區塊 */
+        .card-tags {
+            border-top: 1px solid #f1f5f9; 
+            padding-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag { 
+            background: #f1f5f9; color: #475569; padding: 5px 12px; 
+            border-radius: 20px; font-size: 12px; font-weight: 600; 
+        }
+        .no-tag {
+            color: #cbd5e1; font-style: italic; font-size: 13px;
+        }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">當前開放的微任務</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>編號</th>
-                <th>專案名稱</th>
-                <th>產業類別</th>
-                <th>描述</th>
-                <th>狀態</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="container">
+        <div class="header">
+            <h1>當前開放的微任務</h1>
+            <a href="/projects/create/" class="btn-primary">＋ 發布新微任務</a>
+        </div>
+        
+        <form method="GET" action="" class="filter-bar">
+            
+            <select name="industry" class="filter-select">
+                <option value="">所有產業</option>
+                {% for ind in filter_industries %}
+                    <option value="{{ ind }}" {% if current_industry == ind %}selected{% endif %}>
+                        {{ ind }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="company" id="filter-company" class="filter-select">
+                <option value="">所有發布公司</option>
+                {% for comp in filter_companies %}
+                    <option value="{{ comp.0 }}" data-industry="{{ comp.2 }}" {% if current_company == comp.0|stringformat:"s" %}selected{% endif %}>
+                        {{ comp.1 }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="tag" class="filter-select">
+                <option value="">所有技能與標籤</option>
+                {% for tag in filter_tags %}
+                    <option value="{{ tag.0 }}" {% if current_tag == tag.0|stringformat:"s" %}selected{% endif %}>
+                        {{ tag.1 }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn-search">篩選</button>
+            <a href="/projects/" class="btn-clear">清除</a>
+        </form>
+        
+        <div class="card-grid">
             {% for project in projects %}
-            <tr>
-                <td>{{ project.0 }}</td> <td>{{ project.1 }}</td> <td>{{ project.3 }}</td> <td>{{ project.2 }}</td> <td>{{ project.4 }}</td> </tr>
+            <div class="card">
+                
+                <div class="card-header">
+                    <h3 class="card-title">{{ project.1 }}</h3>
+                </div>
+                
+                <div class="company-section">
+                    <span class="industry-capsule">{{ project.3 }}</span>
+                    <div class="company-name">{{ project.4 }}</div>
+                </div>
+                
+                <div class="card-desc">
+                    {{ project.2 }}
+                </div>
+                
+                <div class="card-tags">
+                    {% if project.5 %}
+                        {% for tag in project.5 %}
+                            <span class="tag">{{ tag }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="no-tag">無設定標籤</span>
+                    {% endif %}
+                </div>
+                
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const industrySelect = document.querySelector('select[name="industry"]');
+            const companySelect = document.getElementById('filter-company');
+            
+            // 備份所有的公司選項 (排除第一個「所有公司」的選項)
+            const allCompanyOptions = Array.from(companySelect.options).slice(1);
+
+            function updateCompanyOptions() {
+                const selectedIndustry = industrySelect.value;
+                const currentSelectedCompany = companySelect.value;
+
+                // 先清空公司選單，只保留預設選項
+                companySelect.innerHTML = '<option value="">所有發布公司</option>';
+
+                // 根據產業過濾公司
+                allCompanyOptions.forEach(option => {
+                    // 如果沒有選產業 (看所有)，或者該公司符合選定的產業，就把它加回來
+                    if (!selectedIndustry || option.getAttribute('data-industry') === selectedIndustry) {
+                        companySelect.appendChild(option.cloneNode(true));
+                    }
+                });
+
+                // 防呆：如果原本選的公司還在新的清單中，就保持選取狀態；不然就重置
+                const stillExists = Array.from(companySelect.options).some(opt => opt.value === currentSelectedCompany);
+                if (stillExists) {
+                    companySelect.value = currentSelectedCompany;
+                }
+            }
+
+            // 當產業選單改變時，觸發更新
+            industrySelect.addEventListener('change', updateCompanyOptions);
+            
+            // 網頁剛載入時，先執行一次，確保符合目前的 URL 狀態
+            updateCompanyOptions();
+        });
+    </script>
 </body>
 </html>
