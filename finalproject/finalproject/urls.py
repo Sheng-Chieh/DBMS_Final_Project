@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from company import views
 from microprojects import views as micro_views
+from microprojects.views import project_list, project_create
 from accounts import views as account_views
 from coffeechat import views as coffee_views
 
@@ -26,7 +27,8 @@ urlpatterns = [
     path('search/', views.search_companies, name='search_companies'),
     path('company/<int:company_id>/', views.company_detail, name='company_detail'),
 
-    path('projects/', micro_views.project_list, name='project_list'), 
+    path('projects/', micro_views.project_list, name='project_list'),
+    path('projects/create/', project_create, name='project_create'), 
 
     path('login/', account_views.login, name='login'),
     path('register/', account_views.register, name='register'),
