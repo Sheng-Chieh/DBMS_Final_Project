@@ -12,18 +12,29 @@
         .chat-title { font-size: 28px; font-weight: 500; margin: 0; }
         .divider { border-top: 2px solid #000; opacity: 1; margin: 15px 0 40px 0; }
         
-        /* 編輯與狀態按鈕 */
-        .custom-btn { border: 1px solid #000; background-color: #e0e0e0; padding: 4px 16px; font-weight: 500; font-size: 14px; transition: 0.2s; }
-        .custom-btn:hover { background-color: #d0d0d0; }
-        .status-btn { border: 1px solid #000; background-color: #e0e0e0; padding: 4px 16px; font-weight: 500; width: 80px; transition: 0.3s; }
-        .status-closed { background-color: #6c757d; color: white; border-color: #6c757d; }
+        /* 編輯與狀態按鈕 (視覺稿：灰色) */
+        .custom-btn { border: 1px solid #000; background-color: #d9d9d9; padding: 4px 16px; font-weight: 500; font-size: 14px; transition: 0.2s; border-radius: 0; color: #000; }
+        .custom-btn:hover { background-color: #ccc; }
         
-        /* 專屬刪除按鈕 (還原你的設計圖) */
+        /* 狀態按鈕：開啟 (依據現有代碼，保持灰色，關閉加 status-closed) */
+        .status-closed { background-color: #6c757d !important; color: white !important; border-color: #6c757d !important; }
+        
+        /* 專屬刪除按鈕 (視覺稿樣式) */
         .delete-btn { background-color: #f28b82; border: 1px solid #000; color: #000; padding: 4px 16px; font-weight: 500; font-size: 16px; transition: 0.2s; border-radius: 0; }
-        .delete-btn:hover { background-color: #e57368; color: #000; }
+        .delete-btn:hover { background-color: #e57368; }
 
-        .gray-box { background-color: #d9d9d9; padding: 20px; min-height: 250px; }
+        /* 右側操作按鈕 */
+        .btn-accept { background-color: #a5d6a7; border: 1px solid #000; color: #000; padding: 4px 12px; font-size: 14px; border-radius: 0; font-weight: 500;}
+        .btn-accept:hover { background-color: #81c784; }
+        .btn-reject { background-color: #ef9a9a; border: 1px solid #000; color: #000; padding: 4px 12px; font-size: 14px; border-radius: 0; font-weight: 500;}
+        .btn-reject:hover { background-color: #e57373; }
+
+        .gray-box { background-color: #d9d9d9; padding: 20px; min-height: 250px; overflow-y: auto; }
         .applicant-row { border: 1px solid #000; padding: 10px 15px; margin-bottom: 10px; background-color: transparent; }
+        
+        /* 新增：申請者方框變色 CSS */
+        .status-accepted { background-color: #FFF4CC; } /* 黃色 */
+        .status-rejected { background-color: #f8d7da; }  /* 淡紅色 */
     </style>
 </head>
 <body>
@@ -33,14 +44,14 @@
         </a>
     </div>
     <div class="position-fixed top-0 end-0 p-3">
-        <a href="{% url 'homepage' %}" class="text-dark">
+        <a href="{% url 'ca_homepage' %}" class="text-dark">
             <i class="bi bi-house-door-fill fs-4"></i>
         </a>
     </div>
 
     <div class="mockup-frame">
         
-        <div class="d-flex justify-content-between align-items-end">
+        <div class="d-flex justify-content-between align-items-center">
             <h1 class="chat-title">管理 Coffee Chat 預約</h1>
             
             <form method="POST" action="{% url 'delete_coffee_chat' chat_info.id %}" class="m-0"
@@ -58,9 +69,9 @@
             <div class="d-flex align-items-center mb-3">
                 <span class="fs-5 me-4">Coffee Chat 狀態</span>
                 {% if chat_info.is_published %}
-                    <button type="button" id="statusBtn" class="custom-btn" onclick="toggleStatus()">開啟</button>
+                    <button type="button" id="statusBtn" class="custom-btn" onclick="toggleStatus()">發布</button>
                 {% else %}
-                    <button type="button" id="statusBtn" class="custom-btn status-closed" onclick="toggleStatus()">關閉</button>
+                    <button type="button" id="statusBtn" class="custom-btn status-closed" onclick="toggleStatus()">草稿</button>
                 {% endif %}
             </div>
             
@@ -73,19 +84,23 @@
         <div class="row g-4">
             <div class="col-md-6">
                 <h5 class="mb-3">預約申請審核</h5>
-                <div class="gray-box" style="max-height: 400px; overflow-y: auto;">
+                <div class="gray-box" style="max-height: 400px;">
                     
                     {% for applicant in applicants %}
-                    <div class="applicant-row d-flex justify-content-between align-items-center">
-                        <span>#{{ forloop.counter }} {{ applicant.name }} |</span>
+                    <div class="applicant-row d-flex justify-content-between align-items-center 
+                                {% if applicant.status == 'accepted' %}status-accepted
+                                {% elif applicant.status == 'rejected' %}status-rejected{% endif %}">
+                                
+                        <span>#{{ forloop.counter }} {{ applicant.student_name }} |</span>
                         <div>
-                            <button type="button" class="custom-btn me-2" onclick="showLetter('{{ applicant.name|escapejs }}', '{{ applicant.message|escapejs }}')">查看申請信</button>
+                            <button type="button" class="custom-btn" 
+                                    data-app-name="{{ applicant.student_name|escapejs }}"
+                                    data-app-id="{{ applicant.id }}"
+                                    data-experience="{{ applicant.experience_summary|default:'未填寫'|escapejs }}"
+                                    data-questions="{{ applicant.question_outline|default:'未填寫'|escapejs }}"
+                                    onclick="showLetter(this)">查看申請信</button>
                             
-                            <form action="{% url 'accept_applicant' applicant.id %}" method="POST" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="custom-btn">接受預約</button>
-                            </form>
-                        </div>
+                            </div>
                     </div>
                     {% empty %}
                         <div class="text-muted">目前還沒有收到申請信喔！</div>
@@ -95,8 +110,21 @@
             </div>
 
             <div class="col-md-6">
-                <h5 class="mb-3">申請信內容</h5>
-                <div id="letterContentBox" class="gray-box" style="max-height: 400px; overflow-y: auto;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0">申請信內容</h5>
+                    <div id="actionButtons" class="d-none d-flex gap-2">
+                        <form id="acceptForm" action="#" method="POST" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-accept">接受預約</button>
+                        </form>
+                        <form id="rejectForm" action="#" method="POST" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-reject">婉拒預約</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="letterContentBox" class="gray-box p-3 border border-dark" style="max-height: 400px; white-space: pre-wrap; background-color: #d9d9d9; border-radius: 0;">
                     (點擊左側「查看申請信」以顯示內容)
                 </div>
             </div>
@@ -104,14 +132,45 @@
     </div>
 
     <script>
-        // 顯示申請信
-        function showLetter(name, content) {
+        // 修正：顯示申請信 (從按鈕 data 屬性讀取資料，並合併內容與顯示右側按鈕)
+        function showLetter(btn) {
+            const name = btn.getAttribute('data-app-name');
+            const appId = btn.getAttribute('data-app-id');
+            const exp = btn.getAttribute('data-experience');
+            const quest = btn.getAttribute('data-questions');
+            
+            // 1. 更新內容灰色框框
             const contentBox = document.getElementById('letterContentBox');
-            contentBox.style.whiteSpace = 'pre-wrap';
-            contentBox.innerText = `【${name} 的申請信】\n\n${content}`;
+            contentBox.style.whiteSpace = 'pre-wrap'; // 確保換行
+            // 用innerText避免HTML注入，InnerText會自動解析\n
+            contentBox.innerText = `經歷摘要：\n${exp}\n\n想要詢問的問題？：\n${quest}`;
+            
+            // 2. 處理右側「接受/婉拒」按鈕
+            const actionButtonsContainer = document.getElementById('actionButtons');
+            const acceptForm = document.getElementById('acceptForm');
+            const rejectForm = document.getElementById('rejectForm');
+            
+            // 動態更新 Form 的 action URL (指向後端對應的 View)
+            // 需要動態產生 URL，這裡假設你的 URL name 叫 'accept_applicant' 和 'reject_applicant'
+            // 由於 django template 無法直接在 JS 裡印出帶變數的 URL name，需要解析字串。
+            // 假設 URL 格式為 /coffeechat-alumni/accept-applicant/{id}/
+            
+            // 簡單方法：在後端 views.py 定義這兩個 URL 模式。
+            // 這裡動態設定 URL，需要依據你實際的 url.py 定義。
+            // 假設格式為 '/alumni/manage-reservation/accept/{id}/'
+            
+            // 這裡為了能運行，先假設原代碼的 url 解析結構
+            // 通常在前端我們不會寫死 URL，但這裡沒有 template 反解析，先展示邏輯
+            let baseAcceptUrl = "{% url 'accept_applicant' 999999 %}";
+            let baseRejectUrl = "{% url 'reject_applicant' 999999 %}";
+            acceptForm.action = baseAcceptUrl.replace('999999', appId);
+            rejectForm.action = baseRejectUrl.replace('999999', appId);
+            
+            // 顯示按鈕
+            actionButtonsContainer.classList.remove('d-none');
         }
 
-        // 切換狀態 (連線到後端 API)
+        // 切換狀態 (連線到後端 API) (保持不變)
         function toggleStatus() {
             const btn = document.getElementById('statusBtn');
 
@@ -125,10 +184,10 @@
             .then(data => {
                 if (data.success) {
                     if (data.new_status === 1) {
-                        btn.innerText = "開啟";
+                        btn.innerText = "發布";
                         btn.classList.remove("status-closed");
                     } else {
-                        btn.innerText = "關閉";
+                        btn.innerText = "草稿";
                         btn.classList.add("status-closed");
                     }
                 }

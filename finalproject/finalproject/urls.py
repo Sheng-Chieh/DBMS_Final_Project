@@ -52,6 +52,7 @@ urlpatterns = [
     path('manage-reservation/<int:chat_id>/', coffeechat_alumni_views.manage_reservation, name='manage_reservation'),
     path('toggle-coffee-chat-status/<int:chat_id>/', coffeechat_alumni_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
     path('delete_chat/<int:chat_id>/', coffeechat_alumni_views.delete_coffee_chat, name='delete_coffee_chat'),
+    path('applicant/<int:applicant_id>/reject/', coffeechat_alumni_views.reject_applicant, name='reject_applicant'),
     
     path('resume/', account_views.resume, name='resume'),
     path('add-activity/', account_views.add_activity, name='add_activity'),
@@ -65,5 +66,4 @@ urlpatterns = [
     path('work/update/<int:work_id>/', account_views.update_work, name='update_work'),
     path('course/update/<int:course_record_id>/', account_views.update_course, name='update_course'),
     path('logout/', account_views.logout, name='logout'),
-
 ]

@@ -63,7 +63,7 @@ class CoffeeChatDatabase:
     def get_published_chats(cls):
         return cls._execute("SELECT * FROM coffee_chat_config WHERE is_published = 1 ORDER BY created_at DESC", fetch=True) or []
 
-    # 更新時段 (對應新欄位名稱)
+    # 更新時段
     @staticmethod
     def update_chat(chat_id, loc_type, loc_detail, date, start_time, end_time, duration, target_departments, resume_match_rate):
         query = """
@@ -77,10 +77,17 @@ class CoffeeChatDatabase:
             duration, target_departments, resume_match_rate, chat_id
         ), commit=True)
 
+    # 接受申請者 (修正資料表名稱為 coffee_chat_application)
     @classmethod
     def accept_applicant(cls, applicant_id):
         cls._execute("UPDATE coffee_chat_application SET status='accepted' WHERE id=%s", (applicant_id,), commit=True)
 
+    # ====== 新增：婉拒申請者 ======
+    @classmethod
+    def reject_applicant(cls, applicant_id):
+        cls._execute("UPDATE coffee_chat_application SET status='rejected' WHERE id=%s", (applicant_id,), commit=True)
+
+    # 取得申請者 (修正資料表名稱為 coffee_chat_application)
     @classmethod
     def get_applicants(cls, chat_id):
         return cls._execute("SELECT * FROM coffee_chat_application WHERE coffee_chat_id = %s ORDER BY created_at DESC", (chat_id,), fetch=True) or []

@@ -121,9 +121,9 @@ AUTH_PASSWORD_VALIDATORS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'coffee_chat_db',
+        'NAME': 'final_project',
         'USER': 'root',
-        'PASSWORD': 'ericaLEE941028++',
+        'PASSWORD': 'yourpassword',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
