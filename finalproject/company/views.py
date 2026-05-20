@@ -62,39 +62,8 @@ def company_detail(request, company_id):
 
 # ======================== RAG ==================================
 
-def extract_evidence_snippet(evidence: str) -> str:
-    if not evidence:
-        return ""
-    for line in evidence.splitlines():
-        line = line.strip()
-        if line.startswith("簡介:"):
-            return line.replace("簡介:", "", 1).strip()
-    return re.sub(r"\s+", " ", evidence).strip()
-
-
 def build_fallback_why(result):
-    industry = result.get("industry_category") or ""
-    sub = result.get("industry_subcategory") or ""
-    location = result.get("location_city") or ""
-    snippet = extract_evidence_snippet(result.get("evidence") or "")
-
-    pieces = []
-    if industry:
-        if sub:
-            pieces.append(f"{industry}/{sub}產業")
-        else:
-            pieces.append(f"{industry}產業")
-
-    if location:
-        pieces.append(f"位於{location}")
-
-    if snippet:
-        pieces.append(f"簡介提到「{snippet[:40]}」")
-
-    if not pieces:
-        return "符合您的條件。"
-
-    return "，".join(pieces) + "。"
+    return "依照這個條件，目前找不到類似的公司。"
 
 
 @lru_cache(maxsize=1)
@@ -147,6 +116,29 @@ def extract_json_array(text):
     except Exception:
         return []
 
+
+def build_no_results_message(user_query):
+    llm = get_llm()
+    if not llm:
+        return "依照這個條件，目前找不到類似的公司。"
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system",
+         "你是一個專業的台灣企業推薦助手。請用正式語氣回答。\n"
+         "目前沒有符合條件的公司，請產生一句簡潔回覆（約20-30字），" 
+         "需要呼應使用者條件，但不要捏造公司名稱。只回傳純文字。"
+        ),
+        ("user", "使用者查詢：{search_context}\n\n請產生回覆：")
+    ])
+
+    msg = prompt.format_messages(search_context=user_query)
+    try:
+        text = normalize_llm_text(llm.invoke(msg))
+        return (text or "").strip() or "依照這個條件，目前找不到類似的公司。"
+    except Exception as e:
+        print(f"LLM 呼叫失敗: {e}")
+        return "依照這個條件，目前找不到類似的公司。"
+
 @csrf_exempt
 def chat_recommend_companies_lc(request):
     if request.method != "POST":
@@ -186,9 +178,10 @@ def chat_recommend_companies_lc(request):
             retrieved = retriever.search(query=user_query, top_k=3)
 
             if not retrieved:
+                no_results_message = build_no_results_message(user_query)
                 yield send_result({
-                    "answer": "抱歉，目前找不到符合條件的公司。",
-                    "assistant_message": "抱歉，目前找不到符合條件的公司。",
+                    "answer": no_results_message,
+                    "assistant_message": no_results_message,
                     "recommendations": [],
                 })
                 return
