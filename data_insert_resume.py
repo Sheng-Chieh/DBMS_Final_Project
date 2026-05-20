@@ -7,7 +7,7 @@ DB_CONFIG = {
     'host': '127.0.0.1',
     'port': 3306,
     'user': 'root',
-    'password': '0000',
+    'password': '215864',
     'database': 'final_project',
     'charset': 'utf8mb4'
 }
@@ -22,6 +22,8 @@ def import_resume_data():
             print("重建履歷相關資料表...")
 
             # 注意：因為其他表會依賴 users，所以刪除順序要先刪子表
+            cursor.execute("DROP TABLE IF EXISTS course_record_tags;")
+            cursor.execute("DROP TABLE IF EXISTS course_tags;")
             cursor.execute("DROP TABLE IF EXISTS course_records;")
             cursor.execute("DROP TABLE IF EXISTS work_experiences;")
             cursor.execute("DROP TABLE IF EXISTS activities;")
@@ -42,14 +44,19 @@ def import_resume_data():
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(100) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
+
                 department_id INT,
                 enrollment_year INT,
                 graduation_year INT,
-                current_company VARCHAR(100),
-                current_job_title VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
                 company_id INT,
-                is_profile_completed BOOLEAN DEFAULT FALSE
+                current_job_title VARCHAR(100),
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_profile_completed BOOLEAN DEFAULT FALSE,
+
+                FOREIGN KEY (department_id) REFERENCES departments(department_id),
+                FOREIGN KEY (company_id) REFERENCES companies(company_id)
             );
             """
 
@@ -57,13 +64,15 @@ def import_resume_data():
             CREATE TABLE activities (
                 activity_id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
-                category VARCHAR(50),
+                category ENUM('社團', '競賽', '專案', '研究', '志工', '活動籌辦', '學生組織', '其他') NOT NULL,
                 title VARCHAR(100) NOT NULL,
                 role VARCHAR(100),
                 start_date DATE,
                 end_date DATE,
                 description TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                ON DELETE CASCADE
             );
             """
 
@@ -72,12 +81,16 @@ def import_resume_data():
                 work_id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 company_id INT NOT NULL,
-                job_type VARCHAR(50),
+                job_type ENUM('實習', '全職', '兼職', '工讀', '自由接案', '其他'),
                 job_title VARCHAR(100),
                 start_date DATE,
                 end_date DATE,
                 description TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                ON DELETE CASCADE,
+                FOREIGN KEY (company_id) REFERENCES companies(company_id)
+                ON DELETE CASCADE
             );
             """
 
@@ -86,20 +99,38 @@ def import_resume_data():
                 course_record_id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 course_name VARCHAR(100) NOT NULL,
-                course_category VARCHAR(50),
                 semester VARCHAR(50),
                 grade VARCHAR(10),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                ON DELETE CASCADE
             );
             """
 
-            
+            create_course_tags_sql = """
+            CREATE TABLE course_tags (
+                tag_id INT AUTO_INCREMENT PRIMARY KEY,
+                tag_name VARCHAR(50) NOT NULL UNIQUE
+            );
+            """
+            create_course_record_tags_sql = """
+            CREATE TABLE course_record_tags (
+                course_record_id INT NOT NULL,
+                tag_id INT NOT NULL,
+                PRIMARY KEY (course_record_id, tag_id),
+                FOREIGN KEY (course_record_id) REFERENCES course_records(course_record_id)
+                ON DELETE CASCADE,
+                FOREIGN KEY (tag_id) REFERENCES course_tags(tag_id)
+                ON DELETE CASCADE
+            );
+            """
             cursor.execute(create_departments_sql)
             cursor.execute(create_users_sql)
             cursor.execute(create_activities_sql)
             cursor.execute(create_work_sql)
             cursor.execute(create_course_sql)
-
+            cursor.execute(create_course_tags_sql)
+            cursor.execute(create_course_record_tags_sql)
             print("履歷相關資料表已重建完成。")
 
             import_departments(cursor, "dataset/departments.csv")
@@ -107,6 +138,8 @@ def import_resume_data():
             import_activities(cursor, "dataset/activities.csv")
             import_work_experiences(cursor, "dataset/work_experiences.csv")
             import_course_records(cursor, "dataset/course_records.csv")
+            import_course_tags(cursor, "dataset/course_tags.csv")
+            import_course_record_tags(cursor, "dataset/course_record_tags.csv")
 
         connection.commit()
         print("成功！已完成履歷假資料匯入。")
@@ -165,12 +198,11 @@ def import_users(cursor, csv_filepath):
         department_id,
         enrollment_year,
         graduation_year,
-        current_company,
         current_job_title,
         company_id,
         is_profile_completed
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     with open(csv_filepath, mode='r', encoding='utf-8-sig', newline='') as file:
@@ -186,7 +218,6 @@ def import_users(cursor, csv_filepath):
                 empty_to_none(row.get('department_id')),
                 empty_to_none(row.get('enrollment_year')),
                 empty_to_none(row.get('graduation_year')),
-                empty_to_none(row.get('current_company')),
                 empty_to_none(row.get('current_job_title')),
                 empty_to_none(row.get('company_id')),
                 row.get('is_profile_completed') or 0
@@ -282,11 +313,10 @@ def import_course_records(cursor, csv_filepath):
     INSERT INTO course_records (
         user_id,
         course_name,
-        course_category,
         semester,
         grade
     )
-    VALUES (%s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s)
     """
 
     with open(csv_filepath, mode='r', encoding='utf-8-sig', newline='') as file:
@@ -297,7 +327,6 @@ def import_course_records(cursor, csv_filepath):
             values = (
                 row.get('user_id'),
                 row.get('course_name') or '',
-                row.get('course_category') or '',
                 row.get('semester') or '',
                 row.get('grade') or ''
             )
@@ -307,6 +336,60 @@ def import_course_records(cursor, csv_filepath):
             cursor.executemany(sql, values_list)
 
     print(f"course_records 匯入完成，共 {len(values_list)} 筆。")
+
+def import_course_tags(cursor, csv_filepath):
+    print(f"正在讀取檔案 {csv_filepath} ...")
+
+    sql = """
+    INSERT INTO course_tags (
+        tag_name
+    )
+    VALUES (%s)
+    """
+
+    with open(csv_filepath, mode='r', encoding='utf-8-sig', newline='') as file:
+        csv_reader = csv.DictReader(file)
+
+        values_list = []
+
+        for row in csv_reader:
+            values = (
+                row.get('tag_name') or '',
+            )
+            values_list.append(values)
+
+        if values_list:
+            cursor.executemany(sql, values_list)
+
+    print(f"course_tags 匯入完成，共 {len(values_list)} 筆。")
+
+def import_course_record_tags(cursor, csv_filepath):
+    print(f"正在讀取檔案 {csv_filepath} ...")
+
+    sql = """
+    INSERT INTO course_record_tags (
+        course_record_id,
+        tag_id
+    )
+    VALUES (%s, %s)
+    """
+
+    with open(csv_filepath, mode='r', encoding='utf-8-sig', newline='') as file:
+        csv_reader = csv.DictReader(file)
+
+        values_list = []
+
+        for row in csv_reader:
+            values = (
+                row.get('course_record_id'),
+                row.get('tag_id')
+            )
+            values_list.append(values)
+
+        if values_list:
+            cursor.executemany(sql, values_list)
+
+    print(f"course_record_tags 匯入完成，共 {len(values_list)} 筆。")
 
 
 if __name__ == '__main__':

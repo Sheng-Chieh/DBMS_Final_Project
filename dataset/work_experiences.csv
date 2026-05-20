@@ -1,8 +1,11 @@
 user_id,company_id,job_type,job_title,start_date,end_date,description
-1,2,實習,Software Intern,2025-07-01,2025-08-31,協助開發內部工具
-2,1,實習,Data Analyst Intern,2025-06-01,2025-08-31,進行資料分析與視覺化
-3,2,工讀生,IT Assistant,2024-09-01,2025-06-30,協助處理校內設備問題
-5,2,全職,Software Engineer,2022-07-01,,負責後端系統開發
-6,1,全職,Data Engineer,2021-08-01,,建立資料管線與 ETL 系統
-7,8,全職,Backend Engineer,2020-09-01,,開發 API 與資料庫系統
-8,3,全職,Business Analyst,2021-03-01,,進行金融數據分析
+5,2,全職,Software Engineer,2022-07-01,,負責後端 API 開發與維護
+6,1,全職,Data Engineer,2021-08-01,,建立 ETL 與資料分析流程
+7,8,全職,Backend Engineer,2020-09-01,,開發與維護後端系統
+8,3,全職,Business Analyst,2019-07-01,,負責商業需求分析與報表製作
+9,5,全職,Frontend Engineer,2020-10-01,,開發 React 前端介面
+10,6,全職,Cloud Engineer,2018-06-01,,管理 AWS 雲端架構
+1,4,實習,Marketing Intern,2024-07-01,2024-08-31,協助社群行銷與數據整理
+2,7,工讀,IT Assistant,2023-09-01,2024-01-31,協助校內資訊設備維護
+3,9,兼職,Web Developer,2024-03-01,,接案製作企業網站
+4,10,實習,UIUX Intern,2025-06-01,2025-08-31,協助介面設計與使用者研究
