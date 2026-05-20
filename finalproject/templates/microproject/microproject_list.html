@@ -165,7 +165,10 @@
     <div class="container">
         <div class="header">
             <h1>當前開放的微任務</h1>
-            <a href="/projects/create/" class="btn-primary">＋ 發布新微任務</a>
+            {% if request.session.role == 'alumni' %}
+                <a href="/projects/create/" class="btn-primary">＋ 發布新微任務</a>
+            {% endif %}
+            
         </div>
         
         <form method="GET" action="" class="filter-bar">

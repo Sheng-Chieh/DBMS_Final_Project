@@ -106,13 +106,13 @@
 
                 <option value="專案">專案</option>
 
+                <option value="研究">研究</option>
+
                 <option value="志工">志工</option>
 
                 <option value="活動籌辦">活動籌辦</option>
 
-                <option value="研究計畫">研究計畫</option>
-
-                <option value="課外學習">課外學習</option>
+                <option value="學生組織">學生組織</option>
 
                 <option value="其他">其他</option>
 
@@ -155,10 +155,12 @@
                     開始日期
                 </label>
 
-                <input type="date"
-                       name="start_date"
-                       class="form-control">
-
+               <input  type="date"
+                        name="start_date"
+                        id="start_date"
+                        class="form-control"
+                        max="{{ today }}"
+                        onchange="updateEndDateLimit()">
             </div>
 
             <div class="col-md-6 mb-4">
@@ -167,9 +169,11 @@
                     結束日期
                 </label>
 
-                <input type="date"
-                       name="end_date"
-                       class="form-control">
+                <input  type="date"
+                        name="end_date"
+                        id="end_date"
+                        class="form-control"
+                        max="{{ today }}">
 
             </div>
 
@@ -202,6 +206,23 @@
     </form>
 
 </div>
+<script>
+function updateEndDateLimit() {
+    const startDate = document.getElementById("start_date");
+    const endDate = document.getElementById("end_date");
 
+    if (!startDate || !endDate) return;
+
+    if (startDate.value) {
+        endDate.min = startDate.value;
+
+        if (endDate.value && endDate.value < startDate.value) {
+            endDate.value = "";
+        }
+    }
+}
+
+updateEndDateLimit();
+</script>
 </body>
 </html>

@@ -30,8 +30,7 @@
             font-weight: 800;
         }
 
-        .form-control,
-        .form-select {
+        .form-control {
             border-radius: 14px;
             padding: 12px;
         }
@@ -76,32 +75,22 @@
         {% csrf_token %}
 
         <div class="mb-3">
-            <label class="form-label">課程名稱 </label>
+            <label class="form-label">課程名稱</label>
+
             <input type="text"
                    name="course_name"
                    class="form-control"
                    placeholder="例如：資料庫管理"
                    required>
+
             <div class="small-note mt-1">
                 請盡量填寫正式課程名稱，方便之後進行相似背景分析。
             </div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">課程類別</label>
-            <select name="course_category" class="form-select">
-                <option value="">請選擇課程類別</option>
-                <option value="資管核心">資管核心</option>
-                <option value="程式設計">程式設計</option>
-                <option value="資料科學">資料科學</option>
-                <option value="管理核心">管理核心</option>
-                <option value="AI課程">AI課程</option>
-                <option value="其他">其他</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
             <label class="form-label">學期</label>
+
             <input type="text"
                    name="semester"
                    class="form-control"
@@ -110,10 +99,12 @@
 
         <div class="mb-4">
             <label class="form-label">成績</label>
+
             <input type="text"
                    name="grade"
                    class="form-control"
                    placeholder="例如：A、A-、B+">
+
             <div class="small-note mt-1">
                 成績可選填，若不想公開或尚未取得成績，可以先留空。
             </div>
