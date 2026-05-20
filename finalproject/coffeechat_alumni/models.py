@@ -1,12 +1,12 @@
-import mysql.connector
-from mysql.connector import Error
+import pymysql
+from pymysql import MySQLError as Error
 from django.conf import settings
 
 class CoffeeChatDatabase:
     @staticmethod
     def get_connection():
         try:
-            return mysql.connector.connect(
+            return pymysql.connect(
                 host=settings.DATABASES['default']['HOST'],
                 database=settings.DATABASES['default']['NAME'],
                 user=settings.DATABASES['default']['USER'],

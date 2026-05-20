@@ -6,9 +6,7 @@ from .models import Company
 from functools import lru_cache
 from pathlib import Path
 import json
-import os
 import re
-import time
 
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -32,7 +30,7 @@ def search_companies(request):
     has_search_criteria = bool(query or industry_param or location_param)
     
     # 呼叫寫在 models.py 裡的 SQL 查詢方法
-    companies_data = Company.objects.search_with_raw_sql(query, industry_param, location_param)
+    companies_data = Company.objects.search_with_raw_sql(query, industry_param, location_param) or []
 
     display_companies = companies_data if has_search_criteria else companies_data[:5]
         
@@ -71,23 +69,16 @@ def extract_evidence_snippet(evidence: str) -> str:
         line = line.strip()
         if line.startswith("簡介:"):
             return line.replace("簡介:", "", 1).strip()
-    return evidence.strip()
+    return re.sub(r"\s+", " ", evidence).strip()
 
 
-def build_fallback_why(result, display_keywords):
-    matched = result.get("matched_keywords") or []
+def build_fallback_why(result):
     industry = result.get("industry_category") or ""
     sub = result.get("industry_subcategory") or ""
     location = result.get("location_city") or ""
     snippet = extract_evidence_snippet(result.get("evidence") or "")
-    snippet = re.sub(r"\s+", " ", snippet)
 
     pieces = []
-    if matched:
-        pieces.append(f"涵蓋關鍵字「{'、'.join(matched[:3])}」")
-    elif display_keywords:
-        pieces.append(f"與「{'、'.join(display_keywords[:2])}」需求相關")
-
     if industry:
         if sub:
             pieces.append(f"{industry}/{sub}產業")
@@ -122,11 +113,12 @@ def get_llm():
         temperature=0.2,
     )
 
+
 def normalize_llm_text(text):
     """將 LLM 回傳的物件 (可能為 LangChain AIMessage、Gemini List 結構等) 正規化為純文字字串"""
     if hasattr(text, "content"):
         text = text.content
-        
+
     if isinstance(text, list):
         parts = []
         for item in text:
@@ -135,10 +127,10 @@ def normalize_llm_text(text):
             else:
                 parts.append(str(item))
         return "\n".join([p for p in parts if p])
-        
+
     if isinstance(text, dict) and "text" in text:
         return str(text.get("text") or "")
-        
+
     return str(text)
 
 def extract_json_array(text):
@@ -154,93 +146,6 @@ def extract_json_array(text):
         return json.loads(cleaned)
     except Exception:
         return []
-
-
-def extract_string_list_from_json_array(text):
-    parsed = extract_json_array(text)
-    if not isinstance(parsed, list):
-        return []
-
-    items = []
-    for item in parsed:
-        if isinstance(item, str):
-            value = item.strip()
-        elif isinstance(item, dict):
-            value = str(item.get("keyword") or item.get("text") or "").strip()
-        else:
-            value = str(item).strip()
-
-        if value and value not in items:
-            items.append(value)
-
-    return items
-
-
-def repair_json_array(llm, raw_text: str) -> str:
-    if not llm:
-        return "[]"
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "你是 JSON 修復助手。請把使用者提供的內容修正成『純 JSON 陣列』，只輸出 JSON。",
-            ),
-            ("user", "請將以下內容修正成 JSON 陣列：\n{raw_text}"),
-        ]
-    )
-    msg = prompt.format_messages(raw_text=raw_text)
-    return normalize_llm_text(llm.invoke(msg))
-
-
-def fallback_query_keywords(user_query: str):
-    parts = [
-        part.strip()
-        for part in re.split(r"[\s,，、/|;；\n\t]+", user_query or "")
-        if part.strip()
-    ]
-
-    if parts:
-        keywords = []
-        for part in parts:
-            if part not in keywords:
-                keywords.append(part)
-        return keywords[:5]
-
-    cleaned = (user_query or "").strip()
-    return [cleaned] if cleaned else []
-
-
-def extract_query_keywords(llm, user_query: str):
-    fallback_keywords = fallback_query_keywords(user_query)
-    if not llm:
-        return fallback_keywords
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "你是一個查詢關鍵字分析 agent。請根據使用者輸入抽取最重要的搜尋關鍵字，"
-                "只輸出純 JSON 陣列，陣列元素必須是字串，不要輸出 markdown 或解釋文字。"
-                "請優先保留公司類型、產業、地點、需求條件等詞彙，最多 5 個。",
-            ),
-            (
-                "user",
-                "使用者查詢：{user_query}\n\n請輸出關鍵字 JSON 陣列：",
-            ),
-        ]
-    )
-
-    try:
-        msg = prompt.format_messages(user_query=user_query)
-        raw_text = normalize_llm_text(llm.invoke(msg))
-        keywords = extract_string_list_from_json_array(raw_text)
-
-        if keywords:
-            return keywords[:5]
-    except Exception as e:
-        print(f"關鍵字 agent 解析失敗: {e}")
-
-    return fallback_keywords
 
 @csrf_exempt
 def chat_recommend_companies_lc(request):
@@ -275,37 +180,10 @@ def chat_recommend_companies_lc(request):
             return f"data: {json.dumps({'type': 'error', 'text': text}, ensure_ascii=False)}\n\n".encode("utf-8")
 
         try:
-            # =========================================================
-            # Step 1: 需求分析與關鍵字擷取 (LLM Agent)
-            # =========================================================
-            yield send_progress("正在分析您的需求與擷取關鍵字...")
-
-            llm = get_llm()
-            keywords = extract_query_keywords(llm, user_query)
-
-            display_keywords = keywords[:]
-
-            search_context = f"使用者查詢：{user_query} | 關鍵字：{', '.join(display_keywords)}" if display_keywords else f"使用者查詢：{user_query}"
-
-            # =========================================================
-            # Step 2: 向量資料庫檢索 (ChromaDB + Hybrid Search)
-            # =========================================================
-            yield send_progress(f"正在資料庫中搜尋相符的公司 (分析了 {len(display_keywords)} 個特徵)...")
+            yield send_progress("正在資料庫中搜尋相符的公司...")
             
             retriever = get_retriever()
-            
-            # 使用較嚴格的門檻 (distance_threshold=0.9 或至少命中1個關鍵字) 搜尋
-            retrieved = retriever.search(
-                query=user_query, top_k=3, keywords=keywords, fetch_k=30,
-                min_keyword_hits=1, distance_threshold=0.9
-            )
-
-            # 若查無結果，放寬門檻再試一次 (distance_threshold=1.2)
-            if not retrieved and keywords:
-                retrieved = retriever.search(
-                    query=user_query, top_k=3, keywords=keywords, fetch_k=30,
-                    min_keyword_hits=0, distance_threshold=1.2
-                )
+            retrieved = retriever.search(query=user_query, top_k=3)
 
             if not retrieved:
                 yield send_result({
@@ -315,10 +193,7 @@ def chat_recommend_companies_lc(request):
                 })
                 return
 
-            # =========================================================
-            # Step 3: 交給 Gemini LLM 腦力激盪並生成推薦理由
-            # =========================================================
-            yield send_progress(f"已找到 {len(retrieved)} 家相關公司，正在請 AI 腦力激盪並撰寫推薦理由...")
+            yield send_progress(f"已找到 {len(retrieved)} 家相關公司，正在整理推薦理由...")
             
             llm = get_llm()
             resp = "[]"
@@ -339,7 +214,7 @@ def chat_recommend_companies_lc(request):
                     {k: r.get(k) for k in ("company_id", "name", "industry_category", "industry_subcategory", "location_city", "location_district", "evidence")} 
                     for r in retrieved
                 ]
-                msg = prompt.format_messages(search_context=search_context, companies_json=json.dumps(llm_candidates, ensure_ascii=False))
+                msg = prompt.format_messages(search_context=user_query, companies_json=json.dumps(llm_candidates, ensure_ascii=False))
                 
                 try:
                     resp = normalize_llm_text(llm.invoke(msg))
@@ -348,19 +223,11 @@ def chat_recommend_companies_lc(request):
             else:
                 print("GEMINI_API_KEY not set; using fallback reasons only.")
 
-            # =========================================================
-            # Step 4: 解析回傳結果與容錯處理 (Fallback)
-            # =========================================================
             yield send_progress("正在整理最後的推薦結果出來給您...")
-            time.sleep(1) # 假裝處理時間，讓前端有機會顯示進度訊息
 
             why_map = {}
             try:
                 arr = extract_json_array(resp)
-                
-                # 如果首次解析失敗，嘗試修復 JSON
-                if not arr and llm:
-                    arr = extract_json_array(repair_json_array(llm, resp))
 
                 if isinstance(arr, list):
                     for item in arr:
@@ -372,17 +239,13 @@ def chat_recommend_companies_lc(request):
             except Exception as e:
                 print(f"LLM 回應解析失敗: {e}, 原始回應內容: {resp}")
 
-            # 依解析出來的 JSON 寫回各公司物件中，若沒匹配到則使用內建邏輯 (build_fallback_why) 產生理由
             for r in retrieved:
                 company_id = int(r["company_id"])
-                r["why"] = why_map.get(company_id) or build_fallback_why(r, display_keywords)
+                r["why"] = why_map.get(company_id) or build_fallback_why(r)
 
-            # =========================================================
-            # Step 5: 回傳最終推薦清單
-            # =========================================================
             yield send_result({
                 "answer": "這是我為您找到的推薦公司：",
-                "assistant_message": f"收到，我已經根據「{search_context}」為您找到最適合的公司。",
+                "assistant_message": f"收到，我已經為您找到適合的公司。",
                 "recommendations": retrieved,
             })
 
