@@ -288,7 +288,7 @@ class CSVImporter:
             print(f"  [OK] course_records 成功匯入 {len(data)} 筆資料。")
         return True
 
-    def insert_course_tags(self, cursor):
+    '''def insert_course_tags(self, cursor):
         path = self._get_path("tag_dictionary.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
@@ -301,9 +301,9 @@ class CSVImporter:
             sql = "INSERT INTO course_tags (tag_id, tag_name) VALUES (%s, %s)"
             cursor.executemany(sql, data)
             print(f"  [OK] course_tags 成功匯入 {len(data)} 筆資料。")
-        return True
+        return True'''
 
-    def insert_course_record_tags(self, cursor):
+    '''def insert_course_record_tags(self, cursor):
         path = self._get_path("project_tag_mapping.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
@@ -317,7 +317,7 @@ class CSVImporter:
             sql = "INSERT INTO course_record_tags (course_record_id, tag_id) VALUES (%s, %s)"
             cursor.executemany(sql, data)
             print(f"  [OK] course_record_tags 成功匯入 {len(data)} 筆資料。")
-        return True
+        return True'''
 
     def insert_all(self, cursor):
         """一鍵全量匯入方法 (嚴格依照外鍵順序)"""
@@ -408,8 +408,8 @@ def import_submenu():
         "[4] activities (活動經歷)\n"
         "[5] work_experiences (工作經驗)\n"
         "[6] course_records (修課紀錄)\n"
-        "[7] course_tags (標籤字典)\n"
-        "[8] course_record_tags (修課標籤對應表)\n"
+        # "[7] course_tags (標籤字典)\n"
+        # "[8] course_record_tags (修課標籤對應表)\n"
         "[A] 一鍵全量匯入 (所有 CSV 檔)\n"
         "[B] 返回主選單\n"
         "----------------------------------------\n"
@@ -422,8 +422,8 @@ def import_submenu():
         "4": ("insert_activities", "activities"),
         "5": ("insert_work_experiences", "work_experiences"),
         "6": ("insert_course_records", "course_records"),
-        "7": ("insert_course_tags", "course_tags"),
-        "8": ("insert_course_record_tags", "course_record_tags")
+        # "7": ("insert_course_tags", "course_tags"),
+        # "8": ("insert_course_record_tags", "course_record_tags")
     }
     
     while True:
