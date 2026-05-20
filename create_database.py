@@ -288,7 +288,7 @@ class CSVImporter:
             print(f"  [OK] course_records 成功匯入 {len(data)} 筆資料。")
         return True
 
-    '''def insert_course_tags(self, cursor):
+    def insert_course_tags(self, cursor):
         path = self._get_path("tag_dictionary.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
@@ -301,9 +301,9 @@ class CSVImporter:
             sql = "INSERT INTO course_tags (tag_id, tag_name) VALUES (%s, %s)"
             cursor.executemany(sql, data)
             print(f"  [OK] course_tags 成功匯入 {len(data)} 筆資料。")
-        return True'''
+        return True
 
-    '''def insert_course_record_tags(self, cursor):
+    def insert_course_record_tags(self, cursor):
         path = self._get_path("project_tag_mapping.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
@@ -317,7 +317,7 @@ class CSVImporter:
             sql = "INSERT INTO course_record_tags (course_record_id, tag_id) VALUES (%s, %s)"
             cursor.executemany(sql, data)
             print(f"  [OK] course_record_tags 成功匯入 {len(data)} 筆資料。")
-        return True'''
+        return True
 
     def insert_all(self, cursor):
         """一鍵全量匯入方法 (嚴格依照外鍵順序)"""
@@ -330,6 +330,57 @@ class CSVImporter:
         self.insert_course_tags(cursor)
         self.insert_course_record_tags(cursor)
 
+# 資料表清空管理類別
+class DataTruncator:
+
+    def _truncate(self, cursor, table_name):
+        """內部的通用清空工具"""
+        cursor.execute(f"TRUNCATE TABLE `{table_name}`;")
+        print(f"  [Clean] 已清空資料表資料: {table_name}")
+        return True
+
+    def clear_companies(self, cursor):
+        return self._truncate(cursor, "companies")
+
+    def clear_departments(self, cursor):
+        return self._truncate(cursor, "departments")
+
+    def clear_users(self, cursor):
+        return self._truncate(cursor, "users")
+
+    def clear_activities(self, cursor):
+        return self._truncate(cursor, "activities")
+
+    def clear_work_experiences(self, cursor):
+        return self._truncate(cursor, "work_experiences")
+
+    def clear_course_records(self, cursor):
+        return self._truncate(cursor, "course_records")
+
+    def clear_course_tags(self, cursor):
+        return self._truncate(cursor, "course_tags")
+
+    def clear_course_record_tags(self, cursor):
+        return self._truncate(cursor, "course_record_tags")
+
+    def clear_coffee_chat_config(self, cursor):
+        return self._truncate(cursor, "coffee_chat_config")
+
+    def clear_coffee_chat_application(self, cursor):
+        return self._truncate(cursor, "coffee_chat_application")
+
+    def clear_all(self, cursor):
+        """一鍵全部清空方法 (嚴格依照外鍵反向順序避免衝突)"""
+        print("  正在執行全量清空作業...")
+        tables_to_clear = [
+            "coffee_chat_application", "coffee_chat_config", 
+            "course_record_tags", "course_tags", "course_records", 
+            "work_experiences", "activities", "users", 
+            "departments", "companies"
+        ]
+        for table in tables_to_clear:
+            self._truncate(cursor, table)
+        return True
 
 # 資料表建置與中央調度控制
 def create_tables():
@@ -361,33 +412,37 @@ def create_tables():
         if connection: connection.close()
 
 
-def execute_import(target_method_name=None, func_name=""):
-    """中央事務調度：動態呼叫 CSVImporter Class 內的方法"""
+def execute(target_method_name=None, func_name="全部資料"):
+    """中央事務調度：動態識別並呼叫 CSVImporter 或 DataTruncator 內的方法"""
     connection = None
     try:
         connection = pymysql.connect(**db_config)
         with connection.cursor() as cursor:
-            print(f"\n開始執行【{func_name}】匯入作業...")
+            print(f"\n開始執行【{func_name}】作業...")
             
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
             
-            importer = CSVImporter(dataset_dir="dataset")
-            
             if target_method_name:
-                # 利用 Python 的 getattr 動態抓取實例裡面的 Method
-                method = getattr(importer, target_method_name)
+                # 💡 判斷：如果是 clear_ 開頭，就實例化 DataTruncator；否則使用 CSVImporter
+                if target_method_name.startswith("clear_"):
+                    executor = DataTruncator()
+                else:
+                    executor = CSVImporter(dataset_dir="dataset")
+                
+                method = getattr(executor, target_method_name)
                 success = method(cursor)
                 if not success:
-                    print("找不到對應的 CSV 檔案，操作終止。")
+                    print("執行對應操作時失敗。")
             else:
-                # 全部匯入
+                # 若完全沒傳方法名稱，預設為 CSV 的全量匯入
+                importer = CSVImporter(dataset_dir="dataset")
                 importer.insert_all(cursor)
                 
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
             connection.commit()
             print(f"【{func_name}】作業成功，已將變更儲存至資料庫！")
     except Exception as e:
-        print(f"匯入中途發生錯誤: {e}")
+        print(f"執行中途發生錯誤: {e}")
         if connection:
             connection.rollback()
             print("已自動執行交易回滾（Rollback）。")
@@ -399,41 +454,61 @@ def execute_import(target_method_name=None, func_name=""):
 # 使用者互動選單
 def import_submenu():
     sub_menu = (
-        "\n----------------------------------------\n"
-        "       請選擇要匯入的 Table 資料       \n"
-        "----------------------------------------\n"
-        "[1] companies (公司)\n"
-        "[2] departments (科系)\n"
-        "[3] users (使用者)\n"
-        "[4] activities (活動經歷)\n"
-        "[5] work_experiences (工作經驗)\n"
-        "[6] course_records (修課紀錄)\n"
-        # "[7] course_tags (標籤字典)\n"
-        # "[8] course_record_tags (修課標籤對應表)\n"
-        "[A] 一鍵全量匯入 (所有 CSV 檔)\n"
-        "[B] 返回主選單\n"
-        "----------------------------------------\n"
+        "\n-------------------------------------------------------------\n"
+        "                   資料庫假資料管理專區                      \n"
+        "-------------------------------------------------------------\n"
+        " 【單表資料操作】                【單表清空操作 (不刪結構)】 \n"
+        " [1]  匯入 companies             [1c] 清空 companies\n"
+        " [2]  匯入 departments           [2c] 清空 departments\n"
+        " [3]  匯入 users                 [3c] 清空 users\n"
+        " [4]  匯入 activities            [4c] 清空 activities\n"
+        " [5]  匯入 work_experiences      [5c] 清空 work_experiences\n"
+        " [6]  匯入 course_records        [6c] 清空 course_records\n"
+        " [7]  匯入 course_tags           [7c] 清空 course_tags\n"
+        " [8]  匯入 course_record_tags    [8c] 清空 course_record_tags\n"
+        "-------------------------------------------------------------\n"
+        " [A]  一鍵全部匯入 (所有 CSV 檔案)\n"
+        " [C]  一鍵清空所有資料表資料 (保留結構)\n"
+        " [B]  返回主選單\n"
+        "-------------------------------------------------------------\n"
     )
-    # 這裡的對應直接改成指向 Class 內部 Method 的「字串名稱」
+    
+    # 映射表全面升級：支援兩個類別的方法對應
     mapping = {
-        "1": ("insert_companies", "companies"),
-        "2": ("insert_departments", "departments"),
-        "3": ("insert_users", "users"),
-        "4": ("insert_activities", "activities"),
-        "5": ("insert_work_experiences", "work_experiences"),
-        "6": ("insert_course_records", "course_records"),
-        # "7": ("insert_course_tags", "course_tags"),
-        # "8": ("insert_course_record_tags", "course_record_tags")
+        # 匯入部分
+        "1": ("insert_companies", "匯入 companies"),
+        "2": ("insert_departments", "匯入 departments"),
+        "3": ("insert_users", "匯入 users"),
+        "4": ("insert_activities", "匯入 activities"),
+        "5": ("insert_work_experiences", "匯入 work_experiences"),
+        "6": ("insert_course_records", "匯入 course_records"),
+        "7": ("insert_course_tags", "匯入 course_tags"),
+        "8": ("insert_course_record_tags", "匯入 course_record_tags"),
+        # 清空部分 (對應到 DataTruncator 的方法)
+        "1c": ("clear_companies", "清空 companies"),
+        "2c": ("clear_departments", "清空 departments"),
+        "3c": ("clear_users", "清空 users"),
+        "4c": ("clear_activities", "清空 activities"),
+        "5c": ("clear_work_experiences", "清空 work_experiences"),
+        "6c": ("clear_course_records", "清空 course_records"),
+        "7c": ("clear_course_tags", "清空 course_tags"),
+        "8c": ("clear_course_record_tags", "清空 course_record_tags")
     }
     
     while True:
         print(sub_menu)
-        choice = input("請選擇要匯入的代號: ").strip().lower()
+        choice = input("請輸入操作指令: ").strip().lower()
         if choice in mapping:
             method_name, show_name = mapping[choice]
-            execute_import(target_method_name=method_name, func_name=show_name)
+            execute(target_method_name=method_name, func_name=show_name)
         elif choice == "a":
-            execute_import(target_method_name=None, func_name="全部 CSV 檔案")
+            execute(target_method_name=None, func_name="全量 CSV 匯入")
+        elif choice == "c":
+            confirm = input("確定要一鍵清空所有資料表嗎？(y/n): ").strip().lower()
+            if confirm == 'y':
+                execute(target_method_name="clear_all", func_name="全量清空資料")
+            else:
+                print("操作已取消。")
         elif choice == "b":
             print("已回到主選單。")
             break
