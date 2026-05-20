@@ -1,0 +1,473 @@
+import os
+import csv
+import pymysql
+from dotenv import load_dotenv
+
+# 1. 載入 .env 檔案中的環境變數
+load_dotenv()
+
+# 2. 從環境變數讀取資料庫連線資訊
+db_config = {
+    'host': os.getenv('DB_HOST'),
+    'port': int(os.getenv('DB_PORT')),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME'),
+    'charset': 'utf8mb4',
+    'autocommit': False
+}
+
+# 按照依賴順序定義要建置的資料表定義
+TABLES_SCHEMA = {
+    "companies": """
+        CREATE TABLE companies (
+            company_id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            industry_category VARCHAR(50),
+            industry_subcategory VARCHAR(50),
+            description TEXT,
+            description_detail TEXT,
+            location_city VARCHAR(50),
+            location_district VARCHAR(50),
+            website VARCHAR(200),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "departments": """
+        CREATE TABLE departments (
+            department_id INT AUTO_INCREMENT PRIMARY KEY,
+            department_name VARCHAR(100) NOT NULL UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "users": """
+        CREATE TABLE users (
+            user_id INT AUTO_INCREMENT PRIMARY KEY,
+            role ENUM('student', 'alumni') NOT NULL,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            department_id INT,
+            enrollment_year INT,
+            graduation_year INT,
+            company_id INT,
+            current_job_title VARCHAR(100),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_profile_completed BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (department_id) REFERENCES departments(department_id),
+            FOREIGN KEY (company_id) REFERENCES companies(company_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "activities": """
+        CREATE TABLE activities (
+            activity_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            category ENUM('社團', '競賽', '專案', '研究', '志工', '活動籌辦', '學生組織', '其他') NOT NULL,
+            title VARCHAR(100) NOT NULL,
+            role VARCHAR(100),
+            start_date DATE,
+            end_date DATE,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "work_experiences": """
+        CREATE TABLE work_experiences (
+            work_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            company_id INT NOT NULL,
+            job_type ENUM('實習', '全職', '兼職', '工讀', '自由接案', '其他'),
+            job_title VARCHAR(100),
+            start_date DATE,
+            end_date DATE,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "course_records": """
+        CREATE TABLE course_records (
+            course_record_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            course_name VARCHAR(100) NOT NULL,
+            semester VARCHAR(50),
+            grade VARCHAR(10),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "course_tags": """
+        CREATE TABLE course_tags (
+            tag_id INT AUTO_INCREMENT PRIMARY KEY,
+            tag_name VARCHAR(50) NOT NULL UNIQUE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "course_record_tags": """
+        CREATE TABLE course_record_tags (
+            course_record_id INT NOT NULL,
+            tag_id INT NOT NULL,
+            PRIMARY KEY (course_record_id, tag_id),
+            FOREIGN KEY (course_record_id) REFERENCES course_records(course_record_id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES course_tags(tag_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "coffee_chat_config": """
+        CREATE TABLE coffee_chat_config (
+            id INT NOT NULL AUTO_INCREMENT,
+            alumni_name VARCHAR(50) NOT NULL COMMENT '發布校友',
+            location_type ENUM('online','offline') NOT NULL,
+            location_detail VARCHAR(255) DEFAULT NULL,
+            date DATE NOT NULL COMMENT '對談日期',
+            start_time TIME NOT NULL COMMENT '開始時間',
+            end_time TIME NOT NULL COMMENT '結束時間',
+            duration INT NOT NULL COMMENT '對談時長(分鐘)',
+            target_departments VARCHAR(255) DEFAULT NULL,
+            resume_match_rate INT DEFAULT '0',
+            is_published TINYINT(1) DEFAULT '0' COMMENT '0=儲存, 1=發布',
+            created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "coffee_chat_application": """
+        CREATE TABLE coffee_chat_application (
+            id INT NOT NULL AUTO_INCREMENT,
+            coffee_chat_id INT NOT NULL COMMENT '對應的 Coffee Chat ID',
+            student_name VARCHAR(100) NOT NULL,
+            experience_summary TEXT,
+            question_outline TEXT,
+            status VARCHAR(20) DEFAULT 'pending' COMMENT '狀態: pending/accepted/rejected',
+            created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY coffee_chat_id (coffee_chat_id),
+            CONSTRAINT coffee_chat_application_ibfk_1 FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chat_config (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """
+}
+
+
+# CSV 假資料匯入封裝 Class
+class CSVImporter:
+    
+    def __init__(self, dataset_dir="dataset"):
+        self.dataset_dir = dataset_dir
+
+    def _clean_int(self, val):
+        """實例內部的清理工具：將字串安全轉為 int 或 None"""
+        if not val or val.strip() == "" or val.upper() == "NAN":
+            return None
+        try:
+            return int(float(val.strip()))
+        except:
+            return None
+
+    def _clean_str(self, val):
+        """實例內部的清理工具：將字串前後去空白，若為空則回傳 None"""
+        if val is None:
+            return None
+        s = val.strip()
+        return s if s != "" else None
+
+    def _get_path(self, filename):
+        """獲取 CSV 檔案的完整相對路徑"""
+        return os.path.join(self.dataset_dir, filename)
+
+    def insert_companies(self, cursor):
+        path = self._get_path("company.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('name') or not row.get('name').strip(): continue
+                data.append((
+                    row.get('name').strip(), self._clean_str(row.get('industry_category')),
+                    self._clean_str(row.get('industry_subcategory')), self._clean_str(row.get('description')),
+                    self._clean_str(row.get('description_detail')), self._clean_str(row.get('location_city')),
+                    self._clean_str(row.get('location_district')), self._clean_str(row.get('website'))
+                ))
+        if data:
+            sql = """INSERT INTO companies (name, industry_category, industry_subcategory, description, description_detail, location_city, location_district, website) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            cursor.executemany(sql, data)
+            print(f"  [OK] companies 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_departments(self, cursor):
+        path = self._get_path("departments.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = [(row.get('department_name').strip(),) for row in reader if row.get('department_name')]
+        if data:
+            sql = "INSERT INTO departments (department_name) VALUES (%s)"
+            cursor.executemany(sql, data)
+            print(f"  [OK] departments 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_users(self, cursor):
+        path = self._get_path("users.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('name') or not row.get('email'): continue
+                data.append((
+                    row.get('role', 'student').strip(), row.get('name').strip(),
+                    row.get('email').strip(), row.get('password', '123456').strip(),
+                    self._clean_int(row.get('department_id')), self._clean_int(row.get('enrollment_year')),
+                    self._clean_int(row.get('graduation_year')), self._clean_int(row.get('company_id')),
+                    self._clean_str(row.get('current_job_title')),
+                    self._clean_int(row.get('is_profile_completed')) if row.get('is_profile_completed') else 0
+                ))
+        if data:
+            sql = """INSERT INTO users (role, name, email, password, department_id, enrollment_year, graduation_year, company_id, current_job_title, is_profile_completed) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            cursor.executemany(sql, data)
+            print(f"  [OK] users 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_activities(self, cursor):
+        path = self._get_path("activities.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('user_id') or not row.get('title'): continue
+                data.append((
+                    self._clean_int(row.get('user_id')), row.get('category', '其他').strip(),
+                    row.get('title').strip(), self._clean_str(row.get('role')),
+                    self._clean_str(row.get('start_date')), self._clean_str(row.get('end_date')),
+                    self._clean_str(row.get('description'))
+                ))
+        if data:
+            sql = """INSERT INTO activities (user_id, category, title, role, start_date, end_date, description) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+            cursor.executemany(sql, data)
+            print(f"  [OK] activities 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_work_experiences(self, cursor):
+        path = self._get_path("work_experiences.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('user_id') or not row.get('company_id'): continue
+                data.append((
+                    self._clean_int(row.get('user_id')), self._clean_int(row.get('company_id')),
+                    row.get('job_type', '其他').strip(), self._clean_str(row.get('job_title')),
+                    self._clean_str(row.get('start_date')), self._clean_str(row.get('end_date')),
+                    self._clean_str(row.get('description'))
+                ))
+        if data:
+            sql = """INSERT INTO work_experiences (user_id, company_id, job_type, job_title, start_date, end_date, description) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+            cursor.executemany(sql, data)
+            print(f"  [OK] work_experiences 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_course_records(self, cursor):
+        path = self._get_path("course_records.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('user_id') or not row.get('course_name'): continue
+                data.append((
+                    self._clean_int(row.get('user_id')), row.get('course_name').strip(),
+                    self._clean_str(row.get('semester')), self._clean_str(row.get('grade'))
+                ))
+        if data:
+            sql = "INSERT INTO course_records (user_id, course_name, semester, grade) VALUES (%s, %s, %s, %s)"
+            cursor.executemany(sql, data)
+            print(f"  [OK] course_records 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_course_tags(self, cursor):
+        path = self._get_path("tag_dictionary.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('tag_name'): continue
+                data.append((self._clean_int(row.get('tag_id')), row.get('tag_name').strip()))
+        if data:
+            sql = "INSERT INTO course_tags (tag_id, tag_name) VALUES (%s, %s)"
+            cursor.executemany(sql, data)
+            print(f"  [OK] course_tags 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_course_record_tags(self, cursor):
+        path = self._get_path("project_tag_mapping.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                pid = self._clean_int(row.get('project_id'))
+                tid = self._clean_int(row.get('tag_id'))
+                if pid and tid: data.append((pid, tid))
+        if data:
+            sql = "INSERT INTO course_record_tags (course_record_id, tag_id) VALUES (%s, %s)"
+            cursor.executemany(sql, data)
+            print(f"  [OK] course_record_tags 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_all(self, cursor):
+        """一鍵全量匯入方法 (嚴格依照外鍵順序)"""
+        self.insert_companies(cursor)
+        self.insert_departments(cursor)
+        self.insert_users(cursor)
+        self.insert_activities(cursor)
+        self.insert_work_experiences(cursor)
+        self.insert_course_records(cursor)
+        self.insert_course_tags(cursor)
+        self.insert_course_record_tags(cursor)
+
+
+# 資料表建置與中央調度控制
+def create_tables():
+    connection = None
+    try:
+        print(f"正在連線至 MySQL 資料庫 ({db_config['host']}:{db_config['port']})...")
+        connection = pymysql.connect(**db_config)
+        
+        with connection.cursor() as cursor:
+            print("連線成功！開始準備資料表...")
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+            for table_name in TABLES_SCHEMA.keys():
+                cursor.execute(f"DROP TABLE IF EXISTS `{table_name}`;")
+                print(f"已清理資料表 (如果存在): {table_name}")
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+            print("----------------------------------------")
+
+            for table_name, create_query in TABLES_SCHEMA.items():
+                cursor.execute(create_query)
+                print(f"資料表建置成功: {table_name}")
+
+            connection.commit()
+            print("----------------------------------------")
+            print("所有資料表重新建置完成！")
+    except Exception as e:
+        print(f"資料庫操作失敗，原因: {e}")
+        if connection: connection.rollback()
+    finally:
+        if connection: connection.close()
+
+
+def execute_import(target_method_name=None, func_name=""):
+    """中央事務調度：動態呼叫 CSVImporter Class 內的方法"""
+    connection = None
+    try:
+        connection = pymysql.connect(**db_config)
+        with connection.cursor() as cursor:
+            print(f"\n開始執行【{func_name}】匯入作業...")
+            
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+            
+            importer = CSVImporter(dataset_dir="dataset")
+            
+            if target_method_name:
+                # 利用 Python 的 getattr 動態抓取實例裡面的 Method
+                method = getattr(importer, target_method_name)
+                success = method(cursor)
+                if not success:
+                    print("找不到對應的 CSV 檔案，操作終止。")
+            else:
+                # 全部匯入
+                importer.insert_all(cursor)
+                
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+            connection.commit()
+            print(f"【{func_name}】作業成功，已將變更儲存至資料庫！")
+    except Exception as e:
+        print(f"匯入中途發生錯誤: {e}")
+        if connection:
+            connection.rollback()
+            print("已自動執行交易回滾（Rollback）。")
+    finally:
+        if connection: connection.close()
+
+
+
+# 使用者互動選單
+def import_submenu():
+    sub_menu = (
+        "\n----------------------------------------\n"
+        "       請選擇要匯入的 Table 資料       \n"
+        "----------------------------------------\n"
+        "[1] companies (公司)\n"
+        "[2] departments (科系)\n"
+        "[3] users (使用者)\n"
+        "[4] activities (活動經歷)\n"
+        "[5] work_experiences (工作經驗)\n"
+        "[6] course_records (修課紀錄)\n"
+        "[7] course_tags (標籤字典)\n"
+        "[8] course_record_tags (修課標籤對應表)\n"
+        "[A] 一鍵全量匯入 (所有 CSV 檔)\n"
+        "[B] 返回主選單\n"
+        "----------------------------------------\n"
+    )
+    # 這裡的對應直接改成指向 Class 內部 Method 的「字串名稱」
+    mapping = {
+        "1": ("insert_companies", "companies"),
+        "2": ("insert_departments", "departments"),
+        "3": ("insert_users", "users"),
+        "4": ("insert_activities", "activities"),
+        "5": ("insert_work_experiences", "work_experiences"),
+        "6": ("insert_course_records", "course_records"),
+        "7": ("insert_course_tags", "course_tags"),
+        "8": ("insert_course_record_tags", "course_record_tags")
+    }
+    
+    while True:
+        print(sub_menu)
+        choice = input("請選擇要匯入的代號: ").strip().lower()
+        if choice in mapping:
+            method_name, show_name = mapping[choice]
+            execute_import(target_method_name=method_name, func_name=show_name)
+        elif choice == "a":
+            execute_import(target_method_name=None, func_name="全部 CSV 檔案")
+        elif choice == "b":
+            print("已回到主選單。")
+            break
+        else:
+            print("輸入無效，請重新選擇。")
+
+def user_selected():
+    menu = (
+        "\n=============================\n"
+        "      資料庫管理工具選單     \n"
+        "=============================\n"
+        "[1] 重新建置所有資料表 (會清空舊資料)\n"
+        "[2] 進入假資料匯入專區\n"
+        "[exit] 離開程式\n"
+        "-----------------------------\n"
+    )
+    
+    while True:
+        print(menu)
+        user_input = input("請輸入操作代號: ").strip().lower()
+        
+        if user_input == "1":
+            confirm = input("這將刪除現有資料表並清空資料，確定嗎？(y/n): ").strip().lower()
+            if confirm == 'y':
+                create_tables()
+            else:
+                print("操作已取消。")
+        elif user_input == "2":
+            import_submenu()
+        elif user_input == "exit":
+            print("程式已關閉。")
+            break
+        else:
+            print("輸入無效，請輸入 1、2 或 exit。")
+
+if __name__ == "__main__":
+    user_selected()
