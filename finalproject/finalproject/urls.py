@@ -54,6 +54,7 @@ urlpatterns = [
     path('delete_chat/<int:chat_id>/', coffeechat_alumni_views.delete_coffee_chat, name='delete_coffee_chat'),
     path('applicant/<int:applicant_id>/reject/', coffeechat_alumni_views.reject_applicant, name='reject_applicant'),
     
+    #登入註冊端
     path('resume/', account_views.resume, name='resume'),
     path('add-activity/', account_views.add_activity, name='add_activity'),
     path('add-work/', account_views.add_work, name='add_work'),

@@ -1,4 +1,4 @@
-import mysql.connector
+import mysql.connector # 到時候讀取資料庫設定要改
 from mysql.connector import Error
 from django.conf import settings
 
