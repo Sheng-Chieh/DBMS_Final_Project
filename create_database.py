@@ -18,6 +18,7 @@ db_config = {
 }
 
 # 按照依賴順序定義要建置的資料表定義
+# 按照依賴順序定義要建置的資料表定義
 TABLES_SCHEMA = {
     "companies": """
         CREATE TABLE companies (
@@ -141,6 +142,35 @@ TABLES_SCHEMA = {
             PRIMARY KEY (id),
             KEY coffee_chat_id (coffee_chat_id),
             CONSTRAINT coffee_chat_application_ibfk_1 FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chat_config (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "tag_dictionary": """
+        CREATE TABLE tag_dictionary (
+            tag_id INT AUTO_INCREMENT PRIMARY KEY,
+            tag_name VARCHAR(50) NOT NULL UNIQUE COMMENT '標籤名稱',
+            tag_category VARCHAR(50) NOT NULL COMMENT '標籤分類'
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "micro_project": """
+        CREATE TABLE micro_project (
+            project_id INT AUTO_INCREMENT PRIMARY KEY,
+            alumni_id INT NOT NULL COMMENT '發布專案的校友ID',
+            company_id INT COMMENT '關聯公司ID',
+            title VARCHAR(100) NOT NULL COMMENT '專案名稱',
+            description TEXT NOT NULL COMMENT '專案詳細內容與需求',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (alumni_id) REFERENCES users(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+    "project_tag_mapping": """
+        CREATE TABLE project_tag_mapping (
+            project_id INT NOT NULL,
+            tag_id INT NOT NULL,
+            PRIMARY KEY (project_id, tag_id),
+            FOREIGN KEY (project_id) REFERENCES micro_project(project_id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tag_dictionary(tag_id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """
 }
@@ -289,7 +319,7 @@ class CSVImporter:
         return True
 
     def insert_course_tags(self, cursor):
-        path = self._get_path("tag_dictionary.csv")
+        path = self._get_path("course_tags.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
@@ -304,6 +334,71 @@ class CSVImporter:
         return True
 
     def insert_course_record_tags(self, cursor):
+        path = self._get_path("course_record_tags.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                pid = self._clean_int(row.get('course_record_id'))
+                tid = self._clean_int(row.get('tag_id'))
+                if pid and tid: data.append((pid, tid))
+        if data:
+            sql = "INSERT INTO course_record_tags (course_record_id, tag_id) VALUES (%s, %s)"
+            cursor.executemany(sql, data)
+            print(f"  [OK] course_record_tags 成功匯入 {len(data)} 筆資料。")
+        return True
+    
+    def insert_tag_dictionary(self, cursor):
+        path = self._get_path("tag_dictionary.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('tag_name') or not row.get('tag_category'): continue
+                data.append((
+                    self._clean_int(row.get('tag_id')),
+                    row.get('tag_name').strip(),
+                    row.get('tag_category').strip()
+                ))
+        if data:
+            # 如果 CSV 內有提供 tag_id 則帶入，否則讓資料庫自增
+            if data[0][0] is not None:
+                sql = "INSERT INTO tag_dictionary (tag_id, tag_name, tag_category) VALUES (%s, %s, %s)"
+            else:
+                sql = "INSERT INTO tag_dictionary (tag_name, tag_category) VALUES (%s, %s)"
+                data = [(r[1], r[2]) for r in data]
+            cursor.executemany(sql, data)
+            print(f"  [OK] tag_dictionary 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_micro_project(self, cursor):
+        path = self._get_path("micro_project.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('alumni_id') or not row.get('title') or not row.get('description'): continue
+                data.append((
+                    self._clean_int(row.get('project_id')),
+                    self._clean_int(row.get('alumni_id')),
+                    self._clean_int(row.get('company_id')),
+                    row.get('title').strip(),
+                    row.get('description').strip()
+                ))
+        if data:
+            if data[0][0] is not None:
+                sql = "INSERT INTO micro_project (project_id, alumni_id, company_id, title, description) VALUES (%s, %s, %s, %s, %s)"
+            else:
+                sql = "INSERT INTO micro_project (alumni_id, company_id, title, description) VALUES (%s, %s, %s, %s)"
+                data = [(r[1], r[2], r[3], r[4]) for r in data]
+            cursor.executemany(sql, data)
+            print(f"  [OK] micro_project 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_project_tag_mapping(self, cursor):
         path = self._get_path("project_tag_mapping.csv")
         if not os.path.exists(path): return False
         with open(path, mode='r', encoding='utf-8-sig') as f:
@@ -314,13 +409,13 @@ class CSVImporter:
                 tid = self._clean_int(row.get('tag_id'))
                 if pid and tid: data.append((pid, tid))
         if data:
-            sql = "INSERT INTO course_record_tags (course_record_id, tag_id) VALUES (%s, %s)"
+            sql = "INSERT INTO project_tag_mapping (project_id, tag_id) VALUES (%s, %s)"
             cursor.executemany(sql, data)
-            print(f"  [OK] course_record_tags 成功匯入 {len(data)} 筆資料。")
+            print(f"  [OK] project_tag_mapping 成功匯入 {len(data)} 筆資料。")
         return True
 
     def insert_all(self, cursor):
-        """一鍵全量匯入方法 (嚴格依照外鍵順序)"""
+        """一鍵全部匯入方法 (嚴格依照外鍵順序)"""
         self.insert_companies(cursor)
         self.insert_departments(cursor)
         self.insert_users(cursor)
@@ -329,6 +424,9 @@ class CSVImporter:
         self.insert_course_records(cursor)
         self.insert_course_tags(cursor)
         self.insert_course_record_tags(cursor)
+        self.insert_tag_dictionary(cursor)
+        self.insert_micro_project(cursor)
+        self.insert_project_tag_mapping(cursor)
 
 # 資料表清空管理類別
 class DataTruncator:
@@ -368,11 +466,21 @@ class DataTruncator:
 
     def clear_coffee_chat_application(self, cursor):
         return self._truncate(cursor, "coffee_chat_application")
+    
+    def clear_tag_dictionary(self, cursor):
+        return self._truncate(cursor, "tag_dictionary")
+
+    def clear_micro_project(self, cursor):
+        return self._truncate(cursor, "micro_project")
+
+    def clear_project_tag_mapping(self, cursor):
+        return self._truncate(cursor, "project_tag_mapping")
 
     def clear_all(self, cursor):
         """一鍵全部清空方法 (嚴格依照外鍵反向順序避免衝突)"""
         print("  正在執行全量清空作業...")
         tables_to_clear = [
+            "project_tag_mapping", "micro_project", "tag_dictionary",
             "coffee_chat_application", "coffee_chat_config", 
             "course_record_tags", "course_tags", "course_records", 
             "work_experiences", "activities", "users", 
@@ -455,7 +563,7 @@ def execute(target_method_name=None, func_name="全部資料"):
 def import_submenu():
     sub_menu = (
         "\n-------------------------------------------------------------\n"
-        "                   資料庫假資料管理專區                      \n"
+        "                      資料庫假資料管理                      \n"
         "-------------------------------------------------------------\n"
         " 【單表資料操作】                【單表清空操作 (不刪結構)】 \n"
         " [1]  匯入 companies             [1c] 清空 companies\n"
@@ -466,6 +574,9 @@ def import_submenu():
         " [6]  匯入 course_records        [6c] 清空 course_records\n"
         " [7]  匯入 course_tags           [7c] 清空 course_tags\n"
         " [8]  匯入 course_record_tags    [8c] 清空 course_record_tags\n"
+        " [9]  匯入 tag_dictionary        [9c] 清空 tag_dictionary\n"
+        " [10] 匯入 micro_project         [10c]清空 micro_project\n"
+        " [11] 匯入 project_tag_mapping   [11c]清空 project_tag_mapping\n"
         "-------------------------------------------------------------\n"
         " [A]  一鍵全部匯入 (所有 CSV 檔案)\n"
         " [C]  一鍵清空所有資料表資料 (保留結構)\n"
@@ -473,7 +584,6 @@ def import_submenu():
         "-------------------------------------------------------------\n"
     )
     
-    # 映射表全面升級：支援兩個類別的方法對應
     mapping = {
         # 匯入部分
         "1": ("insert_companies", "匯入 companies"),
@@ -484,7 +594,10 @@ def import_submenu():
         "6": ("insert_course_records", "匯入 course_records"),
         "7": ("insert_course_tags", "匯入 course_tags"),
         "8": ("insert_course_record_tags", "匯入 course_record_tags"),
-        # 清空部分 (對應到 DataTruncator 的方法)
+        "9": ("insert_tag_dictionary", "匯入 tag_dictionary"),
+        "10": ("insert_micro_project", "匯入 micro_project"),
+        "11": ("insert_project_tag_mapping", "匯入 project_tag_mapping"),
+        # 清空部分
         "1c": ("clear_companies", "清空 companies"),
         "2c": ("clear_departments", "清空 departments"),
         "3c": ("clear_users", "清空 users"),
@@ -492,7 +605,10 @@ def import_submenu():
         "5c": ("clear_work_experiences", "清空 work_experiences"),
         "6c": ("clear_course_records", "清空 course_records"),
         "7c": ("clear_course_tags", "清空 course_tags"),
-        "8c": ("clear_course_record_tags", "清空 course_record_tags")
+        "8c": ("clear_course_record_tags", "清空 course_record_tags"),
+        "9c": ("clear_tag_dictionary", "清空 tag_dictionary"),
+        "10c": ("clear_micro_project", "清空 micro_project"),
+        "11c": ("clear_project_tag_mapping", "清空 project_tag_mapping")
     }
     
     while True:
