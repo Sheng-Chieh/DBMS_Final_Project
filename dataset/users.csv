@@ -1,9 +1,11 @@
-name,email,password,role,department_id,enrollment_year,graduation_year,current_company,current_job_title,company_id,is_profile_completed
-王小明,student1@test.com,student123,student,1,2023,2027,,,NULL,1
-林佳怡,student2@test.com,hello456,student,1,2022,2026,,,NULL,1
-陳柏翰,student3@test.com,nccu888,student,2,2021,2025,,,NULL,1
-張雅婷,student4@test.com,java777,student,3,2023,2027,,,NULL,1
-李志豪,alumni1@test.com,google789,alumni,1,,2022,Google 台灣,Software Engineer,2,1
-蔡宜庭,alumni2@test.com,tsmc888,alumni,1,,2021,台灣積體電路製造 (TSMC),Data Engineer,1,1
-黃俊凱,alumni3@test.com,mediatek321,alumni,1,,2020,聯發科技 (MediaTek),Backend Engineer,8,1
-許文馨,alumni4@test.com,cathay999,alumni,2,,2021,國泰金控,Business Analyst,3,1
+name,email,password,role,department_id,enrollment_year,graduation_year,company_id,current_job_title,is_profile_completed
+王小明,student1@test.com,student123,student,1,2023,2027,,,1
+林佳怡,student2@test.com,hello456,student,1,2022,2026,,,1
+陳柏翰,student3@test.com,nccu888,student,2,2021,2025,,,1
+張雅婷,student4@test.com,java777,student,3,2023,2027,,,1
+李志豪,alumni1@test.com,google789,alumni,1,,2022,2,Software Engineer,1
+蔡宜庭,alumni2@test.com,tsmc888,alumni,2,,2021,1,Data Engineer,1
+黃俊凱,alumni3@test.com,mediatek321,alumni,3,,2020,8,Backend Engineer,1
+許文馨,alumni4@test.com,cathay999,alumni,4,,2019,3,Business Analyst,1
+吳承恩,alumni5@test.com,meta555,alumni,1,,2020,5,Frontend Engineer,1
+劉冠廷,alumni6@test.com,amazon111,alumni,2,,2018,6,Cloud Engineer,1

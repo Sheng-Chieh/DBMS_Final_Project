@@ -66,4 +66,6 @@ urlpatterns = [
     path('work/update/<int:work_id>/', account_views.update_work, name='update_work'),
     path('course/update/<int:course_record_id>/', account_views.update_course, name='update_course'),
     path('logout/', account_views.logout, name='logout'),
+    path('profile/update/', account_views.update_profile, name='update_profile'),
+
 ]

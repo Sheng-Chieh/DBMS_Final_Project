@@ -15,6 +15,7 @@
             align-items: center;
             justify-content: center;
             color: #1e293b;
+            padding: 30px 0;
         }
 
         .onboarding-card {
@@ -44,7 +45,8 @@
             line-height: 1.8;
         }
 
-        .form-control {
+        .form-control,
+        .form-select {
             border-radius: 14px;
             padding: 12px 14px;
         }
@@ -61,6 +63,10 @@
             padding: 16px;
             color: #64748b;
             font-size: 15px;
+        }
+
+        .section-divider {
+            margin: 40px 0 28px;
         }
     </style>
 </head>
@@ -95,13 +101,17 @@
     <form method="POST">
         {% csrf_token %}
 
+        <!-- 學生 -->
         {% if role == 'student' %}
+
             <h4 class="fw-bold mb-3">學生基本資料</h4>
 
             <div class="mb-3">
                 <label class="form-label">系所</label>
+
                 <select name="department_id" class="form-select" required>
                     <option value="">請選擇系所</option>
+
                     {% for department in departments %}
                         <option value="{{ department.department_id }}">
                             {{ department.department_name }}
@@ -112,23 +122,100 @@
 
             <div class="mb-3">
                 <label class="form-label">入學年</label>
-                <input type="number" name="enrollment_year" class="form-control" placeholder="例如：2023">
+                <select name="enrollment_year"
+                        id="enrollment_year"
+                        class="form-select"
+                        onchange="updateGraduationYears()">
+                    <option value="">請選擇年份</option>
+
+                    {% for year in year_options.enrollment_years %}
+                        <option value="{{ year }}"
+                            {% if user.enrollment_year == year %}
+                                selected
+                            {% endif %}>
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+
+                </select>
             </div>
 
             <div class="mb-4">
                 <label class="form-label">預計畢業年</label>
-                <input type="number" name="graduation_year" class="form-control" placeholder="例如：2027">
-            </div>
-            <hr class="my-4">
-            <h4 class="fw-bold mb-3">快速建立第一筆經歷（選填）</h4>
-            <p class="subtitle mb-4">你可以先填一兩筆代表性資料，之後也可以到履歷管理頁再新增或修改。</p>
+               <select name="graduation_year"
+                        id="graduation_year"
+                        class="form-select">
+                    <option value="">請選擇年份</option>
 
-        {% elif role == 'alumni' %}
+                    {% for year in year_options.graduation_years %}
+                        <option value="{{ year }}"
+                            {% if user.graduation_year == year %}
+                                selected
+                            {% endif %}>
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <hr class="section-divider">
+
+            <h4 class="fw-bold mb-3">快速建立第一筆經歷（選填）</h4>
+
+            <p class="subtitle mb-4">
+                你可以先填一兩筆代表性資料，之後也可以到履歷頁再新增或修改。
+            </p>
+
+            <!-- 課程 -->
+            <div class="mb-3">
+                <label class="form-label">一門重要課程</label>
+
+                <input type="text"
+                       name="course_name"
+                       class="form-control"
+                       placeholder="例如：資料庫管理">
+            </div>
+
+            <!-- 活動 -->
+            <div class="mb-3">
+                <label class="form-label">一個代表性活動</label>
+
+                <input type="text"
+                       name="activity_title"
+                       class="form-control"
+                       placeholder="例如：黑客松競賽、資管系學會">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">活動類型</label>
+
+                <select name="activity_category" class="form-select">
+                    <option value="">請選擇活動類型</option>
+                    <option value="社團">社團</option>
+                    <option value="競賽">競賽</option>
+                    <option value="專案">專案</option>
+                    <option value="研究">研究</option>
+                    <option value="志工">志工</option>
+                    <option value="活動籌辦">活動籌辦</option>
+                    <option value="學生組織">學生組織</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+        {% endif %}
+
+        <!-- 校友 -->
+        {% if role == 'alumni' %}
+
             <h4 class="fw-bold mb-3">校友職涯資料</h4>
+
             <div class="mb-3">
                 <label class="form-label">系所</label>
+
                 <select name="department_id" class="form-select" required>
                     <option value="">請選擇系所</option>
+
                     {% for department in departments %}
                         <option value="{{ department.department_id }}">
                             {{ department.department_name }}
@@ -139,15 +226,26 @@
 
             <div class="mb-3">
                 <label class="form-label">畢業年</label>
-                <input type="number" name="graduation_year" class="form-control" placeholder="例如：2021">
+                <select name="graduation_year"
+                    class="form-select">
+                    <option value="">請選擇年份</option>
+
+                    {% for year in year_options.enrollment_years %}
+                        <option value="{{ year }}">
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">目前公司</label>
-                <select name="current_company" class="form-select">
+
+                <select name="company_id" class="form-select">
                     <option value="">請選擇目前公司</option>
+
                     {% for company in companies %}
-                        <option value="{{ company.name }}">
+                        <option value="{{ company.company_id }}">
                             {{ company.name }}
                         </option>
                     {% endfor %}
@@ -156,45 +254,14 @@
 
             <div class="mb-4">
                 <label class="form-label">目前職稱</label>
-                <input type="text" name="current_job_title" class="form-control" placeholder="例如：Software Engineer">
+
+                <input type="text"
+                       name="current_job_title"
+                       class="form-control"
+                       placeholder="例如：Software Engineer">
             </div>
+
         {% endif %}
-
-{% if role == 'student' %}
-    <div class="mb-3">
-        <label class="form-label">一門重要課程</label>
-        <input type="text" name="course_name" class="form-control" placeholder="例如：資料庫管理">
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">課程類別</label>
-        <select name="course_category" class="form-select">
-            <option value="">請選擇課程類別</option>
-            <option value="程式設計與軟體開發">程式設計與軟體開發</option>
-            <option value="資料庫與資料管理">資料庫與資料管理</option>
-            <option value="資料科學與人工智慧">資料科學與人工智慧</option>
-            <option value="商業與管理">商業與管理</option>
-            <option value="其他">其他</option>
-        </select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">一個代表性活動</label>
-        <input type="text" name="activity_title" class="form-control" placeholder="例如：資管系學會、黑客松競賽">
-    </div>
-
-    <div class="mb-4">
-        <label class="form-label">活動類型</label>
-        <select name="activity_category" class="form-select">
-            <option value="">請選擇活動類型</option>
-            <option value="社團">社團</option>
-            <option value="競賽">競賽</option>
-            <option value="專案">專案</option>
-            <option value="志工">志工</option>
-            <option value="其他">其他</option>
-        </select>
-    </div>
-{% endif %}
 
         <div class="d-flex gap-3 flex-wrap">
             <button type="submit" class="btn btn-primary">
@@ -205,6 +272,7 @@
                 稍後再填
             </a>
         </div>
+
     </form>
 
 </div>

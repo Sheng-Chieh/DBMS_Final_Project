@@ -81,13 +81,14 @@
         <div class="mb-3">
             <label class="form-label">工作類型</label>
 
-            <select name="job_type" class="form-select">
-
+            <select name="job_type" class="form-select" required>
+                <option value="">請選擇工作類型</option>
                 <option value="實習">實習</option>
-                <option value="工讀生">工讀生</option>
-                <option value="兼職">兼職</option>
                 <option value="全職">全職</option>
-
+                <option value="兼職">兼職</option>
+                <option value="工讀">工讀</option>
+                <option value="自由接案">自由接案</option>
+                <option value="其他">其他</option>
             </select>
         </div>
 
@@ -106,20 +107,23 @@
 
                 <label class="form-label">開始日期</label>
 
-                <input type="date"
-                       name="start_date"
-                       class="form-control">
-
+                <input  type="date"
+                        name="start_date"
+                        id="start_date"
+                        class="form-control"
+                        max="{{ today }}"
+                        onchange="updateEndDateLimit()">
             </div>
 
             <div class="col-md-6 mb-3">
 
                 <label class="form-label">結束日期</label>
 
-                <input type="date"
-                       name="end_date"
-                       class="form-control">
-
+                <input  type="date"
+                        name="end_date"
+                        id="end_date"
+                        class="form-control"
+                        max="{{ today }}">
             </div>
 
         </div>
@@ -164,6 +168,22 @@ function setCompanyId(companyName) {
         }
     }
 }
+function updateEndDateLimit() {
+    const startDate = document.getElementById("start_date");
+    const endDate = document.getElementById("end_date");
+
+    if (!startDate || !endDate) return;
+
+    if (startDate.value) {
+        endDate.min = startDate.value;
+
+        if (endDate.value && endDate.value < startDate.value) {
+            endDate.value = "";
+        }
+    }
+}
+
+updateEndDateLimit();
 </script>
 </body>
 </html>
