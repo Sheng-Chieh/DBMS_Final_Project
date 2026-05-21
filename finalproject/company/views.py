@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import Http404
 from django.conf import settings
 from .models import Company
+from accounts.views import login_required
 
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +22,7 @@ RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
 RAG_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
 
 
+@login_required
 def search_companies(request):
     # 從 URL GET 請求中獲取多個過濾參數
     query = request.GET.get('q', '').strip()
@@ -45,6 +47,7 @@ def search_companies(request):
     return render(request, 'company/company_search.html', context)
 
 
+@login_required
 def company_detail(request, company_id):
     # 呼叫寫在 models.py 裡的 SQL 查詢方法
     company_data = Company.objects.get_detail_with_raw_sql(company_id)
@@ -139,6 +142,7 @@ def build_no_results_message(user_query):
         print(f"LLM 呼叫失敗: {e}")
         return "依照這個條件，目前找不到類似的公司。"
 
+@login_required
 @csrf_exempt
 def chat_recommend_companies_lc(request):
     if request.method != "POST":
@@ -248,6 +252,7 @@ def chat_recommend_companies_lc(request):
 
     return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
+@login_required
 @ensure_csrf_cookie
 def company_chat_page(request):
     return render(request, "company/company_chat.html")

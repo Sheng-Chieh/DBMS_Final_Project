@@ -413,6 +413,73 @@ class CSVImporter:
             cursor.executemany(sql, data)
             print(f"  [OK] project_tag_mapping 成功匯入 {len(data)} 筆資料。")
         return True
+    
+    def insert_coffee_chat_config(self, cursor):
+        path = self._get_path("coffee_chat_config.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('alumni_name'): continue
+                data.append((
+                    self._clean_int(row.get('id')),
+                    row.get('alumni_name').strip(),
+                    row.get('location_type').strip(),
+                    self._clean_str(row.get('location_detail')),
+                    self._clean_str(row.get('date')),
+                    self._clean_str(row.get('start_time')),
+                    self._clean_str(row.get('end_time')),
+                    self._clean_int(row.get('duration')),
+                    self._clean_str(row.get('target_departments')),
+                    self._clean_int(row.get('resume_match_rate')),
+                    self._clean_int(row.get('is_published'))
+                ))
+        if data:
+            if data[0][0] is not None:
+                sql = """INSERT INTO coffee_chat_config 
+                         (id, alumni_name, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            else:
+                sql = """INSERT INTO coffee_chat_config 
+                         (alumni_name, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
+                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                data = [(r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]) for r in data]
+                
+            cursor.executemany(sql, data)
+            print(f"  [OK] coffee_chat_config 成功匯入 {len(data)} 筆資料。")
+        return True
+
+    def insert_coffee_chat_application(self, cursor):
+        path = self._get_path("coffee_chat_application.csv")
+        if not os.path.exists(path): return False
+        with open(path, mode='r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            data = []
+            for row in reader:
+                if not row.get('student_name'): continue
+                data.append((
+                    self._clean_int(row.get('id')),
+                    self._clean_int(row.get('coffee_chat_id')),
+                    row.get('student_name').strip(),
+                    self._clean_str(row.get('experience_summary')),
+                    self._clean_str(row.get('question_outline')),
+                    row.get('status', 'pending').strip()
+                ))
+        if data:
+            if data[0][0] is not None:
+                sql = """INSERT INTO coffee_chat_application 
+                         (id, coffee_chat_id, student_name, experience_summary, question_outline, status) 
+                         VALUES (%s, %s, %s, %s, %s, %s)"""
+            else:
+                sql = """INSERT INTO coffee_chat_application 
+                         (coffee_chat_id, student_name, experience_summary, question_outline, status) 
+                         VALUES (%s, %s, %s, %s, %s)"""
+                data = [(r[1], r[2], r[3], r[4], r[5]) for r in data]
+
+            cursor.executemany(sql, data)
+            print(f"  [OK] coffee_chat_application 成功匯入 {len(data)} 筆資料。")
+        return True
 
     def insert_all(self, cursor):
         """一鍵全部匯入方法 (嚴格依照外鍵順序)"""
@@ -427,6 +494,8 @@ class CSVImporter:
         self.insert_tag_dictionary(cursor)
         self.insert_micro_project(cursor)
         self.insert_project_tag_mapping(cursor)
+        self.insert_coffee_chat_config(cursor)
+        self.insert_coffee_chat_application(cursor)
 
 # 資料表清空管理類別
 class DataTruncator:
@@ -577,6 +646,8 @@ def import_submenu():
         " [9]  匯入 tag_dictionary        [9c] 清空 tag_dictionary\n"
         " [10] 匯入 micro_project         [10c]清空 micro_project\n"
         " [11] 匯入 project_tag_mapping   [11c]清空 project_tag_mapping\n"
+        " [12] 匯入 coffee_chat_config    [12c]清空 coffee_chat_config\n"
+        " [13] 匯入 coffee_chat_app...    [13c]清空 coffee_chat_application\n"
         "-------------------------------------------------------------\n"
         " [A]  一鍵全部匯入 (所有 CSV 檔案)\n"
         " [C]  一鍵清空所有資料表資料 (保留結構)\n"
@@ -597,6 +668,8 @@ def import_submenu():
         "9": ("insert_tag_dictionary", "匯入 tag_dictionary"),
         "10": ("insert_micro_project", "匯入 micro_project"),
         "11": ("insert_project_tag_mapping", "匯入 project_tag_mapping"),
+        "12": ("insert_coffee_chat_config", "匯入 coffee_chat_config"),
+        "13": ("insert_coffee_chat_application", "匯入 coffee_chat_application"),
         # 清空部分
         "1c": ("clear_companies", "清空 companies"),
         "2c": ("clear_departments", "清空 departments"),
@@ -608,7 +681,9 @@ def import_submenu():
         "8c": ("clear_course_record_tags", "清空 course_record_tags"),
         "9c": ("clear_tag_dictionary", "清空 tag_dictionary"),
         "10c": ("clear_micro_project", "清空 micro_project"),
-        "11c": ("clear_project_tag_mapping", "清空 project_tag_mapping")
+        "11c": ("clear_project_tag_mapping", "清空 project_tag_mapping"),
+        "12c": ("clear_coffee_chat_config", "清空 coffee_chat_config"),
+        "13c": ("clear_coffee_chat_application", "清空 coffee_chat_application")
     }
     
     while True:

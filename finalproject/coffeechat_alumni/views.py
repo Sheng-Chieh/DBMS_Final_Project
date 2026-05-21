@@ -5,14 +5,18 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import CoffeeChatDatabase 
 from datetime import timedelta
+from accounts.views import login_required
 
+@login_required
 def ca_homepage(request):
     return render(request, 'coffeechat_alumni/ca_homepage.html')
 
+@login_required
 def student_coffee_chat_list(request):
     published_chats = CoffeeChatDatabase.get_published_chats()
     return render(request, 'coffeechat_alumni/student_list.html', {'chats': published_chats})
 
+@login_required
 def manage_chats_controller(request):
     action = request.GET.get('action', 'list')
     chat_id = request.GET.get('id') or request.POST.get('id')
@@ -116,6 +120,7 @@ def manage_chats_controller(request):
             chat["end_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
     return render(request, 'coffeechat_alumni/list_manage_reservation.html', {'chats': chats})
 
+@login_required
 def manage_applicants_controller(request):
     action = request.GET.get('action', 'view')
     chat_id = request.GET.get('chat_id') or request.POST.get('chat_id')

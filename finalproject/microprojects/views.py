@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
+from accounts.views import login_required
 from .models import MicroProject 
 
+@login_required
 def project_list(request):
     search_industry = request.GET.get('industry', '')
     search_company = request.GET.get('company', '')
@@ -20,6 +22,7 @@ def project_list(request):
         'current_tag': search_tag,
     })
 
+@login_required
 def project_create(request):
     user_id = request.session.get('user_id')
     user_role = request.session.get('role')

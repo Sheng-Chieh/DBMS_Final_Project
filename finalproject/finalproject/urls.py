@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from company import views
 from microprojects import views as micro_views
 from microprojects.views import project_list, project_create
@@ -24,6 +24,7 @@ from coffeechat import views as coffeechat_student_views
 from coffeechat_alumni import views as coffeechat_alumni_views
 
 urlpatterns = [
+    path('', include('homepage.urls')),
     path('admin/', admin.site.urls),
     path('search/', views.search_companies, name='search_companies'),
     path('company/<int:company_id>/', views.company_detail, name='company_detail'),

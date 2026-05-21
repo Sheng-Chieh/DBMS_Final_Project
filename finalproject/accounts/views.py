@@ -11,7 +11,7 @@ from .models import Account, Activity, WorkExperience, CourseRecord, CourseTag, 
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if 'user_id' not in request.session:
+        if not request.session.get('user_id'):
             return redirect('login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -77,7 +77,7 @@ def login(request):
             if user['is_profile_completed'] == 0:
                 return redirect('onboarding')
 
-            return redirect('resume')
+            return redirect('homepage_logged_in')
 
         return render(request, 'accounts/login.html', {
             'error': 'Email 或密碼錯誤'
