@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'accounts',
     'coffeechat',
     'coffeechat_alumni',
+    'homepage',
 ]
 
 MIDDLEWARE = [
@@ -116,17 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'final_project',
-#         'USER': 'root',
-#         'PASSWORD': 'yourpassword',
-#         'HOST': '127.0.0.1',
-#         'PORT': '3306',
-#     }
-# }
 
 
 # Internationalization

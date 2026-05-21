@@ -2,7 +2,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from coffeechat_alumni.models import CoffeeChatDatabase
+from accounts.views import login_required
 
+@login_required
 @csrf_exempt
 def apply_chat(request):
     # 測試階段：直接給定一個學生名字 (不使用 ORM 撈 Account)
@@ -46,6 +48,7 @@ def apply_chat(request):
     return render(request, 'coffeechat/apply.html', context)
 
 
+@login_required
 def my_applications(request):
     fake_student_name = "測試學生_小明"
     
