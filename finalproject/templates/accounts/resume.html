@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #eef2ff, #f8fafc);
@@ -128,10 +128,11 @@
         }
 
         .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 32px;
             margin-top: 28px;
+            flex-wrap: wrap;
         }
 
         .summary-card {
@@ -143,6 +144,8 @@
             transition: 0.25s;
             position: relative;
             overflow: hidden;
+            width: 300px;
+
         }
 
         .summary-card:hover {
@@ -189,16 +192,41 @@
 
         @media (max-width: 768px) {
             .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-header,
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
+                grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
             }
+
+            .summary-card {
+                padding: 20px 12px;
+                text-align: center;
+            }
+
+            .summary-icon {
+                margin: 0 auto 12px;
+            }
+
+            .summary-card h2 {
+                font-size: 32px;
+            }
+
+            .summary-card p {
+                font-size: 14px;
+            }
         }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 24px;
+        }
+        .summary-card {
+            cursor: pointer;
+        }
+
+        .summary-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
     </style>
 </head>
 
@@ -266,8 +294,11 @@
 
         <div class="mb-3">
             <label class="form-label">系所</label>
-            <select name="department_id" class="form-select" required>
-                <option value="">請選擇系所</option>
+            <select name="department_id"
+                    id="department-select"
+                    class="form-select"
+                    required>
+                 <option value="">請選擇系所</option>   
                 {% for department in departments %}
                     <option value="{{ department.department_id }}"
                         {% if department.department_id == user.department_id %}selected{% endif %}>
@@ -353,14 +384,21 @@
 
             <div class="mb-3">
                 <label class="form-label">目前公司</label>
-                <select name="company_id" class="form-select">
-                    <option value="">請選擇公司</option>
+
+                <select name="company_id"
+                    class="form-select company-select">
+
+                    <option value="">搜尋或選擇公司</option>
+
                     {% for company in companies %}
                         <option value="{{ company.company_id }}"
-                            {% if company.company_id == user.company_id %}selected{% endif %}>
+                            {% if company.company_id == user.company_id %}
+                                selected
+                            {% endif %}>
                             {{ company.name }}
                         </option>
                     {% endfor %}
+
                 </select>
             </div>
 
@@ -384,76 +422,196 @@
         </div>
 
         <div class="summary-grid">
-            <div class="summary-card">
-                <div class="summary-icon">📘</div>
-                <h2>{{ courses|length }}</h2>
-                <p>課程紀錄</p>
-            </div>
+            {% if user.role == 'student' %}
+            <a href="#course-section" class="summary-link">
+                <div class="summary-card">
+                    <div class="summary-icon">📘</div>
+                    <h2>{{ courses|length }}</h2>
+                    <p>課程紀錄</p>
+                </div>
+            </a>
+            {% endif %}
+            <a href="#activity-section" class="summary-link">
+                <div class="summary-card">
+                    <div class="summary-icon">🎯</div>
+                    <h2>{{ activities|length }}</h2>
+                    <p>活動經歷</p>
+                </div>
+            </a>
 
-            <div class="summary-card">
-                <div class="summary-icon">🎯</div>
-                <h2>{{ activities|length }}</h2>
-                <p>活動經歷</p>
-            </div>
+            <a href="#work-section" class="summary-link">
+                <div class="summary-card">
+                    <div class="summary-icon">💼</div>
+                    <h2>{{ works|length }}</h2>
+                    <p>工作經歷</p>
+                </div>
+            </a>
 
-            <div class="summary-card">
-                <div class="summary-icon">💼</div>
-                <h2>{{ works|length }}</h2>
-                <p>工作經歷</p>
-            </div>
         </div>
     </div>
 
     <!-- 學生：課程經歷 -->
-    {% if user.role == 'student' %}
-    <div class="section-card">
-        <div class="section-header">
-            <div>
-                <h3 class="section-title">課程經歷</h3>
-                <p class="section-subtitle">記錄你已修習的重要課程。</p>
+{% if user.role == 'student' %}
+<div class="section-card" id="course-section">
+    <div class="section-header">
+        <div>
+            <h3 class="section-title">課程經歷</h3>
+            <p class="section-subtitle">記錄你已修習的重要課程與相關能力標籤。</p>
+        </div>
+        <a href="/add-course/" class="btn btn-primary">新增課程</a>
+    </div>
+
+    {% for course in courses %}
+        <div class="item-card" id="course-display-{{ course.course_record_id }}">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                    <h5 class="fw-bold mb-1">{{ course.course_name }}</h5>
+                    <p class="meta mb-2">
+                        學期：{{ course.semester|default:"尚未填寫" }}
+                        ・ 成績：{{ course.grade|default:"尚未填寫" }}
+                    </p>
+                </div>
+
+                <span class="tag">課程</span>
             </div>
-            <a href="/add-course/" class="btn btn-primary">新增課程</a>
+
+            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
+                {% for tag in course.tags %}
+                    <span class="tag">
+                        {{ tag.tag_name }}
+                    </span>
+                {% empty %}
+                    <span class="meta">尚未選擇技能標籤</span>
+                {% endfor %}
+            </div>
+
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="showCourseEditForm('{{ course.course_record_id }}')">
+                編輯
+            </button>
+
+            <a href="{% url 'delete_course' course.course_record_id %}"
+               class="btn btn-outline-danger btn-sm">
+                刪除
+            </a>
         </div>
 
-        {% for course in courses %}
-            <div class="item-card" id="course-display-{{ course.course_record_id }}">
-                <h5 class="fw-bold">{{ course.course_name }}</h5>
-                <p class="mb-1">學期：{{ course.semester|default:"尚未填寫" }}</p>
-                <p class="mb-3">成績：{{ course.grade|default:"尚未填寫" }}</p>
+        <form class="edit-box"
+              id="course-form-{{ course.course_record_id }}"
+              method="POST"
+              action="{% url 'update_course' course.course_record_id %}"
+              style="display:none;">
+            {% csrf_token %}
 
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="showCourseEditForm('{{ course.course_record_id }}')">編輯</button>
-                <a href="{% url 'delete_course' course.course_record_id %}" class="btn btn-outline-danger btn-sm">刪除</a>
+            <div class="mb-3">
+                <label class="form-label">課程名稱</label>
+                <input type="text"
+                       name="course_name"
+                       class="form-control"
+                       value="{{ course.course_name }}"
+                       required>
             </div>
 
-            <form class="edit-box" id="course-form-{{ course.course_record_id }}" method="POST" action="{% url 'update_course' course.course_record_id %}" style="display:none;">
-                {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">課程技能標籤</label>
 
-                <div class="mb-3">
-                    <label class="form-label">課程名稱</label>
-                    <input type="text" name="course_name" class="form-control" value="{{ course.course_name }}">
+                <select name="tag_ids"
+                        class="form-select course-tag-select"
+                        multiple>
+
+                    {% for tag in course_tags %}
+                        <option value="{{ tag.tag_id }}"
+                            {% for selected_tag in course.tags %}
+                                {% if selected_tag.tag_id == tag.tag_id %}
+                                    selected
+                                {% endif %}
+                            {% endfor %}>
+                            {{ tag.tag_name }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+                <div class="small-note mt-1">
+                    可選多個標籤，例如：資料庫、SQL、後端、程式設計。
                 </div>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">學期</label>
-                    <input type="text" name="semester" class="form-control" value="{{ course.semester }}">
-                </div>
+            <div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">年級</label>
 
-                <div class="mb-3">
-                    <label class="form-label">成績</label>
-                    <input type="text" name="grade" class="form-control" value="{{ course.grade }}">
-                </div>
+        <select class="form-select course-grade-level"
+                data-course-id="{{ course.course_record_id }}"
+                onchange="updateCourseSemester('{{ course.course_record_id }}')">
 
-                <button type="submit" class="btn btn-primary btn-sm">儲存修改</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="hideCourseEditForm('{{ course.course_record_id }}')">取消</button>
-            </form>
-        {% empty %}
-            <div class="empty-box">目前沒有課程紀錄。</div>
-        {% endfor %}
+            <option value="">請選擇年級</option>
+            <option value="大一" {% if "大一" in course.semester %}selected{% endif %}>大一</option>
+            <option value="大二" {% if "大二" in course.semester %}selected{% endif %}>大二</option>
+            <option value="大三" {% if "大三" in course.semester %}selected{% endif %}>大三</option>
+            <option value="大四" {% if "大四" in course.semester %}selected{% endif %}>大四</option>
+            <option value="研究所" {% if "研究所" in course.semester %}selected{% endif %}>研究所</option>
+            <option value="其他" {% if "其他" in course.semester %}selected{% endif %}>其他</option>
+        </select>
     </div>
-    {% endif %}
+
+    <div class="col-md-6 mb-3">
+        <label class="form-label">學期</label>
+
+        <select class="form-select course-semester-term"
+                data-course-id="{{ course.course_record_id }}"
+                onchange="updateCourseSemester('{{ course.course_record_id }}')">
+
+            <option value="">請選擇學期</option>
+            <option value="上學期" {% if "上學期" in course.semester %}selected{% endif %}>上學期</option>
+            <option value="下學期" {% if "下學期" in course.semester %}selected{% endif %}>下學期</option>
+            <option value="暑期" {% if "暑期" in course.semester %}selected{% endif %}>暑期</option>
+        </select>
+    </div>
+</div>
+
+<input type="hidden"
+       name="semester"
+       id="course-semester-value-{{ course.course_record_id }}"
+       value="{{ course.semester }}">
+
+            <div class="mb-3">
+                <label class="form-label">成績</label>
+                <select name="grade" class="form-select">
+                    <option value="">請選擇成績</option>
+
+                    <option value="A+" {% if course.grade == "A+" %}selected{% endif %}>A+</option>
+                    <option value="A" {% if course.grade == "A" %}selected{% endif %}>A</option>
+                    <option value="A-" {% if course.grade == "A-" %}selected{% endif %}>A-</option>
+
+                    <option value="B+" {% if course.grade == "B+" %}selected{% endif %}>B+</option>
+                    <option value="B" {% if course.grade == "B" %}selected{% endif %}>B</option>
+                    <option value="B-" {% if course.grade == "B-" %}selected{% endif %}>B-</option>
+
+                    <option value="C+" {% if course.grade == "C+" %}selected{% endif %}>C+</option>
+                    <option value="C" {% if course.grade == "C" %}selected{% endif %}>C</option>
+                    <option value="C-" {% if course.grade == "C-" %}selected{% endif %}>C-</option>
+
+                    <option value="D" {% if course.grade == "D" %}selected{% endif %}>D</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm">儲存修改</button>
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    onclick="hideCourseEditForm('{{ course.course_record_id }}')">
+                取消
+            </button>
+        </form>
+    {% empty %}
+        <div class="empty-box">目前沒有課程紀錄。</div>
+    {% endfor %}
+</div>
+{% endif %}
 
     <!-- 活動經歷 -->
-    <div class="section-card">
+    <div class="section-card" id="activity-section">
         <div class="section-header">
             <div>
                 <h3 class="section-title">
@@ -514,11 +672,22 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">開始日期</label>
-                        <input type="date" name="start_date" class="form-control" value="{{ activity.start_date|date:'Y-m-d' }}">
+                        <input type="date"
+                            name="start_date"
+                            id="activity-start-{{ activity.activity_id }}"
+                            class="form-control"
+                            value="{{ activity.start_date|date:'Y-m-d' }}"
+                            max="{{ today }}"
+                            onchange="updateActivityEndDateLimit('{{ activity.activity_id }}')">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">結束日期</label>
-                        <input type="date" name="end_date" class="form-control" value="{{ activity.end_date|date:'Y-m-d' }}">
+                        <input type="date"
+                            name="end_date"
+                            id="activity-end-{{ activity.activity_id }}"
+                            class="form-control"
+                            value="{{ activity.end_date|date:'Y-m-d' }}"
+                            max="{{ today }}">
                     </div>
                 </div>
 
@@ -536,7 +705,7 @@
     </div>
 
     <!-- 工作經歷 -->
-    <div class="section-card">
+    <div class="section-card" id="work-section">
         <div class="section-header">
             <div>
                 <h3 class="section-title">
@@ -590,22 +759,22 @@
 
                 <div class="mb-3">
                     <label class="form-label">公司名稱</label>
-                    <input class="form-control"
-                           list="company-list-{{ work.work_id }}"
-                           value="{{ work.company_name }}"
-                           placeholder="輸入公司名稱搜尋"
-                           oninput="setCompanyId('{{ work.work_id }}', this.value)">
+                    <select name="company_id"
+                        class="form-select company-select"
+                        required>
 
-                    <input type="hidden"
-                           name="company_id"
-                           id="company-id-{{ work.work_id }}"
-                           value="{{ work.company_id }}">
+                        <option value="">搜尋或選擇公司</option>
 
-                    <datalist id="company-list-{{ work.work_id }}">
                         {% for company in companies %}
-                            <option value="{{ company.name }}" data-id="{{ company.company_id }}"></option>
+                            <option value="{{ company.company_id }}"
+                                {% if company.company_id == work.company_id %}
+                                    selected
+                                {% endif %}>
+                                {{ company.name }}
+                            </option>
                         {% endfor %}
-                    </datalist>
+
+                    </select>
                 </div>
 
                 <div class="mb-3">
@@ -616,11 +785,22 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">開始日期</label>
-                        <input type="date" name="start_date" class="form-control" value="{{ work.start_date|date:'Y-m-d' }}">
+                        <input type="date"
+                            name="start_date"
+                            id="work-start-{{ work.work_id }}"
+                            class="form-control"
+                            value="{{ work.start_date|date:'Y-m-d' }}"
+                            max="{{ today }}"
+                            onchange="updateWorkEndDateLimit('{{ work.work_id }}')">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">結束日期</label>
-                        <input type="date" name="end_date" class="form-control" value="{{ work.end_date|date:'Y-m-d' }}">
+                        <input type="date"
+                            name="end_date"
+                            id="work-end-{{ work.work_id }}"
+                            class="form-control"
+                            value="{{ work.end_date|date:'Y-m-d' }}"
+                            max="{{ today }}">
                     </div>
                 </div>
 
@@ -638,11 +818,14 @@
     </div>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script>
 function showActivityEditForm(id) {
     document.getElementById("activity-display-" + id).style.display = "none";
     document.getElementById("activity-form-" + id).style.display = "block";
+
+    updateActivityEndDateLimit(id);
 }
 
 function hideActivityEditForm(id) {
@@ -678,21 +861,7 @@ function hideProfileEditForm() {
     document.getElementById("profile-form").style.display = "none";
 }
 
-function setCompanyId(workId, companyName) {
-    const datalist = document.getElementById("company-list-" + workId);
-    const hiddenInput = document.getElementById("company-id-" + workId);
-
-    hiddenInput.value = "";
-
-    for (let option of datalist.options) {
-        if (option.value === companyName) {
-            hiddenInput.value = option.dataset.id;
-            break;
-        }
-    }
-}
 function updateGraduationYears() {
-
     const enrollmentSelect = document.getElementById("enrollment_year");
     const graduationSelect = document.getElementById("graduation_year");
 
@@ -701,26 +870,112 @@ function updateGraduationYears() {
     const enrollmentYear = parseInt(enrollmentSelect.value);
 
     for (let option of graduationSelect.options) {
-
         if (option.value === "") continue;
 
         const graduationYear = parseInt(option.value);
-
         option.hidden = enrollmentYear && graduationYear < enrollmentYear;
     }
 
     if (
         graduationSelect.value &&
+        enrollmentYear &&
         parseInt(graduationSelect.value) < enrollmentYear
     ) {
         graduationSelect.value = "";
     }
 }
 
-updateGraduationYears();
+document.addEventListener("DOMContentLoaded", function () {
+    updateGraduationYears();
+
+    if (document.getElementById("department-select")) {
+        new TomSelect("#department-select", {
+            create: false,
+            placeholder: "搜尋或選擇系所",
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+    }
+
+    document.querySelectorAll(".company-select").forEach(function (select) {
+        new TomSelect(select, {
+            create: false,
+            maxOptions: 100,
+            placeholder: "搜尋或選擇公司",
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+    });
+    document.querySelectorAll(".course-tag-select").forEach(function (select) {
+        if (!select.tomselect) {
+            new TomSelect(select, {
+                plugins: ["remove_button"],
+                create: false,
+                maxOptions: 100,
+                placeholder: "搜尋或選擇課程技能標籤"
+            });
+        }
+    });
+    document.querySelectorAll("[id^='activity-start-']").forEach(function(startInput) {
+        const activityId = startInput.id.replace("activity-start-", "");
+        updateActivityEndDateLimit(activityId);
+    });
+});
+function updateActivityEndDateLimit(id) {
+    const startDate = document.getElementById("activity-start-" + id);
+    const endDate = document.getElementById("activity-end-" + id);
+
+    if (!startDate || !endDate) return;
+
+    if (startDate.value) {
+        endDate.setAttribute("min", startDate.value);
+
+        if (endDate.value && endDate.value < startDate.value) {
+            endDate.value = "";
+        }
+    } else {
+        endDate.removeAttribute("min");
+    }
+}
+function updateWorkEndDateLimit(id) {
+    const startDate = document.getElementById("work-start-" + id);
+    const endDate = document.getElementById("work-end-" + id);
+
+    if (!startDate || !endDate) return;
+
+    if (startDate.value) {
+        endDate.min = startDate.value;
+
+        if (endDate.value && endDate.value < startDate.value) {
+            endDate.value = "";
+        }
+    }
+}
+function updateCourseSemester(courseId) {
+    const gradeSelect = document.querySelector(
+        `.course-grade-level[data-course-id="${courseId}"]`
+    );
+
+    const termSelect = document.querySelector(
+        `.course-semester-term[data-course-id="${courseId}"]`
+    );
+
+    const hiddenInput = document.getElementById(
+        "course-semester-value-" + courseId
+    );
+
+    if (!gradeSelect || !termSelect || !hiddenInput) return;
+
+    const gradeLevel = gradeSelect.value;
+    const semesterTerm = termSelect.value;
+
+    hiddenInput.value =
+        gradeLevel && semesterTerm ? gradeLevel + semesterTerm : "";
+}
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
