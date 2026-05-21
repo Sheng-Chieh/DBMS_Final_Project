@@ -1,24 +1,35 @@
-# finalproject/coffeechat_alumni/views.py
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from .models import CoffeeChatDatabase 
-from datetime import timedelta
+from accounts.views import login_required
 
+#建立一個小工具，專門用來擋下非校友身分
+def check_is_alumni(request):
+    return request.session.get('role') == 'alumni'
+
+@login_required
 def ca_homepage(request):
+    if not check_is_alumni(request): return redirect('homepage_logged_in')
     return render(request, 'coffeechat_alumni/ca_homepage.html')
 
+@login_required
 def student_coffee_chat_list(request):
+    if not check_is_alumni(request): return redirect('homepage_logged_in')
     published_chats = CoffeeChatDatabase.get_published_chats()
     return render(request, 'coffeechat_alumni/student_list.html', {'chats': published_chats})
 
+@login_required
 def manage_chats_controller(request):
+    if not check_is_alumni(request): return redirect('homepage_logged_in')
+
     action = request.GET.get('action', 'list')
     chat_id = request.GET.get('id') or request.POST.get('id')
 
     if action == 'create':
-        fake_alumni_name = "測試校友_陳大頭"
+        #抓取真實校友 ID
+        alumni_id = request.session.get('user_id')
+
         if request.method == "POST":
             try:
                 location_type = request.POST.get('location_type')
@@ -35,8 +46,9 @@ def manage_chats_controller(request):
                     messages.error(request, "請完整填寫資訊！")
                     return render(request, 'coffeechat_alumni/create_coffeechat.html')
 
+                #傳入真實的 alumni_id
                 CoffeeChatDatabase.create_chat(
-                    alumni_name=fake_alumni_name, loc_type=location_type, loc_detail=location_detail,
+                    alumni_id=alumni_id, loc_type=location_type, loc_detail=location_detail,
                     duration=duration, target_departments=target_departments, resume_match_rate=resume_match_rate,
                     is_published=is_published, date=date, start_time=start_time, end_time=end_time
                 )
@@ -106,7 +118,10 @@ def manage_chats_controller(request):
         conn.close()
         return JsonResponse({"success": True, "new_status": new_status})
 
-    chats = CoffeeChatDatabase.get_all_chats()
+    #改為呼叫專屬查詢，並傳入當前登入者的 user_id
+    alumni_id = request.session.get('user_id')
+    chats = CoffeeChatDatabase.get_chats_by_alumni(alumni_id)
+    
     for chat in chats:
         if chat.get("start_time"):
             parts = str(chat["start_time"]).split(':')
@@ -116,13 +131,18 @@ def manage_chats_controller(request):
             chat["end_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
     return render(request, 'coffeechat_alumni/list_manage_reservation.html', {'chats': chats})
 
+@login_required
 def manage_applicants_controller(request):
+    if not check_is_alumni(request): return redirect('homepage_logged_in')
+
     action = request.GET.get('action', 'view')
     chat_id = request.GET.get('chat_id') or request.POST.get('chat_id')
 
+    # 抓取當前登入的校友 ID
+    current_alumni_id = request.session.get('user_id')
     if action == 'update_status' and request.method == "POST":
         applicant_id = request.POST.get('applicant_id')
-        status_action = request.POST.get('status_action') # 'accept' 或 'reject'
+        status_action = request.POST.get('status_action')
         
         if status_action == 'accept':
             CoffeeChatDatabase.accept_applicant(applicant_id)
@@ -134,8 +154,10 @@ def manage_applicants_controller(request):
         return redirect(f"{request.path}?action=view&chat_id={chat_id}")
 
     chat_info = CoffeeChatDatabase.get_chat_by_id(chat_id)
-    if not chat_info:
-        messages.error(request, "找不到這個 Coffee Chat！")
+
+    # 🌟 終極防護網：如果找不到這個活動，或者這個活動的發起人不是現在登入的校友，就踢回去！
+    if not chat_info or chat_info['alumni_id'] != current_alumni_id:
+        messages.error(request, "無權限查看或找不到這個 Coffee Chat！")
         return redirect('manage_chats')
         
     applicants = CoffeeChatDatabase.get_applicants(chat_id)

@@ -116,7 +116,7 @@ TABLES_SCHEMA = {
     "coffee_chat_config": """
         CREATE TABLE coffee_chat_config (
             id INT NOT NULL AUTO_INCREMENT,
-            alumni_name VARCHAR(50) NOT NULL COMMENT '發布校友',
+            alumni_id INT NOT NULL COMMENT '發布校友的 user_id',
             location_type ENUM('online','offline') NOT NULL,
             location_detail VARCHAR(255) DEFAULT NULL,
             date DATE NOT NULL COMMENT '對談日期',
@@ -127,21 +127,22 @@ TABLES_SCHEMA = {
             resume_match_rate INT DEFAULT '0',
             is_published TINYINT(1) DEFAULT '0' COMMENT '0=儲存, 1=發布',
             created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            FOREIGN KEY (alumni_id) REFERENCES users(user_id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """,
     "coffee_chat_application": """
         CREATE TABLE coffee_chat_application (
             id INT NOT NULL AUTO_INCREMENT,
             coffee_chat_id INT NOT NULL COMMENT '對應的 Coffee Chat ID',
-            student_name VARCHAR(100) NOT NULL,
+            student_id INT NOT NULL COMMENT '申請學生的 user_id',
             experience_summary TEXT,
             question_outline TEXT,
             status VARCHAR(20) DEFAULT 'pending' COMMENT '狀態: pending/accepted/rejected',
             created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY coffee_chat_id (coffee_chat_id),
-            CONSTRAINT coffee_chat_application_ibfk_1 FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chat_config (id) ON DELETE CASCADE
+            FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chat_config(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(user_id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """,
     "tag_dictionary": """
@@ -421,10 +422,10 @@ class CSVImporter:
             reader = csv.DictReader(f)
             data = []
             for row in reader:
-                if not row.get('alumni_name'): continue
+                if not row.get('alumni_id'): continue
                 data.append((
                     self._clean_int(row.get('id')),
-                    row.get('alumni_name').strip(),
+                    self._clean_int(row.get('alumni_id')),
                     row.get('location_type').strip(),
                     self._clean_str(row.get('location_detail')),
                     self._clean_str(row.get('date')),
@@ -438,14 +439,13 @@ class CSVImporter:
         if data:
             if data[0][0] is not None:
                 sql = """INSERT INTO coffee_chat_config 
-                         (id, alumni_name, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
+                         (id, alumni_id, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
                          VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
             else:
                 sql = """INSERT INTO coffee_chat_config 
-                         (alumni_name, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
+                         (alumni_id, location_type, location_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published) 
                          VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                 data = [(r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]) for r in data]
-                
             cursor.executemany(sql, data)
             print(f"  [OK] coffee_chat_config 成功匯入 {len(data)} 筆資料。")
         return True
@@ -457,11 +457,11 @@ class CSVImporter:
             reader = csv.DictReader(f)
             data = []
             for row in reader:
-                if not row.get('student_name'): continue
+                if not row.get('student_id'): continue
                 data.append((
                     self._clean_int(row.get('id')),
                     self._clean_int(row.get('coffee_chat_id')),
-                    row.get('student_name').strip(),
+                    self._clean_int(row.get('student_id')),
                     self._clean_str(row.get('experience_summary')),
                     self._clean_str(row.get('question_outline')),
                     row.get('status', 'pending').strip()
@@ -469,14 +469,13 @@ class CSVImporter:
         if data:
             if data[0][0] is not None:
                 sql = """INSERT INTO coffee_chat_application 
-                         (id, coffee_chat_id, student_name, experience_summary, question_outline, status) 
+                         (id, coffee_chat_id, student_id, experience_summary, question_outline, status) 
                          VALUES (%s, %s, %s, %s, %s, %s)"""
             else:
                 sql = """INSERT INTO coffee_chat_application 
-                         (coffee_chat_id, student_name, experience_summary, question_outline, status) 
+                         (coffee_chat_id, student_id, experience_summary, question_outline, status) 
                          VALUES (%s, %s, %s, %s, %s)"""
                 data = [(r[1], r[2], r[3], r[4], r[5]) for r in data]
-
             cursor.executemany(sql, data)
             print(f"  [OK] coffee_chat_application 成功匯入 {len(data)} 筆資料。")
         return True
