@@ -27,7 +27,10 @@
     <div class="mockup-frame">
         <h1 class="chat-title">管理 Coffee Chat 預約</h1>
         <hr class="divider">
-
+        {% if messages %}
+            {% for message in messages %}
+            {% endfor %}
+        {% endif %}
         <!-- 使用 Django 迴圈自動生成列表 -->
         {% for chat in chats %}
         <div class="list-item-box d-flex justify-content-between align-items-center
@@ -54,6 +57,5 @@
         {% endfor %}
 
     </div>
-
 </body>
 </html>

@@ -72,67 +72,59 @@
                 <label class="form-label fw-bold">偏好對談地點</label>
                 <div class="d-flex gap-4">
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="location_type" id="locOnline" value="online"
-                            onchange="toggleLocationInput()">
+                        <input class="form-check-input" type="radio" name="location_type" id="locOnline" value="online" onchange="toggleLocationInput()" {% if form_data.location_type == "online" %}checked{% endif %}>
                         <label class="form-check-label" for="locOnline">線上</label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="location_type" id="locOffline"
-                            value="offline" onchange="toggleLocationInput()">
+                        <input class="form-check-input" type="radio" name="location_type" id="locOffline" value="offline" onchange="toggleLocationInput()" {% if form_data.location_type == "offline" %}checked{% endif %}>
                         <label class="form-check-label" for="locOffline">實體</label>
                     </div>
                 </div>
-
-                <!-- 線上：選擇工具 -->
-                <div class="mt-2 dynamic-input" id="onlineInputDiv">
-                    <input type="text" class="form-control w-50" name="online_tool"
-                        placeholder="選擇使用工具？ (例如：Google Meet)">
+                <div class="mt-2 dynamic-input" id="onlineInputDiv" style="{% if form_data.location_type == 'online' %}display:block;{% endif %}">
+                    <input type="text" class="form-control w-50" name="online_tool" placeholder="選擇使用工具？ (例如：Google Meet)" value="{{ form_data.online_tool|default:'' }}">
                 </div>
-                <!-- 實體：輸入位置 -->
-                <div class="mt-2 dynamic-input" id="offlineInputDiv">
-                    <input type="text" class="form-control w-50" name="offline_location"
-                        placeholder="輸入預計地點 (例如：校內咖啡廳)">
+                <div class="mt-2 dynamic-input" id="offlineInputDiv" style="{% if form_data.location_type == 'offline' %}display:block;{% endif %}">
+                    <input type="text" class="form-control w-50" name="offline_location" placeholder="輸入預計地點 (例如：校內咖啡廳)" value="{{ form_data.offline_location|default:'' }}">
                 </div>
             </div>
 
-            <!-- 對談時長 -->
             <div class="mb-4">
                 <label class="form-label fw-bold">對談時長</label>
                 <select class="form-select w-50" name="duration">
-                    <option value="30">30 分鐘</option>
-                    <option value="60">60 分鐘</option>
-                    <option value="90">90 分鐘</option>
-                    <option value="120">120 分鐘</option>
-                    <option value="150">150 分鐘</option>
-                    <option value="180">180 分鐘</option>
+                    <option value="30" {% if form_data.duration == '30' %}selected{% endif %}>30 分鐘</option>
+                    <option value="60" {% if form_data.duration == '60' %}selected{% endif %}>60 分鐘</option>
+                    <option value="90" {% if form_data.duration == '90' %}selected{% endif %}>90 分鐘</option>
+                    <option value="120" {% if form_data.duration == '120' %}selected{% endif %}>120 分鐘</option>
+                    <option value="150" {% if form_data.duration == '150' %}selected{% endif %}>150 分鐘</option>
+                    <option value="180" {% if form_data.duration == '180' %}selected{% endif %}>180 分鐘</option>
                 </select>
             </div>
+
             <div class="mb-4">
                 <label class="form-label fw-bold">可接受時間</label>
-                    <div class="d-flex gap-2 mb-2 timeslot-row">
-                        <input type="date" class="form-control" name="date">
-                        <input type="time" class="form-control" name="start_time">
-                        <span class="align-self-center">至</span>
-                        <input type="time" class="form-control" name="end_time">
-                    </div>
+                <div class="d-flex gap-2 mb-2 timeslot-row">
+                    <input type="date" class="form-control" name="date" value="{{ form_data.date|default:'' }}">
+                    <input type="time" class="form-control" name="start_time" value="{{ form_data.start_time|default:'' }}">
+                    <span class="align-self-center">至</span>
+                    <input type="time" class="form-control" name="end_time" value="{{ form_data.end_time|default:'' }}">
+                </div>
             </div>
 
             <div class="mb-4">
                 <label class="form-label fw-bold">特定科系要求 (選填)</label>
-                <input type="text" class="form-control w-50" name="target_departments"
-                    placeholder="例如：資訊管理學系 (若有多個請用逗號隔開)">
+                <input type="text" class="form-control w-50" name="target_departments" placeholder="例如：資訊管理學系" value="{{ form_data.target_departments|default:'' }}">
             </div>
 
             <div class="mb-4">
                 <label class="form-label fw-bold">最低履歷配對度 (選填)</label>
                 <select class="form-select w-50" name="resume_match_rate">
-                    <option value="0">無限制</option>
-                    <option value="50">50%</option>
-                    <option value="60">60%</option>
-                    <option value="70">70%</option>
-                    <option value="80">80%</option>
-                    <option value="90">90%</option>
-                    <option value="100">100%</option>
+                    <option value="0" {% if form_data.resume_match_rate == '0' %}selected{% endif %}>無限制</option>
+                    <option value="50" {% if form_data.resume_match_rate == '50' %}selected{% endif %}>50%</option>
+                    <option value="60" {% if form_data.resume_match_rate == '60' %}selected{% endif %}>60%</option>
+                    <option value="70" {% if form_data.resume_match_rate == '70' %}selected{% endif %}>70%</option>
+                    <option value="80" {% if form_data.resume_match_rate == '80' %}selected{% endif %}>80%</option>
+                    <option value="90" {% if form_data.resume_match_rate == '90' %}selected{% endif %}>90%</option>
+                    <option value="100" {% if form_data.resume_match_rate == '100' %}selected{% endif %}>100%</option>
                 </select>
             </div>
 
@@ -143,42 +135,67 @@
         </form>
     </div>
     {% if messages %}
-    {% for message in messages %}
-    {% if message.tags == "success" %}
+        {% for message in messages %}
+            {% if message.tags == "success" %}
 
-    <div class="modal fade show" id="successModal" style="display:block;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+            <div class="modal fade show" id="successModal" style="display:block;">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
                         
-        <div class="modal-header">
-            <h5 class="modal-title"></h5>
-        </div>
+                        <div class="modal-header">
+                            <h5 class="modal-title"></h5>
+                        </div>
                         
-        <div class="modal-body text-center">
-            {{ message }}
-        </div>
+                        <div class="modal-body text-center">
+                            {{ message }}
+                        </div>
 
-        <div class="modal-footer">
-            <button onclick="goHome()" class="btn btn-primary px-4">
-            確定
-            </button>
-        </div>
+                        <div class="modal-footer">
+                            <button onclick="goHome()" class="btn btn-primary px-4">
+                                確定
+                            </button>
+                        </div>
 
-        </div>
-    </div>
-    </div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="modal-backdrop fade show"></div>
+            <div class="modal-backdrop fade show"></div>
 
-    <script>
-    function goHome() {
-        window.location.href = "{% url 'manage_chats' %}";
-    }
-    </script>
-
+            <script>
+                function goHome() {
+                    // 按下確定後，才導向管理列表
+                    window.location.href = "{% url 'manage_chats' %}";
+                }
+            </script>
+            {% elif message.tags == "error" %}
+            <div class="modal fade show" id="errorModal" style="display:block; z-index: 1055;">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold">提示</h5>
+                        </div>
+                        <div class="modal-body text-center">
+                            {{ message }}
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="closeErrorModal()" class="btn custom-btn px-4">確定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show" id="errorBackdrop" style="z-index: 1050;"></div>
+            <script>
+                function closeErrorModal() {
+                    // 這裡只隱藏視窗，不重新載入網頁，所以你剛剛打的字都不會消失！
+                    document.getElementById('errorModal').style.display = 'none';
+                    document.getElementById('errorBackdrop').style.display = 'none';
+                }
+            </script>
             {% endif %}
         {% endfor %}
     {% endif %}
+
     <script>
         // 控制「線上/實體」輸入框的顯示與隱藏
         function toggleLocationInput() {
@@ -188,43 +205,28 @@
             document.getElementById('onlineInputDiv').style.display = isOnline ? 'block' : 'none';
             document.getElementById('offlineInputDiv').style.display = isOffline ? 'block' : 'none';
         }
-
     </script>
 
     <script>
-        // 等待網頁載入完成
+        // 等待網頁載入完成 (自動計算時間的邏輯保持不變)
         document.addEventListener('DOMContentLoaded', function() {
             const durationSelect = document.querySelector('select[name="duration"]');
             const startTimeInput = document.querySelector('input[name="start_time"]');
             const endTimeInput = document.querySelector('input[name="end_time"]');
 
-            // 自動計算結束時間的函數
             function calculateEndTime() {
-                // 確保兩個欄位都有值才計算
                 if (startTimeInput.value && durationSelect.value) {
-                    // 取得時長 (轉成整數)
                     const durationMinutes = parseInt(durationSelect.value, 10);
-                    
-                    // 解析開始時間 (HH:MM)
                     const [hours, minutes] = startTimeInput.value.split(':').map(Number);
-                    
-                    // 計算總分鐘數
                     const totalMinutes = (hours * 60) + minutes + durationMinutes;
-                    
-                    // 換算回新的小時與分鐘 (處理跨日的情況，例如 23:30 + 60分 = 00:30)
                     const newHours = Math.floor(totalMinutes / 60) % 24;
                     const newMinutes = totalMinutes % 60;
-                    
-                    // 補零格式化 (確保是 HH:MM，例如 9:5 會變成 09:05)
                     const formattedHours = String(newHours).padStart(2, '0');
                     const formattedMinutes = String(newMinutes).padStart(2, '0');
-                    
-                    // 自動填入結束時間
                     endTimeInput.value = `${formattedHours}:${formattedMinutes}`;
                 }
             }
 
-            // 監聽器：當「對談時長」或「開始時間」被改變時，就自動觸發計算
             if (durationSelect && startTimeInput && endTimeInput) {
                 durationSelect.addEventListener('change', calculateEndTime);
                 startTimeInput.addEventListener('change', calculateEndTime);
@@ -232,5 +234,4 @@
         });
     </script>
 </body>
-
 </html>

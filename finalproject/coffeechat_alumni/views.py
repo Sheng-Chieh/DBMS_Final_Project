@@ -41,7 +41,7 @@ def manage_chats_controller(request):
                     is_published=is_published, date=date, start_time=start_time, end_time=end_time
                 )
                 messages.success(request, "Coffee Chat 已儲存！")
-                return redirect('manage_chats') # 成功後導回列表
+                return render(request, 'coffeechat_alumni/create_coffeechat.html')
             except Exception as e:
                 messages.error(request, f"發生錯誤：{str(e)}")
         
@@ -59,6 +59,9 @@ def manage_chats_controller(request):
                 start_time = request.POST.get('start_time')
                 end_time = request.POST.get('end_time')
 
+                if not location_type or not location_detail or not date or not start_time or not end_time:
+                        messages.error(request, "資料未填寫完整！")
+                        return render(request, 'coffeechat_alumni/create_coffeechat.html', {'form_data': request.POST})
                 CoffeeChatDatabase.update_chat(
                     chat_id, location_type, location_detail, date, start_time, end_time,
                     duration, target_departments, resume_match_rate
@@ -72,6 +75,13 @@ def manage_chats_controller(request):
         if not chat:
             messages.error(request, "找不到該筆資料")
             return redirect('manage_chats')
+        if chat.get("start_time"):
+            parts = str(chat["start_time"]).split(':')
+            chat["start_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
+            
+        if chat.get("end_time"):
+            parts = str(chat["end_time"]).split(':')
+            chat["end_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
         return render(request, 'coffeechat_alumni/edit_coffee_chat.html', {'chat': chat})
 
     elif action == 'delete' and request.method == "POST":
@@ -98,8 +108,12 @@ def manage_chats_controller(request):
 
     chats = CoffeeChatDatabase.get_all_chats()
     for chat in chats:
-        chat["start_time"] = str(chat["start_time"])[:5]
-        chat["end_time"] = str(chat["end_time"])[:5]
+        if chat.get("start_time"):
+            parts = str(chat["start_time"]).split(':')
+            chat["start_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
+        if chat.get("end_time"):
+            parts = str(chat["end_time"]).split(':')
+            chat["end_time"] = f"{parts[0].zfill(2)}:{parts[1]}"
     return render(request, 'coffeechat_alumni/list_manage_reservation.html', {'chats': chats})
 
 def manage_applicants_controller(request):
