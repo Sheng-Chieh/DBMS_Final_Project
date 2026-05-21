@@ -225,6 +225,7 @@ class CourseRecordManager(models.Manager):
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, [user_id, course_name, semester, grade])
+            return cursor.lastrowid
 
     def get_user_courses(self, user_id):
         with connection.cursor() as cursor:
@@ -235,7 +236,14 @@ class CourseRecordManager(models.Manager):
                 ORDER BY created_at DESC
             """
             cursor.execute(sql, [user_id])
-            return dictfetchall(cursor)
+            courses = dictfetchall(cursor)
+
+        for course in courses:
+            course["tags"] = CourseTag.objects.get_tags_by_course_record(
+                course["course_record_id"]
+            )
+
+        return courses
 
     def update_course(self, course_record_id, user_id, course_name, semester, grade):
         with connection.cursor() as cursor:
@@ -259,6 +267,20 @@ class CourseRecordManager(models.Manager):
             """
             cursor.execute(sql, [course_record_id, user_id])
 
+    def update_course_tags(self, course_record_id, tag_ids):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM course_record_tags WHERE course_record_id = %s",
+                [course_record_id]
+            )
+
+            sql = """
+                INSERT INTO course_record_tags (course_record_id, tag_id)
+                VALUES (%s, %s)
+            """
+
+            for tag_id in tag_ids:
+                cursor.execute(sql, [course_record_id, tag_id])
 
 class CourseTagManager(models.Manager):
 

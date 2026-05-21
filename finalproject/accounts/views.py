@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 
-from .models import Account, Activity, WorkExperience, CourseRecord, Company, Department
+from .models import Account, Activity, WorkExperience, CourseRecord, CourseTag, Company, Department
 
 
 # ===================== Helper =====================
@@ -104,6 +104,7 @@ def resume(request):
 
     companies = Company.objects.get_all_companies()
     departments = Department.objects.get_all_departments()
+    course_tags = CourseTag.objects.get_all_tags()
 
     return render(request, 'accounts/resume.html', {
         'user': user,
@@ -113,6 +114,8 @@ def resume(request):
         'companies': companies,
         'departments': departments,
         'year_options': get_year_options(),
+        'today': datetime.now().date().isoformat(),
+        'course_tags': course_tags,
     })
 
 
@@ -250,16 +253,23 @@ def delete_work(request, work_id):
 @login_required
 def add_course(request):
     if request.method == 'POST':
-        CourseRecord.objects.add_course(
+        course_record_id = CourseRecord.objects.add_course(
             get_user_id(request),
             request.POST.get('course_name'),
             request.POST.get('semester'),
             request.POST.get('grade')
         )
 
+        tag_ids = request.POST.getlist('tag_ids')
+        CourseRecord.objects.update_course_tags(course_record_id, tag_ids)
+
         return redirect('resume')
 
-    return render(request, 'accounts/add_course.html')
+    course_tags = CourseTag.objects.get_all_tags()
+
+    return render(request, 'accounts/add_course.html', {
+        'course_tags': course_tags
+    })
 
 
 @login_required
@@ -272,6 +282,9 @@ def update_course(request, course_record_id):
             request.POST.get('semester'),
             request.POST.get('grade')
         )
+
+        tag_ids = request.POST.getlist('tag_ids')
+        CourseRecord.objects.update_course_tags(course_record_id, tag_ids)
 
     return redirect('resume')
 
