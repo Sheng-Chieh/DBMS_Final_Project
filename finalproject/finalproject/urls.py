@@ -43,16 +43,8 @@ urlpatterns = [
 
     # 校友端 (coffeechat_alumni_views)
     path('ca_homepage/', coffeechat_alumni_views.ca_homepage, name='ca_homepage'),
-    
-    path('create-coffee-chat/', coffeechat_alumni_views.create_coffee_chat, name='create_coffee_chat'),
-    path('edit-coffee-chat/<int:chat_id>/', coffeechat_alumni_views.edit_coffee_chat, name='edit_coffee_chat'),
-    path('manage-reservations/', coffeechat_alumni_views.list_manage_reservation, name='list_manage_reservation'),
-    
-    path('applicant/<int:applicant_id>/accept/', coffeechat_alumni_views.accept_applicant, name='accept_applicant'),
-    path('manage-reservation/<int:chat_id>/', coffeechat_alumni_views.manage_reservation, name='manage_reservation'),
-    path('toggle-coffee-chat-status/<int:chat_id>/', coffeechat_alumni_views.toggle_coffee_chat_status, name='toggle_coffee_chat_status'),
-    path('delete_chat/<int:chat_id>/', coffeechat_alumni_views.delete_coffee_chat, name='delete_coffee_chat'),
-    path('applicant/<int:applicant_id>/reject/', coffeechat_alumni_views.reject_applicant, name='reject_applicant'),
+    path('manage-chats/', coffeechat_alumni_views.manage_chats_controller, name='manage_chats'),
+    path('manage-applicants/', coffeechat_alumni_views.manage_applicants_controller, name='manage_applicants'),
     
     #登入註冊端
     path('resume/', account_views.resume, name='resume'),

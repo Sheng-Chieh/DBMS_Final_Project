@@ -33,15 +33,17 @@
         <div class="list-item-box d-flex justify-content-between align-items-center
     {% if chat.is_published %}published{% else %}unpublished{% endif %}">
 
-    <div>
-        #{{ forloop.counter }}
-        {{ chat.location_detail }}
-        |
-        {{ chat.duration }} 分鐘 | (暫定) 人預約
+    <div class="chat-row">
+        <div class="left">
+            #{{ forloop.counter }} {{ chat.location_detail }} | {{ chat.date }}
+        </div>
+        <div class="right">
+            {{ chat.start_time}} - {{ chat.end_time}}
+        </div>
     </div>
             
             <!-- 將這筆資料的 ID 帶入 URL，跳轉到專屬的編輯頁面 -->
-            <a href="{% url 'manage_reservation' chat.id %}" class="btn custom-btn bg-light">管理</a>
+            <a href="{% url 'manage_applicants' %}?action=view&chat_id={{ chat.id }}" class="btn custom-btn bg-light">管理</a>
         </div>
         
         <!-- 當資料庫裡沒有任何 Coffee Chat 時顯示 -->

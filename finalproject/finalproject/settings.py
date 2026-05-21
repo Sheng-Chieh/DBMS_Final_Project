@@ -20,7 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -117,17 +116,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'final_project',
-        'USER': 'root',
-        'PASSWORD': 'ericaLEE941028++',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
-}
 
 
 # Internationalization

@@ -6,12 +6,13 @@ class CoffeeChatDatabase:
     @staticmethod
     def get_connection():
         try:
+            
             return pymysql.connect(
                 host=settings.DATABASES['default']['HOST'],
                 database=settings.DATABASES['default']['NAME'],
                 user=settings.DATABASES['default']['USER'],
                 password=settings.DATABASES['default']['PASSWORD'],
-                port=settings.DATABASES['default'].get('PORT', 3306)
+                port=int(settings.DATABASES['default'].get('PORT', 3306))
             )
         except Error as e:
             print(f"資料庫連線失敗: {e}")
@@ -21,7 +22,7 @@ class CoffeeChatDatabase:
     def _execute(query, params=None, fetch=False, fetchone=False, commit=False):
         conn = CoffeeChatDatabase.get_connection()
         if not conn: return None
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         try:
             cursor.execute(query, params or ())
             if commit:

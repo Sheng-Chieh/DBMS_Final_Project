@@ -64,7 +64,7 @@
         <hr class="divider">
 
         <!-- 這裡的 action 記得改成你 Django 接收 POST 的 url -->
-        <form action="{% url 'create_coffee_chat' %}" method="POST">
+        <form action="{% url 'manage_chats' %}?action=create" method="POST">
             {% csrf_token %}
 
             <!-- 偏好對談地點 -->
@@ -137,8 +137,8 @@
             </div>
 
             <div class="d-flex justify-content-end gap-3 mt-5">
-                <button type="submit" name="action" value="draft" class="btn custom-btn px-4">儲存</button>
-                <button type="submit" name="action" value="publish" class="btn custom-btn px-4">發布</button>
+                <button type="submit" name="submit_action" value="draft" class="btn custom-btn px-4">儲存</button>
+                <button type="submit" name="submit_action" value="publish" class="btn custom-btn px-4">發布</button>
             </div>
         </form>
     </div>
@@ -172,7 +172,7 @@
 
     <script>
     function goHome() {
-        window.location.href = "{% url 'list_manage_reservation' %}";
+        window.location.href = "{% url 'manage_chats' %}";
     }
     </script>
 

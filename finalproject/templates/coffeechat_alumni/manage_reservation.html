@@ -54,8 +54,8 @@
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="chat-title">管理 Coffee Chat 預約</h1>
             
-            <form method="POST" action="{% url 'delete_coffee_chat' chat_info.id %}" class="m-0"
-                  onsubmit="return confirm('確定要刪除這個 Coffee Chat 嗎？');">
+            <form method="POST" action="{% url 'manage_chats' %}?action=delete&id={{ chat_info.id }}" class="m-0"
+                    onsubmit="return confirm('確定要刪除這個 Coffee Chat 嗎？');">
                 {% csrf_token %}
                 <button type="submit" class="btn delete-btn">
                     刪除Coffee Chat
@@ -77,7 +77,7 @@
             
             <div class="d-flex align-items-center">
                 <span class="fs-5 me-4">Coffee Chat 內容</span>
-                <a href="{% url 'edit_coffee_chat' chat_info.id %}" class="custom-btn text-decoration-none text-dark">編輯</a>
+                <a href="{% url 'manage_chats' %}?action=edit&id={{ chat_info.id }}" class="custom-btn text-decoration-none text-dark">編輯</a>
             </div>
         </div>
 
@@ -113,12 +113,19 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="m-0">申請信內容</h5>
                     <div id="actionButtons" class="d-none d-flex gap-2">
-                        <form id="acceptForm" action="#" method="POST" class="m-0">
+                        <form id="acceptForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
                             {% csrf_token %}
+                            <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
+                            <input type="hidden" name="applicant_id" id="acceptAppId" value=""> 
+                            <input type="hidden" name="status_action" value="accept"> 
                             <button type="submit" class="btn btn-accept">接受預約</button>
                         </form>
-                        <form id="rejectForm" action="#" method="POST" class="m-0">
+
+                        <form id="rejectForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
                             {% csrf_token %}
+                            <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
+                            <input type="hidden" name="applicant_id" id="rejectAppId" value="">
+                            <input type="hidden" name="status_action" value="reject">
                             <button type="submit" class="btn btn-reject">婉拒預約</button>
                         </form>
                     </div>
@@ -134,47 +141,59 @@
     <script>
         // 修正：顯示申請信 (從按鈕 data 屬性讀取資料，並合併內容與顯示右側按鈕)
         function showLetter(btn) {
-            const name = btn.getAttribute('data-app-name');
             const appId = btn.getAttribute('data-app-id');
             const exp = btn.getAttribute('data-experience');
             const quest = btn.getAttribute('data-questions');
             
-            // 1. 更新內容灰色框框
+            // 1. 更新內容框框 (不變)
             const contentBox = document.getElementById('letterContentBox');
-            contentBox.style.whiteSpace = 'pre-wrap'; // 確保換行
-            // 用innerText避免HTML注入，InnerText會自動解析\n
+            contentBox.style.whiteSpace = 'pre-wrap';
             contentBox.innerText = `經歷摘要：\n${exp}\n\n想要詢問的問題？：\n${quest}`;
             
-            // 2. 處理右側「接受/婉拒」按鈕
+            // 2. 處理操作按鈕
             const actionButtonsContainer = document.getElementById('actionButtons');
+            
+            // 這裡我們取得同一個控制器的網址
+            // 假設你在 urls.py 定義的名字是 'manage_applicants'
+            let baseUrl = "{% url 'manage_applicants' %}?action=update_status";
+            
+            // 設定 acceptForm
             const acceptForm = document.getElementById('acceptForm');
+            acceptForm.action = baseUrl;
+            // 確保表單裡有必要的隱藏欄位
+            updateHiddenInput(acceptForm, 'applicant_id', appId);
+            updateHiddenInput(acceptForm, 'status_action', 'accept');
+
+            // 設定 rejectForm
             const rejectForm = document.getElementById('rejectForm');
+            rejectForm.action = baseUrl;
+            updateHiddenInput(rejectForm, 'applicant_id', appId);
+            updateHiddenInput(rejectForm, 'status_action', 'reject');
             
-            // 動態更新 Form 的 action URL (指向後端對應的 View)
-            // 需要動態產生 URL，這裡假設你的 URL name 叫 'accept_applicant' 和 'reject_applicant'
-            // 由於 django template 無法直接在 JS 裡印出帶變數的 URL name，需要解析字串。
-            // 假設 URL 格式為 /coffeechat-alumni/accept-applicant/{id}/
-            
-            // 簡單方法：在後端 views.py 定義這兩個 URL 模式。
-            // 這裡動態設定 URL，需要依據你實際的 url.py 定義。
-            // 假設格式為 '/alumni/manage-reservation/accept/{id}/'
-            
-            // 這裡為了能運行，先假設原代碼的 url 解析結構
-            // 通常在前端我們不會寫死 URL，但這裡沒有 template 反解析，先展示邏輯
-            let baseAcceptUrl = "{% url 'accept_applicant' 999999 %}";
-            let baseRejectUrl = "{% url 'reject_applicant' 999999 %}";
-            acceptForm.action = baseAcceptUrl.replace('999999', appId);
-            rejectForm.action = baseRejectUrl.replace('999999', appId);
-            
-            // 顯示按鈕
+            // 顯示按鈕區塊
             actionButtonsContainer.classList.remove('d-none');
+        }
+
+        // 輔助函式：用來動態新增或更新表單裡的隱藏欄位
+        function updateHiddenInput(form, name, value) {
+            let input = form.querySelector(`input[name="${name}"]`);
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                form.appendChild(input);
+            }
+            input.value = value;
         }
 
         // 切換狀態 (連線到後端 API) (保持不變)
         function toggleStatus() {
             const btn = document.getElementById('statusBtn');
+            
+            // 透過 URL 參數 ?action=toggle&id=... 告訴後端要執行切換狀態
+            const url = "{% url 'manage_chats' %}?action=toggle&id={{ chat_info.id }}";
 
-            fetch("{% url 'toggle_coffee_chat_status' chat_info.id %}", {
+            fetch(url, {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}",
@@ -184,7 +203,7 @@
             .then(data => {
                 if (data.success) {
                     if (data.new_status === 1) {
-                        btn.innerText = "發布";
+                        btn.innerText = "發布"; // 根據你的 UI 需求更新文字
                         btn.classList.remove("status-closed");
                     } else {
                         btn.innerText = "草稿";
