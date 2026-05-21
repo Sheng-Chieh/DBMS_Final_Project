@@ -1,6 +1,6 @@
-id,alumni_name,location_type,location_detail,date,start_time,end_time,duration,target_departments,resume_match_rate,is_published
-1,李志豪,online,Google Meet,2026-06-01,14:00:00,15:00:00,60,資管系,70,1
-2,蔡宜庭,offline,台大綜合教學館101,2026-06-05,10:00:00,11:30:00,90,不限,50,1
-3,黃俊凱,online,Zoom 連結,2026-06-10,19:00:00,19:45:00,45,資科系;資管系,80,1
-4,許文馨,offline,信義區星巴克,2026-06-15,15:00:00,16:00:00,60,企管系;財金系,60,0
-5,吳承恩,online,Google Meet,2026-06-20,20:00:00,21:00:00,60,資管系;設計系,0,1
+id,alumni_id,location_type,location_detail,date,start_time,end_time,duration,target_departments,resume_match_rate,is_published
+1,5,online,Google Meet,2026-06-01,14:00:00,15:00:00,60,資管系,70,1
+2,6,offline,台大綜合教學館101,2026-06-05,10:00:00,11:30:00,90,不限,50,1
+3,7,online,Zoom 連結,2026-06-10,19:00:00,19:45:00,45,資科系;資管系,80,1
+4,8,offline,信義區星巴克,2026-06-15,15:00:00,16:00:00,60,企管系;財金系,60,0
+5,9,online,Google Meet,2026-06-20,20:00:00,21:00:00,60,資管系;設計系,0,1

@@ -6,7 +6,6 @@ class CoffeeChatDatabase:
     @staticmethod
     def get_connection():
         try:
-            
             return pymysql.connect(
                 host=settings.DATABASES['default']['HOST'],
                 database=settings.DATABASES['default']['NAME'],
@@ -38,33 +37,52 @@ class CoffeeChatDatabase:
             cursor.close()
             conn.close()
 
-    # 建立時段
+    #建立時段 (寫入 alumni_id)
     @classmethod
-    def create_chat(cls, alumni_name, loc_type, loc_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published):
+    def create_chat(cls, alumni_id, loc_type, loc_detail, date, start_time, end_time, duration, target_departments, resume_match_rate, is_published):
         query = """
             INSERT INTO coffee_chat_config
-            (alumni_name, location_type, location_detail, date, start_time, end_time, 
+            (alumni_id, location_type, location_detail, date, start_time, end_time, 
              duration, target_departments, resume_match_rate, is_published)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         return cls._execute(query, (
-            alumni_name, loc_type, loc_detail, date, start_time, end_time,
+            alumni_id, loc_type, loc_detail, date, start_time, end_time,
             duration, target_departments, resume_match_rate, is_published
         ), commit=True)
-
+    
+    #撈取時 JOIN 校友名字
     @classmethod
     def get_chat_by_id(cls, chat_id):
-        return cls._execute("SELECT * FROM coffee_chat_config WHERE id = %s", (chat_id,), fetchone=True)
-
+        query = """
+            SELECT c.*, u.name as alumni_name 
+            FROM coffee_chat_config c
+            JOIN users u ON c.alumni_id = u.user_id
+            WHERE c.id = %s
+        """
+        return cls._execute(query, (chat_id,), fetchone=True)
+    
     @classmethod
     def get_all_chats(cls):
-        return cls._execute("SELECT * FROM coffee_chat_config ORDER BY created_at DESC", fetch=True) or []
-
+        query = """
+            SELECT c.*, u.name as alumni_name 
+            FROM coffee_chat_config c
+            JOIN users u ON c.alumni_id = u.user_id
+            ORDER BY c.created_at DESC
+        """
+        return cls._execute(query, fetch=True) or []
+    
     @classmethod
     def get_published_chats(cls):
-        return cls._execute("SELECT * FROM coffee_chat_config WHERE is_published = 1 ORDER BY created_at DESC", fetch=True) or []
+        query = """
+            SELECT c.*, u.name as alumni_name 
+            FROM coffee_chat_config c
+            JOIN users u ON c.alumni_id = u.user_id
+            WHERE c.is_published = 1 
+            ORDER BY c.created_at DESC
+        """
+        return cls._execute(query, fetch=True) or []
 
-    # 更新時段
     @staticmethod
     def update_chat(chat_id, loc_type, loc_detail, date, start_time, end_time, duration, target_departments, resume_match_rate):
         query = """
@@ -78,17 +96,34 @@ class CoffeeChatDatabase:
             duration, target_departments, resume_match_rate, chat_id
         ), commit=True)
 
-    # 接受申請者 (修正資料表名稱為 coffee_chat_application)
     @classmethod
     def accept_applicant(cls, applicant_id):
         cls._execute("UPDATE coffee_chat_application SET status='accepted' WHERE id=%s", (applicant_id,), commit=True)
 
-    # ====== 新增：婉拒申請者 ======
     @classmethod
     def reject_applicant(cls, applicant_id):
         cls._execute("UPDATE coffee_chat_application SET status='rejected' WHERE id=%s", (applicant_id,), commit=True)
 
-    # 取得申請者 (修正資料表名稱為 coffee_chat_application)
+    #審核介面：JOIN 學生名字
     @classmethod
     def get_applicants(cls, chat_id):
-        return cls._execute("SELECT * FROM coffee_chat_application WHERE coffee_chat_id = %s ORDER BY created_at DESC", (chat_id,), fetch=True) or []
+        query = """
+            SELECT a.*, u.name as student_name 
+            FROM coffee_chat_application a
+            JOIN users u ON a.student_id = u.user_id
+            WHERE a.coffee_chat_id = %s 
+            ORDER BY a.created_at DESC
+        """
+        return cls._execute(query, (chat_id,), fetch=True) or []
+    
+    #只撈取「特定校友」發布的時段
+    @classmethod
+    def get_chats_by_alumni(cls, alumni_id):
+        query = """
+            SELECT c.*, u.name as alumni_name 
+            FROM coffee_chat_config c
+            JOIN users u ON c.alumni_id = u.user_id
+            WHERE c.alumni_id = %s
+            ORDER BY c.created_at DESC
+        """
+        return cls._execute(query, (alumni_id,), fetch=True) or []

@@ -350,15 +350,11 @@
                 <!-- 三個主要功能圖示 -->
                 <div class="nav-menu">
                     <!-- Coffee Chat -->
-                    <a class="nav-link" href="{% if request.session.user_id %}{% url 'ca_homepage' %}{% else %}{% url 'login' %}{% endif %}" title="校友咖啡聊天">
+                    <a class="nav-link" href="{% if request.session.user_id %}{% if request.session.role == 'alumni' %}{% url 'ca_homepage' %}{% else %}{% url 'apply_chat' %}{% endif %}{% else %}{% url 'login' %}{% endif %}" title="Coffee Chat">
                         <svg viewBox="0 0 24 24">
-                            <!-- 蒸氣 -->
                             <path d="M7 2c.3.8.3 1.7 0 2.5M11 1.5c.3.8.3 1.7 0 2.5M15 2c.3.8.3 1.7 0 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                            <!-- 杯體 -->
                             <path d="M4 8h14v7c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V8z"/>
-                            <!-- 杯把 -->
                             <path d="M18 10h1.5c1.1 0 2 .9 2 2v1c0 1.1-.9 2-2 2H18v-5z"/>
-                            <!-- 碟子 -->
                             <path d="M2 21h18v-1.5H2V21z"/>
                         </svg>
                         Coffee Chat
