@@ -8,10 +8,153 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
     <style>
+        :root {
+            --brand-color: #2563eb;
+            --brand-hover: #1d4ed8;
+            --theme-teal: #42b5d4;
+            --theme-teal-light: #53c8d8;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, '微軟正黑體'; 
-            background-color: #f4f7f6; margin: 0; padding: 40px; 
-            display: flex; justify-content: center; align-items: center; min-height: 100vh; 
+            background-color: #f4f7f6; margin: 0; padding: 0; 
+        }
+
+        .header-outer {
+            width: 100%;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1128px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .brand-logo:hover {
+            transform: translateY(-1px);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
+
+        .logo-text-db {
+            color: var(--theme-teal);
+            font-weight: 900;
+            position: relative;
+        }
+
+        .logo-text-db::after {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background-color: var(--theme-teal-light);
+            border-radius: 50%;
+            margin-left: 2.5px;
+            vertical-align: baseline;
+        }
+
+        .nav-right-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s ease, transform 0.2s ease;
+            position: relative;
+            padding: 6px 0;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: var(--theme-teal);
+        }
+
+        .nav-link.active {
+            color: var(--theme-teal);
+            font-weight: 700;
+        }
+
+        .nav-link svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            fill: currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-link:hover svg {
+            transform: translateY(-2px);
+        }
+
+        .nav-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: #e8eef9;
+            border: 1px solid #d6e0f2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #5f76a6;
+            margin-bottom: 4px;
+        }
+
+        .nav-avatar svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .page-content {
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px);
         }
         
         .form-container { 
@@ -60,17 +203,78 @@
     </style>
 </head>
 <body>
+    <header class="header-outer">
+        <div class="header-inner">
+            <a href="{% url 'homepage_logged_in' %}" class="brand-logo" title="回首頁">
+                <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="var(--theme-teal-light)" />
+                            <stop offset="100%" stop-color="var(--theme-teal)" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 2C6.5 2 2 3.8 2 6s4.5 4 10 4 10-1.8 10-4-4.5-4-10-4z" fill="url(#logo-grad)" />
+                    <path d="M2 6v5c0 2.2 4.5 4 10 4s10-1.8 10-4V6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M2 11v5c0 2.2 4.5 4 10 4s10-1.8 10-4v-5" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>DBMS <span class="logo-text-db">db</span></span>
+            </a>
 
-    <div class="form-container">
-        <h2>發布新微任務</h2>
-        
-        <form method="POST" action="">
-            {% csrf_token %} 
-            
-            <div class="form-group">
-                <label>微任務名稱</label>
-                <input type="text" name="title" required placeholder="請輸入任務名稱..." />
+            <div class="nav-right-group">
+                <div class="nav-menu">
+                    <a class="nav-link" href="{% url 'ca_homepage' %}" title="校友咖啡聊天">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 2c.3.8.3 1.7 0 2.5M11 1.5c.3.8.3 1.7 0 2.5M15 2c.3.8.3 1.7 0 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                            <path d="M4 8h14v7c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V8z"/>
+                            <path d="M18 10h1.5c1.1 0 2 .9 2 2v1c0 1.1-.9 2-2 2H18v-5z"/>
+                            <path d="M2 21h18v-1.5H2V21z"/>
+                        </svg>
+                        Coffee Chat
+                    </a>
+                    <a class="nav-link" href="{% url 'search_companies' %}" title="公司搜尋">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm6 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm8 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/>
+                        </svg>
+                        公司搜尋
+                    </a>
+                    <a class="nav-link active" href="{% url 'project_list' %}" title="微專案">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                        </svg>
+                        Micro Projects
+                    </a>
+                    <a class="nav-link" href="{% url 'resume' %}" title="個人履歷">
+                        <span class="nav-avatar" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 12a4 4 0 100-8 4 4 0 000 8z"/>
+                                <path d="M4 20a8 8 0 0116 0"/>
+                            </svg>
+                        </span>
+                        {{ request.session.name|default:"使用者" }}
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}" title="登出">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10 3h8c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2h-8v-2h8V5h-8V3z"/>
+                            <path d="M3 12l4-4v3h7v2H7v3l-4-4z"/>
+                        </svg>
+                        登出
+                    </a>
+                </div>
             </div>
+        </div>
+    </header>
+
+    <div class="page-content">
+        <div class="form-container">
+            <h2>發布新微任務</h2>
+            
+            <form method="POST" action="">
+                {% csrf_token %} 
+                
+                <div class="form-group">
+                    <label>微任務名稱</label>
+                    <input type="text" name="title" required placeholder="請輸入任務名稱..." />
+                </div>
 
             <div class="form-group">
                 <label>選擇產業類別</label>
@@ -106,9 +310,10 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn-submit">確認發布</button>
-            <a href="/projects/" class="back-link">← 取消並返回列表</a>
-        </form>
+                <button type="submit" class="btn-submit">確認發布</button>
+                <a href="/projects/" class="back-link">← 取消並返回列表</a>
+            </form>
+        </div>
     </div>
 
     <script>
