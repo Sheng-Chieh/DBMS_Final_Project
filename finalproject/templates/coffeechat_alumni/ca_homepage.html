@@ -1,79 +1,98 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Chat</title>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <style>
-        body {
-            background-color: #ffffff; 
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 20px;
-        }
-        .mockup-frame {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 800px;
-            padding: 80px 40px;
-        }
+{% extends "shared/base.html" %}
 
-        .coffee-icon {
-            width: 110px;
-            height: auto;
-            margin-bottom: 12px;
-        }
+{% block title %}Coffee Chat 控制台 - DBMS{% endblock %}
+{% block nav_coffeechat %}active{% endblock %}
 
-        .chat-title {
-            font-size: 28px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            color: #000;
-        }
-        .divider {
-            border-top: 2px solid #000;
-            opacity: 1; /* 覆蓋 Bootstrap 預設的透明度 */
-            margin: 24px auto 48px auto;
-            width: 90%;
-        }
-        .custom-btn {
-            background-color: #dcdcdc;
-            color: #1a1a1a;
-            border: none;
-            border-radius: 6px;
-            font-size: 18px;
-            font-weight: 400;
-            transition: background-color 0.2s ease;
-        }
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
 
-        .custom-btn:hover {
-            background-color: #c8c8c8;
-            color: #000;
-        }
-    </style>
-</head>
-<body>
+{% block extra_styles %}
+/* 強制鎖定瀏覽器最外層，不允許出現任何滾動條 */
+html, body, .app-body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
-    <div class="mockup-frame text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-cup-hot mb-3" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M.5 6a.5.5 0 0 0-.488.608l1.652 7.434A2.5 2.5 0 0 0 4.104 16h5.792a2.5 2.5 0 0 0 2.44-1.958l.131-.59a3 3 0 0 0 1.3-5.854l.221-.99A.5.5 0 0 0 13.5 6zM13 12.5a2 2 0 0 1-.316-.025l.867-3.898A2.001 2.001 0 0 1 13 12.5M2.64 13.825 1.123 7h11.754l-1.517 6.825A1.5 1.5 0 0 1 9.896 15H4.104a1.5 1.5 0 0 1-1.464-1.175"/>
-            <path d="m4.4.8-.003.004-.014.019a4 4 0 0 0-.204.31 2 2 0 0 0-.141.267c-.026.06-.034.092-.037.103v.004a.6.6 0 0 0 .091.248c.075.133.178.272.308.445l.01.012c.118.158.26.347.37.543.112.2.22.455.22.745 0 .188-.065.368-.119.494a3 3 0 0 1-.202.388 5 5 0 0 1-.253.382l-.018.025-.005.008-.002.002A.5.5 0 0 1 3.6 4.2l.003-.004.014-.019a4 4 0 0 0 .204-.31 2 2 0 0 0 .141-.267c.026-.06.034-.092.037-.103a.6.6 0 0 0-.09-.252A4 4 0 0 0 3.6 2.8l-.01-.012a5 5 0 0 1-.37-.543A1.53 1.53 0 0 1 3 1.5c0-.188.065-.368.119-.494.059-.138.134-.274.202-.388a6 6 0 0 1 .253-.382l.025-.035A.5.5 0 0 1 4.4.8m3 0-.003.004-.014.019a4 4 0 0 0-.204.31 2 2 0 0 0-.141.267c-.026.06-.034.092-.037.103v.004a.6.6 0 0 0 .091.248c.075.133.178.272.308.445l.01.012c.118.158.26.347.37.543.112.2.22.455.22.745 0 .188-.065.368-.119.494a3 3 0 0 1-.202.388 5 5 0 0 1-.253.382l-.018.025-.005.008-.002.002A.5.5 0 0 1 6.6 4.2l.003-.004.014-.019a4 4 0 0 0 .204-.31 2 2 0 0 0 .141-.267c.026-.06.034-.092.037-.103a.6.6 0 0 0-.09-.252A4 4 0 0 0 6.6 2.8l-.01-.012a5 5 0 0 1-.37-.543A1.53 1.53 0 0 1 6 1.5c0-.188.065-.368.119-.494.059-.138.134-.274.202-.388a6 6 0 0 1 .253-.382l.025-.035A.5.5 0 0 1 7.4.8m3 0-.003.004-.014.019a4 4 0 0 0-.204.31 2 2 0 0 0-.141.267c-.026.06-.034.092-.037.103v.004a.6.6 0 0 0 .091.248c.075.133.178.272.308.445l.01.012c.118.158.26.347.37.543.112.2.22.455.22.745 0 .188-.065.368-.119.494a3 3 0 0 1-.202.388 5 5 0 0 1-.252.382l-.019.025-.005.008-.002.002A.5.5 0 0 1 9.6 4.2l.003-.004.014-.019a4 4 0 0 0 .204-.31 2 2 0 0 0 .141-.267c.026-.06.034-.092.037-.103a.6.6 0 0 0-.09-.252A4 4 0 0 0 9.6 2.8l-.01-.012a5 5 0 0 1-.37-.543A1.53 1.53 0 0 1 9 1.5c0-.188.065-.368.119-.494.059-.138.134-.274.202-.388a6 6 0 0 1 .253-.382l.025-.035A.5.5 0 0 1 10.4.8"/>
-        </svg>
-        <h1 class="chat-title">Coffee Chat</h1>
+/* 限制 Django 內容容器高度，並將內容垂直水平置中 */
+.page-content {
+    height: calc(100vh - 80px) !important;
+    max-height: calc(100vh - 80px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+{% endblock %}
 
-        <hr class="divider">
+{% block content %}
+<!-- 外層滿版容器，完全交由外層 page-content 的 flex 置中控制 -->
+<div class="bg-slate-50 w-full h-full flex items-center justify-center px-4 font-sans antialiased">
+    <div class="max-w-4xl w-full">
 
-        <div class="d-flex justify-content-center gap-4 flex-wrap">
-            <a href="{% url 'manage_chats' %}?action=create" class="btn custom-btn px-4 py-2">建立Coffee Chat</a>
-            <a href="{% url 'manage_chats' %}" class="btn custom-btn px-4 py-2">管理Coffee Chat預約</a>
+        <!-- 儀表板主卡片 -->
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <!-- 漸層頂飾條 -->
+            <div class="h-24 sm:h-28 bg-gradient-to-r from-[#53c8d8] to-[#42b5d4] flex items-center justify-center relative">
+                <!-- 重新設計的極致美學咖啡杯圖示 -->
+                <div class="absolute -bottom-8 bg-white p-3 rounded-2xl shadow-md border border-slate-100 flex items-center justify-center">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- 定義精緻的主題漸層 -->
+                            <linearGradient id="cupGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#53c8d8" />
+                                <stop offset="100%" stop-color="#2563eb" />
+                            </linearGradient>
+                        </defs>
+                        <!-- 飄逸溫暖的熱氣蒸汽 -->
+                        <path d="M7.5 5c0-1.2 0.8-1.8 0.8-2.5M11.5 5c0-1.2 0.8-1.8 0.8-2.5M15.5 5c0-1.2 0.8-1.8 0.8-2.5" stroke="url(#cupGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- 半透明漸層杯身，立體感倍增 -->
+                        <path d="M5 9h11a1 1 0 0 1 1 1v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-4a1 1 0 0 1 1-1z" fill="url(#cupGrad)" fill-opacity="0.1" stroke="url(#cupGrad)" stroke-width="1.8" stroke-linejoin="round" />
+                        <!-- 杯耳/把手 -->
+                        <path d="M17 11.5h1.25a2.25 2.25 0 0 1 2.25 2.25v0a2.25 2.25 0 0 1-2.25 2.25H17" stroke="url(#cupGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- 底部托盤，展現咖啡館的儀式感與安定感 -->
+                        <path d="M2.5 21.5c3 1.2 13 1.2 16 0" stroke="url(#cupGrad)" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 控制卡片內距 -->
+            <div class="px-6 sm:px-8 pt-14 pb-8 sm:pb-12 text-center">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-1 sm:mb-2">Coffee Chat 控制台</h1>
+                <p class="text-slate-500 max-w-lg mx-auto mb-8 sm:mb-10 leading-relaxed text-xs sm:text-sm">
+                    歡迎來到 Coffee Chat 教練中心！在這裡，您可以自由開放與發布預約時段，用您寶貴的產業智慧與經驗幫助學弟妹。
+                </p>
+
+                <!-- 雙向功能選擇區 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+                    <!-- 卡片 1: 建立時段 -->
+                    <a href="{% url 'manage_chats' %}?action=create" class="group flex flex-col items-center justify-center p-6 sm:p-8 min-h-[190px] sm:min-h-[230px] bg-slate-50 border border-slate-200 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-2">新增 Coffee Chat 時段</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-400 text-center leading-relaxed max-w-[250px]">發布或儲存新的可預約時段，設定目標科系及篩選標準</p>
+                    </a>
+
+                    <!-- 卡片 2: 管理預約 -->
+                    <a href="{% url 'manage_chats' %}" class="group flex flex-col items-center justify-center p-6 sm:p-8 min-h-[190px] sm:min-h-[230px] bg-slate-50 border border-slate-200 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-2">管理預約與審核</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-400 text-center leading-relaxed max-w-[250px]">查看學弟妹的自薦信及提問大綱，並批次進行錄取確認</p>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

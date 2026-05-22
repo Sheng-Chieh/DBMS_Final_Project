@@ -1,198 +1,211 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>編輯 Coffee Chat</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #ffffff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .mockup-frame { background-color: #ffffff; width: 100%; max-width: 800px; padding: 60px 80px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-        .chat-title { font-size: 28px; font-weight: 500; }
-        .divider { border-top: 2px solid #000; opacity: 1; margin: 20px 0 40px 0; }
-        .custom-btn { background-color: #e0e0e0; border: none; font-weight: 500; }
-        .custom-btn:hover { background-color: #d0d0d0; }
-        /* 隱藏輔助輸入框，透過 JS 控制顯示 */
-        .dynamic-input { display: none; } 
-    </style>
-</head>
-<body>
-    <div class="position-fixed top-0 start-0 p-3">
-        <a href="javascript:history.back()" class="text-dark">
-            <i class="bi bi-arrow-left fs-4"></i>
-        </a>
-    </div>
-    <div class="position-fixed top-0 end-0 p-3">
-        <a href="{% url 'ca_homepage' %}" class="text-dark">
-            <i class="bi bi-house-door-fill fs-4"></i>
-        </a>
-    </div>
-    <div class="mockup-frame">
-        <h1 class="chat-title">編輯 Coffee Chat</h1>
-        <hr class="divider">
+{% extends "shared/base.html" %}
 
-        <!-- 這裡的 action 記得改成你 Django 接收 POST 的 url -->
-        <form id="coffeeChatForm" action="{% url 'manage_chats' %}?action=edit&id={{ chat.id }}" method="POST">
-            {% csrf_token %}
-            
-            <!-- 偏好對談地點 -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">偏好對談地點</label>
-                <div class="d-flex gap-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="location_type" id="locOnline" value="online" {% if chat.location_type == "online" %}checked{% endif %} onchange="toggleLocationInput()">
-                        <label class="form-check-label" for="locOnline">線上</label>
+{% block title %}編輯 Coffee Chat 時段 - DBMS{% endblock %}
+{% block nav_coffeechat %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block extra_styles %}
+.form-input-focus:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-50 min-h-screen py-10 px-4 font-sans antialiased">
+    <div class="max-w-2xl mx-auto">
+        <!-- 頂部返回導覽 -->
+        <div class="mb-6 flex items-center justify-between">
+            <a href="javascript:history.back()" class="inline-flex items-center text-slate-500 hover:text-blue-600 transition-colors font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回
+            </a>
+            <span class="text-sm text-slate-400 font-medium">修改預約時段</span>
+        </div>
+
+        <!-- 表單卡片 -->
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <!-- 漸層表頭 -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white">
+                <h1 class="text-2xl font-bold">編輯 Coffee Chat</h1>
+                <p class="text-blue-100/85 text-xs mt-1">更新對談條件與偏好地點，儲存後即時生效。</p>
+            </div>
+
+            <form id="coffeeChatForm" action="{% url 'manage_chats' %}?action=edit&id={{ chat.id }}" method="POST" class="p-8 space-y-6">
+                {% csrf_token %}
+
+                <!-- 1. 地點選擇 -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-3 text-sm tracking-wide">偏好對談地點</label>
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <label class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/50 transition-colors">
+                            <span class="flex items-center text-slate-700 font-medium text-sm">
+                                <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                線上視訊
+                            </span>
+                            <input type="radio" name="location_type" id="locOnline" value="online" {% if chat.location_type == "online" %}checked{% endif %} onchange="toggleLocationInput()" class="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500">
+                        </label>
+                        <label class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100/50 transition-colors">
+                            <span class="flex items-center text-slate-700 font-medium text-sm">
+                                <svg class="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                實體碰面
+                            </span>
+                            <input type="radio" name="location_type" id="locOffline" value="offline" {% if chat.location_type == "offline" %}checked{% endif %} onchange="toggleLocationInput()" class="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500">
+                        </label>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="location_type" id="locOffline" value="offline" {% if chat.location_type == "offline" %}checked{% endif %} onchange="toggleLocationInput()">
-                        <label class="form-check-label" for="locOffline">實體</label>
+
+                    <!-- 線上與實體輸入控制 -->
+                    <div id="onlineInputDiv" class="hidden transition-all duration-200">
+                        <input type="text" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder-slate-400 bg-slate-50 form-input-focus text-sm" name="online_tool" value="{{ chat.location_detail }}" placeholder="例如：Google Meet / Zoom">
+                    </div>
+                    <div id="offlineInputDiv" class="hidden transition-all duration-200">
+                        <input type="text" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder-slate-400 bg-slate-50 form-input-focus text-sm" name="offline_location" value="{{ chat.location_detail }}" placeholder="例如：校內圖書館咖啡廳">
                     </div>
                 </div>
-                
-                <!-- 線上：選擇工具 -->
-                <div class="mt-2 dynamic-input" id="onlineInputDiv">
-                    <input type="text" class="form-control w-50" name="online_tool" value="{{ chat.location_detail }}" placeholder="選擇使用工具？ (例如：Google Meet)">
+
+                <!-- 2. 對談時長 -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-sm tracking-wide">對談時長</label>
+                    <div class="relative">
+                        <select class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 bg-slate-50 form-input-focus text-sm appearance-none" name="duration">
+                            <option value="30" {% if chat.duration == 30 %}selected{% endif %}>30 分鐘</option>
+                            <option value="60" {% if chat.duration == 60 %}selected{% endif %}>60 分鐘</option>
+                            <option value="90" {% if chat.duration == 90 %}selected{% endif %}>90 分鐘</option>
+                            <option value="120" {% if chat.duration == 120 %}selected{% endif %}>120 分鐘</option>
+                            <option value="150" {% if chat.duration == 150 %}selected{% endif %}>150 分鐘</option>
+                            <option value="180" {% if chat.duration == 180 %}selected{% endif %}>180 分鐘</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
-                <!-- 實體：輸入位置 -->
-                <div class="mt-2 dynamic-input" id="offlineInputDiv">
-                    <input type="text" class="form-control w-50" name="offline_location" value="{{ chat.location_detail }}" placeholder="輸入預計地點 (例如：校內咖啡廳)">
+
+                <!-- 3. 可接受時間 -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-sm tracking-wide">可接受時間</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="date" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 bg-slate-50 form-input-focus text-sm" name="date" value="{{ chat.date|date:'Y-m-d' }}">
+                        <input type="time" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 bg-slate-50 form-input-focus text-sm" name="start_time" value="{{ chat.start_time }}">
+                        <div class="relative flex items-center justify-between">
+                            <span class="text-slate-400 text-sm px-2">至</span>
+                            <input type="time" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 bg-slate-50 form-input-focus text-sm" name="end_time" value="{{ chat.end_time }}">
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- 對談時長 -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">對談時長</label>
-                <select class="form-select w-50" name="duration">
-                    <option value="30" {% if chat.duration == 30 %}selected{% endif %}>30 分鐘</option>
-                    <option value="60" {% if chat.duration == 60 %}selected{% endif %}>60 分鐘</option>
-                    <option value="90" {% if chat.duration == 90 %}selected{% endif %}>90 分鐘</option>
-                    <option value="120" {% if chat.duration == 120 %}selected{% endif %}>120 分鐘</option>
-                    <option value="150" {% if chat.duration == 150 %}selected{% endif %}>150 分鐘</option>
-                    <option value="180" {% if chat.duration == 180 %}selected{% endif %}>180 分鐘</option>
-                </select>
-            </div>
-
-            <!-- 每個月可接受時段 (動態新增) -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">可接受時間</label>
-                <div class="d-flex gap-2 mb-2 timeslot-row">
-                    <input type="date" class="form-control" name="date" value="{{ chat.date|date:'Y-m-d' }}">
-                    <input type="time" class="form-control" name="start_time" value="{{ chat.start_time }}">
-                    <span class="align-self-center">至</span>
-                    <input type="time" class="form-control" name="end_time" value="{{ chat.end_time }}">
+                <!-- 4. 特定科系限制 -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-sm tracking-wide">特定科系要求 (選填)</label>
+                    <input type="text" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder-slate-400 bg-slate-50 form-input-focus text-sm" name="target_departments" value="{{ chat.target_departments }}" placeholder="例如：資訊管理學系 (多個科系請用中英文逗號隔開)">
                 </div>
-            </div>
 
-            <div class="mb-4">
-                <label class="form-label fw-bold">特定科系要求 (選填)</label>
-                <input type="text" class="form-control w-50" name="target_departments" value="{{ chat.target_departments }}" placeholder="例如：資訊管理學系 (若有多個請用逗號隔開)">
-            </div>
+                <!-- 5. 履歷配對 -->
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-sm tracking-wide">最低履歷配對度 (選填)</label>
+                    <div class="relative">
+                        <select class="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 bg-slate-50 form-input-focus text-sm appearance-none" name="resume_match_rate">
+                            <option value="0" {% if chat.resume_match_rate == 0 %}selected{% endif %}>無限制</option>
+                            <option value="50" {% if chat.resume_match_rate == 50 %}selected{% endif %}>50%</option>
+                            <option value="60" {% if chat.resume_match_rate == 60 %}selected{% endif %}>60%</option>
+                            <option value="70" {% if chat.resume_match_rate == 70 %}selected{% endif %}>70%</option>
+                            <option value="80" {% if chat.resume_match_rate == 80 %}selected{% endif %}>80%</option>
+                            <option value="90" {% if chat.resume_match_rate == 90 %}selected{% endif %}>90%</option>
+                            <option value="100" {% if chat.resume_match_rate == 100 %}selected{% endif %}>100%</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="mb-4">
-                <label class="form-label fw-bold">最低履歷配對度 (選填)</label>
-                <select class="form-select w-50" name="resume_match_rate">
-                    <option value="0" {% if chat.resume_match_rate == 0 %}selected{% endif %}>無限制</option>
-                    <option value="50" {% if chat.resume_match_rate == 50 %}selected{% endif %}>50%</option>
-                    <option value="60" {% if chat.resume_match_rate == 60 %}selected{% endif %}>60%</option>
-                    <option value="70" {% if chat.resume_match_rate == 70 %}selected{% endif %}>70%</option>
-                    <option value="80" {% if chat.resume_match_rate == 80 %}selected{% endif %}>80%</option>
-                    <option value="90" {% if chat.resume_match_rate == 90 %}selected{% endif %}>90%</option>
-                    <option value="100" {% if chat.resume_match_rate == 100 %}selected{% endif %}>100%</option>
-                </select>
-            </div>
-            
-            <div class="d-flex justify-content-end gap-3 mt-5">
-                <button type="submit" class="btn custom-btn px-4">儲存</button>
-            </div>
-        </form>
-    </div>
-    {% if messages %}
-    {% for message in messages %}
-    {% if message.tags == "success" %}
-
-    <div class="modal fade show" id="successModal" style="display:block;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-        
-        <div class="modal-header">
-            <h5 class="modal-title"></h5>
-        </div>
-        <div class="modal-body text-center">
-            Coffee Chat 已更新資料！
-        </div>
-
-        <div class="modal-footer">
-            <button onclick="goHome()" class="btn btn-primary">
-            確定
-            </button>
-        </div>
-
+                <!-- 底部按鈕區 -->
+                <div class="pt-4 border-t border-slate-100 flex gap-4 justify-end">
+                    <a href="{% url 'manage_chats' %}" class="px-6 py-3 border border-slate-200 text-slate-500 font-bold rounded-xl hover:bg-slate-50 transition-colors text-sm">
+                        取消
+                    </a>
+                    <button type="submit" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm">
+                        確認修改並儲存
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+<!-- ================== Django 彈窗通知模版 ================== -->
+{% if messages %}
+{% for message in messages %}
+{% if message.tags == "success" %}
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-[bounce_0.5s_ease-out]">
+        <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-1">修改完成</h3>
+        <p class="text-slate-500 text-sm mb-6">Coffee Chat 已成功更新！</p>
+        <button onclick="goHome()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors text-sm">
+            好的
+        </button>
     </div>
+</div>
+<script>
+function goHome(){ window.location.href="{% url 'manage_chats' %}"; }
+</script>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock %}
 
-    <div class="modal-backdrop fade show"></div>
+{% block extra_scripts %}
+<script>
+    function toggleLocationInput() {
+        const isOnline = document.getElementById('locOnline').checked;
+        const isOffline = document.getElementById('locOffline').checked;
 
-    <script>
-    function goHome(){
-        window.location.href="{% url 'manage_chats' %}";
-    }
-    </script>
+        const onlineDiv = document.getElementById('onlineInputDiv');
+        const offlineDiv = document.getElementById('offlineInputDiv');
 
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-    <script>
-        // 控制「線上/實體」輸入框的顯示與隱藏
-        function toggleLocationInput() {
-            const isOnline = document.getElementById('locOnline').checked;
-            const isOffline = document.getElementById('locOffline').checked;
-            
-            document.getElementById('onlineInputDiv').style.display = isOnline ? 'block' : 'none';
-            document.getElementById('offlineInputDiv').style.display = isOffline ? 'block' : 'none';
+        if (isOnline) {
+            onlineDiv.classList.remove('hidden');
+            offlineDiv.classList.add('hidden');
+        } else if (isOffline) {
+            offlineDiv.classList.remove('hidden');
+            onlineDiv.classList.add('hidden');
         }
-    </script>
+    }
 
-    <script>
-        // 等待網頁載入完成
-        document.addEventListener('DOMContentLoaded', function() {
-            const durationSelect = document.querySelector('select[name="duration"]');
-            const startTimeInput = document.querySelector('input[name="start_time"]');
-            const endTimeInput = document.querySelector('input[name="end_time"]');
+    document.addEventListener('DOMContentLoaded', function() {
+        const durationSelect = document.querySelector('select[name="duration"]');
+        const startTimeInput = document.querySelector('input[name="start_time"]');
+        const endTimeInput = document.querySelector('input[name="end_time"]');
 
-            // 自動計算結束時間的函數
-            function calculateEndTime() {
-                // 確保兩個欄位都有值才計算
-                if (startTimeInput.value && durationSelect.value) {
-                    // 取得時長 (轉成整數)
-                    const durationMinutes = parseInt(durationSelect.value, 10);
-                    
-                    // 解析開始時間 (HH:MM)
-                    const [hours, minutes] = startTimeInput.value.split(':').map(Number);
-                    
-                    // 計算總分鐘數
-                    const totalMinutes = (hours * 60) + minutes + durationMinutes;
-                    
-                    // 換算回新的小時與分鐘 (處理跨日的情況，例如 23:30 + 60分 = 00:30)
-                    const newHours = Math.floor(totalMinutes / 60) % 24;
-                    const newMinutes = totalMinutes % 60;
-                    
-                    // 補零格式化 (確保是 HH:MM，例如 9:5 會變成 09:05)
-                    const formattedHours = String(newHours).padStart(2, '0');
-                    const formattedMinutes = String(newMinutes).padStart(2, '0');
-                    
-                    // 自動填入結束時間
-                    endTimeInput.value = `${formattedHours}:${formattedMinutes}`;
-                }
+        function calculateEndTime() {
+            if (startTimeInput.value && durationSelect.value) {
+                const durationMinutes = parseInt(durationSelect.value, 10);
+                const [hours, minutes] = startTimeInput.value.split(':').map(Number);
+                const totalMinutes = (hours * 60) + minutes + durationMinutes;
+                const newHours = Math.floor(totalMinutes / 60) % 24;
+                const newMinutes = totalMinutes % 60;
+                const formattedHours = String(newHours).padStart(2, '0');
+                const formattedMinutes = String(newMinutes).padStart(2, '0');
+                endTimeInput.value = `${formattedHours}:${formattedMinutes}`;
             }
+        }
 
-            // 監聽器：當「對談時長」或「開始時間」被改變時，就自動觸發計算
-            if (durationSelect && startTimeInput && endTimeInput) {
-                durationSelect.addEventListener('change', calculateEndTime);
-                startTimeInput.addEventListener('change', calculateEndTime);
-            }
-        });
-    </script>
-</body>
-</html>
+        if (durationSelect && startTimeInput && endTimeInput) {
+            durationSelect.addEventListener('change', calculateEndTime);
+            startTimeInput.addEventListener('change', calculateEndTime);
+        }
+
+        // 初始載入判斷
+        toggleLocationInput();
+    });
+</script>
+{% endblock %}

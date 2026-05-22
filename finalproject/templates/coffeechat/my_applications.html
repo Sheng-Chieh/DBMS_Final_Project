@@ -1,101 +1,127 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <title>我的申請進度</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <style>
-        .timeline-container { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; margin: 20px 0;}
-        .timeline-line { position: absolute; top: 20px; left: 50px; right: 50px; height: 3px; background-color: #e0e0e0; z-index: 1;}
-        .timeline-step { position: relative; z-index: 2; background-color: #f8f9fa; padding: 0 10px; text-align: center; width: 100px;}
-        .step-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; margin: 0 auto 10px; color: white; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-        .step-text { font-size: 0.85rem; font-weight: bold; }
-        
-        .bg-coffee { background-color: #C4A484; }
-        .bg-gray { background-color: #d3d3d3; }   
-        .hover-card:hover { border-color: #C4A484; transition: 0.3s; }
-    </style>
-</head>
-<body class="bg-light">
+{% extends "shared/base.html" %}
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>申請進度追蹤</h2>
-        <a href="/coffeechat/apply/" class="btn btn-coffee" style="background-color: #C4A484; color: white;">返回預約大廳</a>
-    </div>
-    <hr>
+{% block title %}我的申請進度 - DBMS{% endblock %}
+{% block nav_coffeechat %}active{% endblock %}
 
-    <div class="row">
-        <div class="col-md-8 mx-auto">
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-slate-50 min-h-screen py-10 px-4 font-sans antialiased">
+    <div class="max-w-4xl mx-auto">
+        <!-- 頂部導覽列 -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800 tracking-wide">申請進度追蹤</h1>
+                <p class="text-slate-500 text-xs mt-1 leading-relaxed">即時追蹤您的 Coffee Chat 申請審核進度、閱讀快照與校友教練的回應狀態。</p>
+            </div>
             
+            <a href="/coffeechat/apply/" class="inline-flex items-center text-xs font-bold bg-white border border-slate-200 text-blue-600 hover:bg-slate-50 px-5 py-3 rounded-full shadow-sm transition-all text-center">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                返回預約大廳
+            </a>
+        </div>
+
+        <div class="space-y-6">
             {% for app in applications %}
-            <div class="card mb-4 shadow-sm hover-card bg-light">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        {{ app.alumni_name }} <span class="text-muted" style="font-size: 1rem;">| {{ app.scheduled_time }}</span>
-                    </h5>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#snapshot{{ app.id }}">
-                        申請快照 ▼
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-300">
+                <!-- 申請單頂端頭部 -->
+                <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
+                    <div>
+                        <h2 class="text-base font-extrabold text-slate-800 flex items-center">
+                            {{ app.alumni_name }}
+                            <span class="mx-2 text-slate-300 font-light">|</span>
+                            <span class="text-xs text-slate-400 font-semibold">{{ app.scheduled_time }}</span>
+                        </h2>
+                    </div>
+                    <button class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-xl shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#snapshot{{ app.id }}">
+                        檢視申請信快照
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                 </div>
-                
-                <div class="card-body">
-                    <div class="timeline-container">
-                        <div class="timeline-line"></div>
-                        
-                        <div class="timeline-step">
-                            <div class="step-circle bg-coffee">✓</div>
-                            <div class="step-text text-dark">申請已送出</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">{{ app.created_at|date:"m/d H:i" }}</div>
+
+                <!-- 時序進度條 (與公司風格一致的極簡時序) -->
+                <div class="p-8">
+                    <div class="relative flex items-center justify-between max-w-2xl mx-auto">
+                        <!-- 連接線 -->
+                        <div class="absolute left-10 right-10 top-5 h-0.5 bg-slate-200 z-0"></div>
+
+                        <!-- 步驟 1: 送出 -->
+                        <div class="relative z-10 flex flex-col items-center text-center w-24">
+                            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow border-4 border-white">
+                                ✓
+                            </div>
+                            <span class="text-xs font-bold text-slate-800 mt-2.5">申請已送出</span>
+                            <span class="text-[9px] text-slate-400 mt-0.5">{{ app.created_at|date:"m/d H:i" }}</span>
                         </div>
 
-                        <div class="timeline-step">
+                        <!-- 步驟 2: 已讀/審核中 -->
+                        <div class="relative z-10 flex flex-col items-center text-center w-24">
                             {% if app.status == 'pending' %}
-                                <div class="step-circle bg-warning text-dark"></div>
-                                <div class="step-text text-dark">校友審核中</div>
+                            <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow border-4 border-white animate-pulse">
+                                •
+                            </div>
+                            <span class="text-xs font-bold text-slate-800 mt-2.5">校友審核中</span>
                             {% else %}
-                                <div class="step-circle bg-coffee">✓</div>
-                                <div class="step-text text-dark">校友已讀取</div>
+                            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow border-4 border-white">
+                                ✓
+                            </div>
+                            <span class="text-xs font-bold text-slate-800 mt-2.5">校友已讀取</span>
                             {% endif %}
                         </div>
 
-                        <div class="timeline-step">
+                        <!-- 步驟 3: 同意/婉拒 -->
+                        <div class="relative z-10 flex flex-col items-center text-center w-24">
                             {% if app.status == 'accepted' %}
-                                <div class="step-circle bg-success">✓</div>
-                                <div class="step-text text-success">已同意</div>
+                            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow border-4 border-white">
+                                ✓
+                            </div>
+                            <span class="text-xs font-bold text-emerald-600 mt-2.5">已同意對談</span>
                             {% elif app.status == 'rejected' %}
-                                <div class="step-circle bg-secondary">✗</div>
-                                <div class="step-text text-secondary">已婉拒</div>
+                            <div class="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-sm shadow border-4 border-white">
+                                ✗
+                            </div>
+                            <span class="text-xs font-bold text-rose-500 mt-2.5">已婉拒對談</span>
                             {% else %}
-                                <div class="step-circle bg-gray"></div>
-                                <div class="step-text text-muted">尚未回覆</div>
+                            <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center font-bold text-sm shadow border-4 border-white">
+                                
+                            </div>
+                            <span class="text-xs font-bold text-slate-400 mt-2.5">待校友回應</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
+                <!-- 展開的快照抽屜 -->
                 <div class="collapse" id="snapshot{{ app.id }}">
-                    <div class="card-footer bg-white p-4 border-top">
-                        <h6 class="fw-bold text-secondary">你的經歷簡述與自我推薦信</h6>
-                        <p class="text-dark bg-light p-3 rounded border">{{ app.experience_summary|linebreaksbr }}</p>
-                        
-                        <h6 class="fw-bold text-secondary mt-3">具體提問大綱</h6>
-                        <p class="text-dark bg-light p-3 rounded border">{{ app.question_outline|linebreaksbr }}</p>
+                    <div class="p-6 bg-slate-50 border-t border-slate-100 space-y-4 text-xs">
+                        <div>
+                            <span class="text-slate-400 font-bold block mb-1">您的經歷簡述與自我推薦信：</span>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 text-slate-700 leading-relaxed whitespace-pre-line">{{ app.experience_summary }}</div>
+                        </div>
+
+                        <div>
+                            <span class="text-slate-400 font-bold block mb-1">您的提問問題大綱：</span>
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 text-slate-700 leading-relaxed whitespace-pre-line">{{ app.question_outline }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
             {% empty %}
-                <div class="text-center mt-5 text-muted">
-                    <h4>目前還沒有任何申請紀錄喔！</h4>
-                    <a href="/coffeechat/apply/" class="btn btn-coffee mt-3" style="background-color: #C4A484; color: white;">去預約第一個 Coffee Chat 吧</a>
+            <!-- 空狀態 -->
+            <div class="bg-white rounded-3xl border border-slate-200 py-20 px-4 text-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 </div>
+                <h3 class="text-lg font-bold text-slate-700 mb-1">尚無任何申請紀錄</h3>
+                <p class="text-slate-400 text-xs mb-6">您目前還沒有提出過預約 Coffee Chat 喔！</p>
+                <a href="/coffeechat/apply/" class="inline-flex items-center text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition-all">
+                    前往預約大廳挑選時段
+                </a>
+            </div>
             {% endfor %}
-            
         </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

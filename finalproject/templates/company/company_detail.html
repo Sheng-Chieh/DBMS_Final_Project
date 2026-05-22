@@ -1,20 +1,18 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ company.name }} - 公司詳情</title>
-    <!-- 引入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+{% extends "shared/base.html" %}
 
+{% block title %}{{ company.name }} - 公司詳情{% endblock %}
+{% block nav_company %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="company-detail-page bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
     <div class="container mx-auto px-4 py-10 max-w-4xl">
-        
-        <!-- 返回按鈕 -->
         <div class="mb-6">
-            <!-- javascript:history.back() 可讓網頁回上一頁並保留剛才的搜尋條件 -->
-            <a href="javascript:history.back()" class="inline-flex items-center text-slate-500 hover:text-blue-600 transition-colors font-medium">
+            <!-- 呼叫 goBackTransition 函數，提供快速返回，交由搜尋頁面執行動態收縮過場動畫 -->
+            <a href="#" onclick="goBackTransition(event)" class="inline-flex items-center text-slate-500 hover:text-blue-600 transition-colors font-medium">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -22,14 +20,10 @@
             </a>
         </div>
 
-        <!-- 內容卡片 -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            
-            <!-- 卡片頂部設計 (Cover Header) -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
             <div class="h-32 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            
+
             <div class="px-8 pb-10">
-                <!-- 標題與產業標籤 -->
                 <div class="-mt-12 mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 inline-block">
                         <h1 class="text-3xl font-extrabold text-slate-800 leading-tight">{{ company.name }}</h1>
@@ -41,7 +35,6 @@
                     </div>
                 </div>
 
-                <!-- 資訊區塊 (地點與網站) -->
                 <div class="flex flex-col sm:flex-row gap-6 mb-10 pb-8 border-b border-slate-100">
                     <div class="flex items-center text-slate-600">
                         <div class="bg-slate-100 p-2.5 rounded-full mr-3 text-slate-500">
@@ -68,21 +61,87 @@
                     {% endif %}
                 </div>
 
-                <!-- 簡介內容 -->
                 <div>
                     <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
                         <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         關於 {{ company.name }}
                     </h2>
                     <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                        <!-- 使用 linebreaksbr 讓資料庫裡的換行可以正常顯示 -->
                         <p class="text-slate-600 leading-relaxed text-lg whitespace-pre-line">{{ company.description_detail }}</p>
                     </div>
                 </div>
-                
             </div>
         </div>
+
+        <!-- 🎓 同系所畢業校友（學長姐）推薦區 -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 overflow-hidden">
+            <h2 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                </svg>
+                同系畢業校友在這裡
+            </h2>
+            <p class="text-sm text-slate-500 mb-6">與您畢業於相同科系的校友（學長姐），目前或曾於 {{ company.name }} 服務，歡迎向他們請教職涯或實習經驗！</p>
+
+            {% if alumni_list %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for alumnus in alumni_list %}
+                    <div class="bg-gradient-to-br from-white to-slate-50/50 rounded-2xl p-5 border border-slate-200/60 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <!-- 顯示姓名首字做為大氣圓形頭像 -->
+                                    <div class="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                                        {{ alumnus.name|slice:":1" }}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 text-base leading-tight">{{ alumnus.name }}</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">{{ alumnus.department_name }} • {% if alumnus.graduation_year %}{{ alumnus.graduation_year }} 級{% else %}已畢業{% endif %}</p>
+                                    </div>
+                                </div>
+                                <span class="bg-indigo-50 text-indigo-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-indigo-100">
+                                    同系校友
+                                </span>
+                            </div>
+                            
+                            <div class="mt-2 mb-4 bg-white/80 p-3 rounded-xl border border-slate-100">
+                                <p class="text-xs text-slate-400 font-semibold mb-0.5">目前職稱</p>
+                                <p class="text-sm font-medium text-slate-700">{{ alumnus.current_job_title|default:"未填寫職稱" }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Coffee Chat 預約按鈕 (已移除寄信請教，升級為精緻滿寬按鈕) -->
+                        <div class="mt-2">
+                            <a href="{% url 'apply_chat' %}?alumni_id={{ alumnus.user_id }}" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                預約 Chat
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- 美觀的空白狀態 -->
+                <div class="bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 py-12 px-6 text-center flex flex-col items-center justify-center">
+                    <div class="bg-white p-3.5 rounded-full border border-slate-100 shadow-sm mb-3 text-slate-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-1">目前尚無同科系校友登記</h3>
+                    <p class="text-xs text-slate-400 max-w-sm">期待您未來實習或畢業進入這間企業，成為我們第一位在這裡開疆闢土的傑出學長姐！</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
-    
-</body>
-</html>
+</div>
+
+<script>
+    // 直接觸發瀏覽器的 history.back()，並由搜尋頁面接手將白幕流暢地收回，避免動畫重疊與卡死白屏
+    function goBackTransition(e) {
+        e.preventDefault();
+        history.back();
+    }
+</script>
+{% endblock %}

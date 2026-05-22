@@ -123,6 +123,25 @@ class CompanyManager(models.Manager["Company"]):
 
             # 3. 轉成單筆字典資料，方便 view 和 template 使用
             return dictfetch(cursor, one=True)
+    
+    def get_alumni_by_department_and_company(self, user_id, company_id):
+        """獲取與當前登入使用者相同科系，且在該公司工作（或曾有工作經驗）的校友列表"""
+        if not user_id:
+            return []
+
+        sql = """
+            SELECT u.user_id, u.name, u.email, u.current_job_title, u.graduation_year, d.department_name
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.department_id
+            WHERE u.role = 'alumni'
+              AND u.department_id = (SELECT department_id FROM users WHERE user_id = %s)
+              AND (u.company_id = %s OR u.user_id IN (
+                  SELECT user_id FROM work_experiences WHERE company_id = %s
+              ))
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [user_id, company_id, company_id])
+            return dictfetch(cursor)
 
 # 建立一個簡單的 Model，並掛載上面的自定義 Manager
 class Company(models.Model):

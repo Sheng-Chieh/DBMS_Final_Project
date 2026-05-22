@@ -56,8 +56,17 @@ def company_detail(request, company_id):
     if not company_data:
         raise Http404("找不到該公司資料")
         
+    # 獲取當前登入使用者的 user_id
+    user_id = request.session.get('user_id')
+    
+    # 查詢與使用者同系所，且在該公司工作或服務過的校友名單
+    alumni_list = []
+    if user_id:
+        alumni_list = Company.objects.get_alumni_by_department_and_company(user_id, company_id) or []
+        
     context = {
-        'company': company_data
+        'company': company_data,
+        'alumni_list': alumni_list
     }
     
     return render(request, 'company/company_detail.html', context)

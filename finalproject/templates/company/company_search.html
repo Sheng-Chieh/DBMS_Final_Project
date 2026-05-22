@@ -273,7 +273,7 @@
         </div>
     </header>
 
-    <!-- 頂部漸層橫幅與搜尋列 (保持不變) -->
+    <!-- 頂部漸層橫幅與搜尋列 -->
     <div class="bg-gradient-to-r from-[#53c8d8] to-[#42b5d4] pb-10 pt-12 px-4 shadow-sm mb-6">
         <div class="container mx-auto max-w-6xl">
             <header class="mb-8 text-center">
@@ -368,8 +368,8 @@
 
         <div class="flex flex-col md:flex-row gap-6 relative items-start">
             
-            <!-- 左側：公司列表區 (加上 md:flex-1 讓它能自動填滿剩餘空間) -->
-            <div id="list-panel" class="w-full md:flex-1 flex flex-col gap-4 h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar pr-2 pb-10 transition-all duration-300">
+            <!-- 左側：公司列表區 -->
+            <div id="list-panel" class="w-full md:flex-1 flex flex-col gap-4 pb-10 transition-all duration-300">
                 {% if companies %}
                     {% for company in companies %}
                     <!-- 公司卡片 -->
@@ -402,8 +402,8 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <!-- 無結果狀態 (修正了遺失的結尾標籤) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 py-16 px-6 text-center flex flex-col items-center justify-center">
+                    <!-- 無結果狀態 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 py-16 px-6 text-center flex flex-col items-center justify-center w-full">
                         <div class="bg-slate-100 p-4 rounded-full mb-4">
                             <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
@@ -413,8 +413,8 @@
                 {% endif %}
             </div>
 
-            <!-- 右側：動態詳細資料顯示區 (全靠 CSS 控制 RWD 與側邊固定) -->
-            <div id="detail-panel" class="hidden fixed inset-0 z-[200] bg-slate-50/95 backdrop-blur-sm p-4 md:p-0 md:bg-transparent md:backdrop-blur-none w-full md:w-[45%] lg:w-[40%] shrink-0 h-full md:h-[calc(100vh-250px)] md:sticky md:top-4 transition-all duration-300">
+            <!-- 右側：動態詳細資料顯示區 (在桌面端使用黏性定位 md:sticky 緊隨頁面滾動) -->
+            <div id="detail-panel" class="hidden fixed inset-0 z-[200] bg-slate-50/95 backdrop-blur-sm p-4 md:p-0 md:bg-transparent md:backdrop-blur-none w-full md:w-[45%] lg:w-[40%] shrink-0 h-full md:h-[calc(100vh-120px)] md:sticky md:top-[100px] transition-all duration-300">
                 
                 <!-- 點擊後顯示的詳細資料容器 -->
                 <div id="detail-content-state" class="w-full h-full bg-white rounded-2xl shadow-2xl md:shadow-sm border border-slate-200 overflow-y-auto custom-scrollbar relative opacity-0 translate-y-4 transition-all duration-300 ease-out">
@@ -428,7 +428,7 @@
                     <div class="h-28 bg-gradient-to-r from-blue-500 to-indigo-600 relative">
                         <!-- 右上角獨立頁面連結與關閉按鈕 -->
                         <div class="absolute top-4 right-4 flex space-x-2 z-10">
-                            <a id="detail-fullscreen-link" href="#" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition-colors text-sm font-medium flex items-center" title="在新分頁開啟完整頁面" target="_blank">
+                            <a id="detail-fullscreen-link" href="#" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition-colors text-sm font-medium flex items-center" title="進入完整詳細頁面" onclick="startDetailTransition(event)">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             </a>
                             <button onclick="closeDetailPanel()" class="hidden md:flex bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition-colors text-sm font-medium items-center" title="關閉預覽">
@@ -480,7 +480,6 @@
                                 關於公司
                             </h2>
                             <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
-                                <!-- JS 會將內容塞入這裡 -->
                                 <p id="view-desc" class="text-slate-600 leading-relaxed text-md"></p>
                             </div>
                         </div>
@@ -493,7 +492,7 @@
     </div>
 
 
-    <!-- ================== 產業類型與地區 Modal (保持與原本完全相同) ================== -->
+    <!-- ================== 產業類型與地區 Modal ================== -->
     <!-- 產業類型 Modal -->
     <div id="industry-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeIndustryModal()"></div>
@@ -622,6 +621,129 @@
                 el.classList.add('border-slate-200', 'bg-white');
             });
         }
+
+        // =========================================================================
+        // 點擊「完整詳細頁面」按鈕的無縫過場動畫跳轉
+        // =========================================================================
+        function startDetailTransition(e) {
+            e.preventDefault(); // 阻止原本預設的跳轉行為
+            
+            const btn = e.currentTarget;
+            const targetUrl = btn.getAttribute("href");
+            if (!targetUrl || targetUrl === "#") return;
+            
+            // 抓取點擊按鈕的螢幕位置
+            const rect = btn.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2;
+            const startY = rect.top + rect.height / 2;
+            
+            // 儲存座標至 sessionStorage
+            sessionStorage.setItem('transition_origin_x', startX);
+            sessionStorage.setItem('transition_origin_y', startY);
+            
+            // 建立一個擴散背景的 div，覆蓋整個螢幕
+            const overlay = document.createElement("div");
+            overlay.className = "transition-overlay"; // 加上 className
+            overlay.style.position = "fixed";
+            overlay.style.inset = "0";
+            overlay.style.width = "100vw";
+            overlay.style.height = "100vh";
+            overlay.style.backgroundColor = "#ffffff"; // 白色背景
+            overlay.style.zIndex = "9999";
+            overlay.style.pointerEvents = "none";
+            
+            // 將 initial clip-path 設為一個小圓 (兼容 webkit)
+            const initialClip = `circle(0px at ${startX}px ${startY}px)`;
+            overlay.style.clipPath = initialClip;
+            overlay.style.webkitClipPath = initialClip;
+            
+            document.body.appendChild(overlay);
+            
+            // 計算能夠蓋住整個螢幕所需的最大半徑
+            const maxRadius = Math.hypot(
+                Math.max(startX, window.innerWidth - startX),
+                Math.max(startY, window.innerHeight - startY)
+            ) + 10;
+            
+            // 利用 Web Animations API 執行動畫
+            requestAnimationFrame(() => {
+                const finalClip = `circle(${maxRadius}px at ${startX}px ${startY}px)`;
+                const animation = overlay.animate([
+                    { clipPath: initialClip, webkitClipPath: initialClip, opacity: 0.8 },
+                    { clipPath: finalClip, webkitClipPath: finalClip, opacity: 1 }
+                ], {
+                    duration: 600,
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)', // 平滑的緩動曲線
+                    fill: 'forwards' // 保持結束狀態
+                });
+                
+                // 動畫結束後，在原視窗跳轉
+                animation.onfinish = () => {
+                    window.location.href = targetUrl;
+                };
+            });
+        }
+
+        // =========================================================================
+        // 處理回到此頁面（如 history.back()）時的還原過場動畫，避免任何白色殘留覆蓋畫面
+        // =========================================================================
+        window.addEventListener('pageshow', function(event) {
+            const originX = sessionStorage.getItem('transition_origin_x');
+            const originY = sessionStorage.getItem('transition_origin_y');
+            
+            if (originX !== null && originY !== null) {
+                const startX = parseFloat(originX);
+                const startY = parseFloat(originY);
+                
+                // 尋找已有的遮罩，若沒有（例如快取因特定瀏覽器設定未保留）則動態建立遮蓋全螢幕的白幕
+                let overlay = document.querySelector('.transition-overlay');
+                if (!overlay) {
+                    overlay = document.createElement("div");
+                    overlay.className = "transition-overlay";
+                    overlay.style.position = "fixed";
+                    overlay.style.inset = "0";
+                    overlay.style.width = "100vw";
+                    overlay.style.height = "100vh";
+                    overlay.style.backgroundColor = "#ffffff";
+                    overlay.style.zIndex = "9999";
+                    overlay.style.pointerEvents = "none";
+                    document.body.appendChild(overlay);
+                }
+                
+                // 計算對角最大半徑
+                const maxRadius = Math.hypot(
+                    Math.max(startX, window.innerWidth - startX),
+                    Math.max(startY, window.innerHeight - startY)
+                ) + 10;
+                
+                const initialClip = `circle(${maxRadius}px at ${startX}px ${startY}px)`;
+                const finalClip = `circle(0px at ${startX}px ${startY}px)`;
+                
+                overlay.style.clipPath = initialClip;
+                overlay.style.webkitClipPath = initialClip;
+                
+                // 執行收縮消失動畫，將白幕收回到點擊的位置
+                requestAnimationFrame(() => {
+                    const animation = overlay.animate([
+                        { clipPath: initialClip, webkitClipPath: initialClip, opacity: 1 },
+                        { clipPath: finalClip, webkitClipPath: finalClip, opacity: 0 }
+                    ], {
+                        duration: 500,
+                        easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                        fill: 'forwards'
+                    });
+                    
+                    animation.onfinish = () => {
+                        overlay.remove();
+                        sessionStorage.removeItem('transition_origin_x');
+                        sessionStorage.removeItem('transition_origin_y');
+                    };
+                });
+            } else {
+                // 如果沒有座標紀錄，直接強制清除所有殘留白幕，絕對避免白色頁面
+                document.querySelectorAll('.transition-overlay').forEach(el => el.remove());
+            }
+        });
 
         // =========================================================================
         // 以下為原有的 Modal 邏輯，完全保留不變以維持原本的搜尋功能
@@ -785,35 +907,7 @@
             renderIndustryRightPanel();
         }
 
-        function updateIndustryCount() { document.getElementById('industry-selected-count').innerText = selectedIndustries.size; }
-        function resetIndustrySelection() { selectedIndustries.clear(); updateIndustryCount(); renderIndustryRightPanel(); }
-
-        function openIndustryModal() {
-            document.getElementById('industry-modal').classList.remove('hidden');
-            const currentVal = document.getElementById('industry-input').value;
-            if (currentVal && selectedIndustries.size === 0) {
-                const vals = currentVal.split(',');
-                vals.forEach(v => { v = v.trim(); if (v) selectedIndustries.add(v); });
-                if (vals.length > 0) {
-                    const firstVal = vals[0].trim();
-                    activeIndustryCategory = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
-                }
-            }
-            updateIndustryCount(); renderIndustryLeftPanel(); renderIndustryRightPanel();
-        }
-        function closeIndustryModal() { document.getElementById('industry-modal').classList.add('hidden'); }
-
-        function confirmIndustrySelection() {
-            const arr = Array.from(selectedIndustries);
-            document.getElementById('industry-input').value = arr.join(',');
-            const textDisplay = document.getElementById('industry-text');
-            if (arr.length === 0) { textDisplay.innerText = '所有產業'; } 
-            else if (arr.length === 1) { textDisplay.innerText = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0] + '業'; } 
-            else { textDisplay.innerText = `已選 ${arr.length} 項`; }
-            closeIndustryModal();
-        }
-
-        // ======================= 地區 Modal 邏輯 =======================
+        // 地區 Modal 邏輯
         const locationData = [
             { group: '北部', cities: [{ name: '台北市', districts: ['中正區', '大同區', '中山區', '松山區', '大安區', '萬華區', '信義區', '士林區', '北投區', '內湖區', '南港區', '文山區'] }, { name: '新北市', districts: ['板橋區', '三重區', '中和區', '永和區', '新莊區', '新店區', '樹林區', '鶯歌區', '三峽區', '淡水區', '汐止區', '瑞芳區', '土城區', '蘆洲區', '五股區', '泰山區', '林口區', '深坑區', '石碇區', '坪林區', '三芝區', '石門區', '八里區', '平溪區', '雙溪區', '貢寮區', '金山區', '萬里區', '烏來區'] }, { name: '基隆市', districts: ['仁愛區', '信義區', '中正區', '中山區', '安樂區', '暖暖區', '七堵區'] }, { name: '桃園市', districts: ['桃園區', '中壢區', '大溪區', '楊梅區', '蘆竹區', '大園區', '龜山區', '八德區', '龍潭區', '平鎮區', '新屋區', '觀音區', '復興區'] }, { name: '新竹市', districts: ['東區', '北區', '香山區'] }, { name: '新竹縣', districts: ['竹北市', '竹東鎮', '新埔鎮', '關西鎮', '湖口鄉', '新豐鄉', '芎林鄉', '橫山鄉', '北埔鄉', '寶山鄉', '峨眉鄉', '尖石鄉', '五峰鄉'] }, { name: '苗栗縣', districts: ['苗栗市', '苑裡鎮', '通霄鎮', '竹南鎮', '頭份市', '後龍鎮', '卓蘭鎮', '大湖鄉', '公館鄉', '銅鑼鄉', '南庄鄉', '頭屋鄉', '三義鄉', '西湖鄉', '造橋鄉', '三灣鄉', '獅潭鄉', '泰安鄉'] }]},
             { group: '中部', cities: [{ name: '台中市', districts: ['中區', '東區', '南區', '西區', '北區', '北屯區', '西屯區', '南屯區', '太平區', '大里區', '霧峰區', '烏日區', '豐原區', '后里區', '石岡區', '東勢區', '和平區', '新社區', '潭子區', '大雅區', '神岡區', '大肚區', '沙鹿區', '龍井區', '梧棲區', '清水區', '大甲區', '外埔區', '大安區'] }, { name: '彰化縣', districts: ['彰化市', '鹿港鎮', '和美鎮', '線西鄉', '伸港鄉', '福興鄉', '秀水鄉', '花壇鄉', '芬園鄉', '員林市', '溪湖鎮', '田中鎮', '大村鄉', '埔鹽鄉', '埔心鄉', '永靖鄉', '社頭鄉', '二水鄉', '北斗鎮', '二林鎮', '田尾鄉', '埤頭鄉', '芳苑鄉', '大城鄉', '竹塘鄉', '溪州鄉'] }, { name: '南投縣', districts: ['南投市', '埔里鎮', '草屯鎮', '竹山鎮', '集集鎮', '名間鄉', '鹿谷鄉', '中寮鄉', '魚池鄉', '國姓鄉', '水里鄉', '信義鄉', '仁愛鄉'] }, { name: '雲林縣', districts: ['斗六市', '斗南鎮', '虎尾鎮', '西螺鎮', '土庫鎮', '北港鎮', '古坑鄉', '大埤鄉', '莿桐鄉', '林內鄉', '二崙鄉', '崙背鄉', '麥寮鄉', '東勢鄉', '褒忠鄉', '臺西鄉', '元長鄉', '四湖鄉', '口湖鄉', '水林鄉'] }]},
@@ -931,6 +1025,7 @@
         function updateLocationCount() { document.getElementById('location-selected-count').innerText = selectedLocations.size; }
         function resetLocationSelection() { selectedLocations.clear(); updateLocationCount(); renderLocationRightPanel(); }
 
+        // 地區彈窗開啟
         function openLocationModal() {
             document.getElementById('location-modal').classList.remove('hidden');
             const currentVal = document.getElementById('location-input').value;
@@ -968,8 +1063,13 @@
             const startX = rect.left + rect.width / 2;
             const startY = rect.top + rect.height / 2;
             
-            // 建立一個擴散背景的 div，取代原本可能有渲染問題的 iframe
+            // 儲存座標至 sessionStorage
+            sessionStorage.setItem('transition_origin_x', startX);
+            sessionStorage.setItem('transition_origin_y', startY);
+            
+            // 建立一個擴散背景的 div
             const overlay = document.createElement("div");
+            overlay.className = "transition-overlay"; // 加上 className
             overlay.style.position = "fixed";
             overlay.style.inset = "0";
             overlay.style.width = "100vw";
@@ -1008,6 +1108,35 @@
                     window.location.href = targetUrl;
                 };
             });
+        }
+        
+        function updateIndustryCount() { document.getElementById('industry-selected-count').innerText = selectedIndustries.size; }
+        function resetIndustrySelection() { selectedIndustries.clear(); updateIndustryCount(); renderIndustryRightPanel(); }
+
+        // 產業彈窗開啟
+        function openIndustryModal() {
+            document.getElementById('industry-modal').classList.remove('hidden');
+            const currentVal = document.getElementById('industry-input').value;
+            if (currentVal && selectedIndustries.size === 0) {
+                const vals = currentVal.split(',');
+                vals.forEach(v => { v = v.trim(); if (v) selectedIndustries.add(v); });
+                if (vals.length > 0) {
+                    const firstVal = vals[0].trim();
+                    activeIndustryCategory = firstVal.includes('-') ? firstVal.split('-')[0] : firstVal;
+                }
+            }
+            updateIndustryCount(); renderIndustryLeftPanel(); renderIndustryRightPanel();
+        }
+        function closeIndustryModal() { document.getElementById('industry-modal').classList.add('hidden'); }
+
+        function confirmIndustrySelection() {
+            const arr = Array.from(selectedIndustries);
+            document.getElementById('industry-input').value = arr.join(',');
+            const textDisplay = document.getElementById('industry-text');
+            if (arr.length === 0) { textDisplay.innerText = '所有產業'; } 
+            else if (arr.length === 1) { textDisplay.innerText = arr[0].includes('-') ? arr[0].split('-')[1] : arr[0] + '業'; } 
+            else { textDisplay.innerText = `已選 ${arr.length} 項`; }
+            closeIndustryModal();
         }
     </script>
 </body>

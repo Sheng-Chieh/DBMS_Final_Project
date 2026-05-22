@@ -1,377 +1,164 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <title>微任務列表</title>
-    <style>
-        :root {
-            --brand-color: #2563eb;
-            --brand-hover: #1d4ed8;
-            --theme-teal: #42b5d4;
-            --theme-teal-light: #53c8d8;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-        }
+{% extends "shared/base.html" %}
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, '微軟正黑體'; 
-            background-color: #f4f7f6; 
-            margin: 0; 
-            padding: 0; 
-            color: #333; 
-        }
+{% block title %}微任務列表{% endblock %}
+{% block nav_projects %}active{% endblock %}
 
-        .header-outer {
-            width: 100%;
-            background-color: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+{% block extra_styles %}
+.page-content { padding: 40px; }
+.container { max-width: 1200px; margin: 0 auto; }
 
-        .header-inner {
-            max-width: 1128px;
-            margin: 0 auto;
-            padding: 0 24px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.header h1 { margin: 0; color: #2c3e50; font-size: 28px; font-weight: 800; letter-spacing: 1px; }
 
-        .brand-logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-main);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: transform 0.2s ease;
-        }
+.btn-primary {
+    background-color: var(--brand-color);
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    transition: all 0.3s ease;
+    display: inline-block;
+}
 
-        .brand-logo:hover {
-            transform: translateY(-1px);
-        }
+.btn-primary:hover {
+    background-color: var(--brand-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+}
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            flex-shrink: 0;
-        }
+.filter-bar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    margin-bottom: 30px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    border: 1px solid #f1f5f9;
+}
 
-        .logo-text-db {
-            color: var(--theme-teal);
-            font-weight: 900;
-            position: relative;
-        }
+.filter-select {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #475569;
+    background-color: #f8fafc;
+    flex: 1;
+    cursor: pointer;
+    outline: none;
+}
 
-        .logo-text-db::after {
-            content: '';
-            display: inline-block;
-            width: 5px;
-            height: 5px;
-            background-color: var(--theme-teal-light);
-            border-radius: 50%;
-            margin-left: 2.5px;
-            vertical-align: baseline;
-        }
+.filter-select:focus {
+    border-color: var(--brand-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
 
-        .nav-right-group {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+.btn-search {
+    background-color: var(--brand-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
 
-        .nav-menu {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-        }
+.btn-search:hover { background-color: var(--brand-hover); }
 
-        .nav-link {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 500;
-            transition: color 0.2s ease, transform 0.2s ease;
-            position: relative;
-            padding: 6px 0;
-            cursor: pointer;
-        }
+.btn-clear {
+    background-color: #f1f5f9;
+    color: #64748b;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
 
-        .nav-link:hover {
-            color: var(--theme-teal);
-        }
+.btn-clear:hover { background-color: #e2e8f0; color: #334155; }
 
-        .nav-link.active {
-            color: var(--theme-teal);
-            font-weight: 700;
-        }
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
 
-        .nav-link svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
-            fill: currentColor;
-            transition: transform 0.2s ease;
-        }
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #f1f5f9;
+}
 
-        .nav-link:hover svg {
-            transform: translateY(-2px);
-        }
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+}
 
-        .nav-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            background: #e8eef9;
-            border: 1px solid #d6e0f2;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #5f76a6;
-            margin-bottom: 4px;
-        }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 12px; }
+.card-title { font-size: 18px; font-weight: 800; color: #1e293b; margin: 0; line-height: 1.4; }
 
-        .nav-avatar svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
+.industry-capsule {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 8px;
+}
 
-        .page-content { padding: 40px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* 頂部標題與按鈕區塊 */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        h1 { margin: 0; color: #2c3e50; font-size: 28px; font-weight: 800; letter-spacing: 1px;}
-        .btn-primary { 
-            background-color: #10b981; color: white; padding: 12px 24px; 
-            text-decoration: none; border-radius: 8px; font-weight: bold; 
-            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-            transition: all 0.3s ease; 
-        }
-        .btn-primary:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3); }
-        
-        /* Filter Bar 設計 */
-        .filter-bar {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            border: 1px solid #f1f5f9;
-        }
-        .filter-select {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #475569;
-            background-color: #f8fafc;
-            flex: 1; 
-            cursor: pointer;
-            outline: none;
-        }
-        .filter-select:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-        .btn-search {
-            background-color: #3b82f6; 
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .btn-search:hover { background-color: #2563eb; }
-        .btn-clear {
-            background-color: #f1f5f9;
-            color: #64748b;
-            padding: 10px 16px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background-color 0.3s;
-        }
-        .btn-clear:hover { background-color: #e2e8f0; color: #334155; }
+.company-name {
+    color: #64748b;
+    font-size: 14.5px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
 
-        /* 卡片網格佈局 (Grid) */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-            gap: 24px;
-        }
+.card-desc {
+    color: #475569;
+    font-size: 14.5px;
+    line-height: 1.6;
+    flex-grow: 1;
+    margin-bottom: 20px;
+}
 
-        /* 單一卡片設計 */
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #f1f5f9;
-        }
-        .card:hover {
-            transform: translateY(-5px); 
-            box-shadow: 0 12px 20px rgba(0,0,0,0.08);
-        }
+.card-tags {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
 
-        /* 卡片頭部：標題 */
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 15px;
-            margin-bottom: 12px;
-        }
-        .card-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: #1e293b;
-            margin: 0;
-            line-height: 1.4;
-        }
-        
-        /* 產業類別 */
-        .industry-capsule {
-            background-color: #e0e7ff; 
-            color: #4f46e5; 
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
+.tag { background: #f1f5f9; color: #475569; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.no-tag { color: #cbd5e1; font-style: italic; font-size: 13px; }
+{% endblock %}
 
-        /* 公司名稱 */
-        .company-name {
-            color: #64748b;
-            font-size: 14.5px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        /* 任務描述 */
-        .card-desc {
-            color: #475569;
-            font-size: 14.5px;
-            line-height: 1.6;
-            flex-grow: 1; 
-            margin-bottom: 20px;
-        }
-
-        /* 底部標籤區塊 */
-        .card-tags {
-            border-top: 1px solid #f1f5f9; 
-            padding-top: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .tag { 
-            background: #f1f5f9; color: #475569; padding: 5px 12px; 
-            border-radius: 20px; font-size: 12px; font-weight: 600; 
-        }
-        .no-tag {
-            color: #cbd5e1; font-style: italic; font-size: 13px;
-        }
-    </style>
-</head>
-<body>
-    <header class="header-outer">
-        <div class="header-inner">
-            <a href="{% url 'homepage_logged_in' %}" class="brand-logo" title="回首頁">
-                <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="var(--theme-teal-light)" />
-                            <stop offset="100%" stop-color="var(--theme-teal)" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M12 2C6.5 2 2 3.8 2 6s4.5 4 10 4 10-1.8 10-4-4.5-4-10-4z" fill="url(#logo-grad)" />
-                    <path d="M2 6v5c0 2.2 4.5 4 10 4s10-1.8 10-4V6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M2 11v5c0 2.2 4.5 4 10 4s10-1.8 10-4v-5" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <span>DBMS <span class="logo-text-db">db</span></span>
-            </a>
-
-            <div class="nav-right-group">
-                <div class="nav-menu">
-                    <a class="nav-link" href="{% url 'ca_homepage' %}" title="校友咖啡聊天">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M7 2c.3.8.3 1.7 0 2.5M11 1.5c.3.8.3 1.7 0 2.5M15 2c.3.8.3 1.7 0 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                            <path d="M4 8h14v7c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V8z"/>
-                            <path d="M18 10h1.5c1.1 0 2 .9 2 2v1c0 1.1-.9 2-2 2H18v-5z"/>
-                            <path d="M2 21h18v-1.5H2V21z"/>
-                        </svg>
-                        Coffee Chat
-                    </a>
-                    <a class="nav-link" href="{% url 'search_companies' %}" title="公司搜尋">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm6 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm8 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/>
-                        </svg>
-                        公司搜尋
-                    </a>
-                    <a class="nav-link active" href="{% url 'project_list' %}" title="微專案">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-                        </svg>
-                        Micro Projects
-                    </a>
-                    <a class="nav-link" href="{% url 'resume' %}" title="個人履歷">
-                        <span class="nav-avatar" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 12a4 4 0 100-8 4 4 0 000 8z"/>
-                                <path d="M4 20a8 8 0 0116 0"/>
-                            </svg>
-                        </span>
-                        {{ request.session.name|default:"使用者" }}
-                    </a>
-                    <a class="nav-link" href="{% url 'logout' %}" title="登出">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M10 3h8c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2h-8v-2h8V5h-8V3z"/>
-                            <path d="M3 12l4-4v3h7v2H7v3l-4-4z"/>
-                        </svg>
-                        登出
-                    </a>
-                </div>
-            </div>
+{% block content %}
+<div class="page-content">
+    <div class="container">
+        <div class="header">
+            <h1>當前開放的微任務</h1>
+            {% if request.session.role == 'alumni' %}
+                <a href="/projects/create/" class="btn-primary">＋ 發布新微任務</a>
+            {% endif %}
         </div>
-    </header>
 
-    <div class="page-content">
-        <div class="container">
-            <div class="header">
-                <h1>當前開放的微任務</h1>
-                {% if request.session.role == 'alumni' %}
-                    <a href="/projects/create/" class="btn-primary">＋ 發布新微任務</a>
-                {% endif %}
-            </div>
-        
         <form method="GET" action="" class="filter-bar">
-            
             <select name="industry" class="filter-select">
                 <option value="">所有產業</option>
                 {% for ind in filter_industries %}
@@ -402,24 +189,23 @@
             <button type="submit" class="btn-search">篩選</button>
             <a href="/projects/" class="btn-clear">清除</a>
         </form>
-        
+
         <div class="card-grid">
             {% for project in projects %}
             <div class="card">
-                
                 <div class="card-header">
                     <h3 class="card-title">{{ project.1 }}</h3>
                 </div>
-                
+
                 <div class="company-section">
                     <span class="industry-capsule">{{ project.3 }}</span>
                     <div class="company-name">{{ project.4 }}</div>
                 </div>
-                
+
                 <div class="card-desc">
                     {{ project.2 }}
                 </div>
-                
+
                 <div class="card-tags">
                     {% if project.5 %}
                         {% for tag in project.5 %}
@@ -429,49 +215,40 @@
                         <span class="no-tag">無設定標籤</span>
                     {% endif %}
                 </div>
-                
             </div>
             {% endfor %}
         </div>
-
-        </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const industrySelect = document.querySelector('select[name="industry"]');
-            const companySelect = document.getElementById('filter-company');
-            
-            // 備份所有的公司選項 (排除第一個「所有公司」的選項)
-            const allCompanyOptions = Array.from(companySelect.options).slice(1);
+</div>
+{% endblock %}
 
-            function updateCompanyOptions() {
-                const selectedIndustry = industrySelect.value;
-                const currentSelectedCompany = companySelect.value;
+{% block extra_scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const industrySelect = document.querySelector('select[name="industry"]');
+        const companySelect = document.getElementById('filter-company');
+        const allCompanyOptions = Array.from(companySelect.options).slice(1);
 
-                // 先清空公司選單，只保留預設選項
-                companySelect.innerHTML = '<option value="">所有發布公司</option>';
+        function updateCompanyOptions() {
+            const selectedIndustry = industrySelect.value;
+            const currentSelectedCompany = companySelect.value;
 
-                // 根據產業過濾公司
-                allCompanyOptions.forEach(option => {
-                    // 如果沒有選產業 (看所有)，或者該公司符合選定的產業，就把它加回來
-                    if (!selectedIndustry || option.getAttribute('data-industry') === selectedIndustry) {
-                        companySelect.appendChild(option.cloneNode(true));
-                    }
-                });
+            companySelect.innerHTML = '<option value="">所有發布公司</option>';
 
-                // 防呆：如果原本選的公司還在新的清單中，就保持選取狀態；不然就重置
-                const stillExists = Array.from(companySelect.options).some(opt => opt.value === currentSelectedCompany);
-                if (stillExists) {
-                    companySelect.value = currentSelectedCompany;
+            allCompanyOptions.forEach(option => {
+                if (!selectedIndustry || option.getAttribute('data-industry') === selectedIndustry) {
+                    companySelect.appendChild(option.cloneNode(true));
                 }
-            }
+            });
 
-            // 當產業選單改變時，觸發更新
-            industrySelect.addEventListener('change', updateCompanyOptions);
-            
-            // 網頁剛載入時，先執行一次，確保符合目前的 URL 狀態
-            updateCompanyOptions();
-        });
-    </script>
-</body>
-</html>
+            const stillExists = Array.from(companySelect.options).some(opt => opt.value === currentSelectedCompany);
+            if (stillExists) {
+                companySelect.value = currentSelectedCompany;
+            }
+        }
+
+        industrySelect.addEventListener('change', updateCompanyOptions);
+        updateCompanyOptions();
+    });
+</script>
+{% endblock %}

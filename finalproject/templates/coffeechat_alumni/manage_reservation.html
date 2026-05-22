@@ -1,217 +1,283 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理 Coffee Chat 預約</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #ffffff; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .mockup-frame { background-color: #ffffff; width: 100%; max-width: 900px; padding: 60px 80px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-        .chat-title { font-size: 28px; font-weight: 500; margin: 0; }
-        .divider { border-top: 2px solid #000; opacity: 1; margin: 15px 0 40px 0; }
-        
-        /* 編輯與狀態按鈕 (視覺稿：灰色) */
-        .custom-btn { border: 1px solid #000; background-color: #d9d9d9; padding: 4px 16px; font-weight: 500; font-size: 14px; transition: 0.2s; border-radius: 0; color: #000; }
-        .custom-btn:hover { background-color: #ccc; }
-        
-        /* 狀態按鈕：開啟 (依據現有代碼，保持灰色，關閉加 status-closed) */
-        .status-closed { background-color: #6c757d !important; color: white !important; border-color: #6c757d !important; }
-        
-        /* 專屬刪除按鈕 (視覺稿樣式) */
-        .delete-btn { background-color: #f28b82; border: 1px solid #000; color: #000; padding: 4px 16px; font-weight: 500; font-size: 16px; transition: 0.2s; border-radius: 0; }
-        .delete-btn:hover { background-color: #e57368; }
+{% extends "shared/base.html" %}
 
-        /* 右側操作按鈕 */
-        .btn-accept { background-color: #a5d6a7; border: 1px solid #000; color: #000; padding: 4px 12px; font-size: 14px; border-radius: 0; font-weight: 500;}
-        .btn-accept:hover { background-color: #81c784; }
-        .btn-reject { background-color: #ef9a9a; border: 1px solid #000; color: #000; padding: 4px 12px; font-size: 14px; border-radius: 0; font-weight: 500;}
-        .btn-reject:hover { background-color: #e57373; }
+{% block title %}審核預約申請 - DBMS{% endblock %}
+{% block nav_coffeechat %}active{% endblock %}
 
-        .gray-box { background-color: #d9d9d9; padding: 20px; min-height: 250px; overflow-y: auto; }
-        .applicant-row { border: 1px solid #000; padding: 10px 15px; margin-bottom: 10px; background-color: transparent; }
-        
-        /* 新增：申請者方框變色 CSS */
-        .status-accepted { background-color: #FFF4CC; } /* 黃色 */
-        .status-rejected { background-color: #f8d7da; }  /* 淡紅色 */
-    </style>
-</head>
-<body>
-    <div class="position-fixed top-0 start-0 p-3">
-        <a href="javascript:history.back()" class="text-dark">
-            <i class="bi bi-arrow-left fs-4"></i>
-        </a>
-    </div>
-    <div class="position-fixed top-0 end-0 p-3">
-        <a href="{% url 'ca_homepage' %}" class="text-dark">
-            <i class="bi bi-house-door-fill fs-4"></i>
-        </a>
-    </div>
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    /* 美化捲軸 */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9; 
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+    }
+</style>
+{% endblock %}
 
-    <div class="mockup-frame">
-        
-        <div class="d-flex justify-content-between align-items-center">
-            <h1 class="chat-title">管理 Coffee Chat 預約</h1>
-            
-            <form method="POST" action="{% url 'manage_chats' %}?action=delete&id={{ chat_info.id }}" class="m-0"
-                    onsubmit="return confirm('確定要刪除這個 Coffee Chat 嗎？');">
+{% block content %}
+<div class="bg-slate-50 min-h-screen py-10 px-4 font-sans antialiased">
+    <div class="max-w-6xl mx-auto">
+        <!-- 頂部導覽列 -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <a href="{% url 'manage_chats' %}" class="inline-flex items-center text-slate-500 hover:text-blue-600 transition-colors font-medium">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回時段列表
+            </a>
+
+            <!-- 刪除此時段 -->
+            <form method="POST" action="{% url 'manage_chats' %}?action=delete&id={{ chat_info.id }}" class="m-0" onsubmit="return confirm('確定要刪除整個 Coffee Chat 時段嗎？');">
                 {% csrf_token %}
-                <button type="submit" class="btn delete-btn">
-                    刪除Coffee Chat
+                <button type="submit" class="inline-flex items-center text-xs font-bold bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100/50 px-4 py-2 rounded-xl transition-all">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    刪除此時段
                 </button>
             </form>
         </div>
-        
-        <hr class="divider">
 
-        <div class="mb-5 ms-4">
-            <div class="d-flex align-items-center mb-3">
-                <span class="fs-5 me-4">Coffee Chat 狀態</span>
-                {% if chat_info.is_published %}
-                    <button type="button" id="statusBtn" class="custom-btn" onclick="toggleStatus()">發布</button>
-                {% else %}
-                    <button type="button" id="statusBtn" class="custom-btn status-closed" onclick="toggleStatus()">草稿</button>
-                {% endif %}
-            </div>
+        <!-- 雙欄工作台 (與公司搜尋完全一致的架構) -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
             
-            <div class="d-flex align-items-center">
-                <span class="fs-5 me-4">Coffee Chat 內容</span>
-                <a href="{% url 'manage_chats' %}?action=edit&id={{ chat_info.id }}" class="custom-btn text-decoration-none text-dark">編輯</a>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-6">
-                <h5 class="mb-3">預約申請審核</h5>
-                <div class="gray-box" style="max-height: 400px;">
-                    
-                    {% for applicant in applicants %}
-                    <div class="applicant-row d-flex justify-content-between align-items-center 
-                                {% if applicant.status == 'accepted' %}status-accepted
-                                {% elif applicant.status == 'rejected' %}status-rejected{% endif %}">
-                                
-                        <span>#{{ forloop.counter }} {{ applicant.student_name }} |</span>
-                        <div>
-                            <button type="button" class="custom-btn" 
-                                    data-app-name="{{ applicant.student_name|escapejs }}"
-                                    data-app-id="{{ applicant.id }}"
-                                    data-experience="{{ applicant.experience_summary|default:'未填寫'|escapejs }}"
-                                    data-questions="{{ applicant.question_outline|default:'未填寫'|escapejs }}"
-                                    onclick="showLetter(this)">查看申請信</button>
-                            
-                            </div>
-                    </div>
-                    {% empty %}
-                        <div class="text-muted">目前還沒有收到申請信喔！</div>
-                    {% endfor %}
-
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="m-0">申請信內容</h5>
-                    <div id="actionButtons" class="d-none d-flex gap-2">
-                        <form id="acceptForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
-                            <input type="hidden" name="applicant_id" id="acceptAppId" value=""> 
-                            <input type="hidden" name="status_action" value="accept"> 
-                            <button type="submit" class="btn btn-accept">接受預約</button>
-                        </form>
-
-                        <form id="rejectForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
-                            <input type="hidden" name="applicant_id" id="rejectAppId" value="">
-                            <input type="hidden" name="status_action" value="reject">
-                            <button type="submit" class="btn btn-reject">婉拒預約</button>
-                        </form>
-                    </div>
-                </div>
+            <!-- 左欄：申請信件與時段狀態 (佔據 45%) -->
+            <div class="w-full lg:w-[45%] shrink-0 flex flex-col gap-5">
                 
-                <div id="letterContentBox" class="gray-box p-3 border border-dark" style="max-height: 400px; white-space: pre-wrap; background-color: #d9d9d9; border-radius: 0;">
-                    (點擊左側「查看申請信」以顯示內容)
+                <!-- 時段基本資訊與發布狀態 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800">時段基本資訊</h3>
+                    
+                    <div class="space-y-3 text-sm text-slate-600">
+                        <p class="flex items-center">
+                            <span class="text-slate-400 font-medium w-20">地點方式：</span>
+                            <span class="font-semibold text-slate-800">{{ chat_info.location_detail }}</span>
+                        </p>
+                        <p class="flex items-center">
+                            <span class="text-slate-400 font-medium w-20">時間長度：</span>
+                            <span class="font-semibold text-slate-800">{{ chat_info.duration }} 分鐘</span>
+                        </p>
+                        <p class="flex items-center">
+                            <span class="text-slate-400 font-medium w-20">時間日期：</span>
+                            <span class="font-semibold text-slate-800">{{ chat_info.date }} ({{ chat_info.start_time}} - {{ chat_info.end_time}})</span>
+                        </p>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-sm font-bold text-slate-700 mr-3">時段發布狀態：</span>
+                            <button type="button" id="statusBtn" class="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors shadow-sm focus:outline-none" onclick="toggleStatus()">
+                                {% if chat_info.is_published %}
+                                    已發布
+                                {% else %}
+                                    草稿狀態
+                                {% endif %}
+                            </button>
+                        </div>
+                        <a href="{% url 'manage_chats' %}?action=edit&id={{ chat_info.id }}" class="inline-flex items-center text-xs font-bold text-blue-600 hover:text-blue-800">
+                            編輯時段內容
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 申請者清單卡片 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h4 class="text-lg font-bold text-slate-800 mb-4">預約申請名單</h4>
+                    <div class="space-y-3 max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
+                        {% for applicant in applicants %}
+                        <div class="applicant-card cursor-pointer border border-slate-200 p-4 rounded-xl hover:border-blue-400 hover:shadow-sm transition-all duration-200"
+                             onclick="selectApplicant(this)"
+                             data-app-id="{{ applicant.id }}"
+                             data-app-name="{{ applicant.student_name|escapejs }}"
+                             data-experience="{{ applicant.experience_summary|default:'未填寫'|escapejs }}"
+                             data-questions="{{ applicant.question_outline|default:'未填寫'|escapejs }}"
+                             data-status="{{ applicant.status }}">
+                            
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-slate-800 text-sm">#{{ forloop.counter }} {{ applicant.student_name }}</span>
+                                {% if applicant.status == 'accepted' %}
+                                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold">已同意</span>
+                                {% elif applicant.status == 'rejected' %}
+                                    <span class="bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 rounded text-[10px] font-bold">已拒絕</span>
+                                {% else %}
+                                    <span class="bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded text-[10px] font-bold">待審核</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-xs text-slate-400 truncate">點擊載入自我推薦與提問大綱...</p>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-10 text-slate-400 text-sm">
+                            <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v2m0 0h16"></path></svg>
+                            目前此時段尚無任何學員申請。
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
+
+            <!-- 右欄：申請信詳細資料面板 (佔據 55%，動態黏性定位) -->
+            <div id="detail-panel" class="w-full lg:flex-1 h-full lg:sticky lg:top-4 transition-all duration-300">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col h-full min-h-[400px]">
+                    
+                    <!-- 預設提示 (尚未選中任何申請者) -->
+                    <div id="no-selection-placeholder" class="flex-grow flex flex-col items-center justify-center text-center py-20">
+                        <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-5.603-3.735a2 2 0 00-2.294 0L9.75 14.5"></path></svg>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-700 mb-1">請點擊左側學員名稱</h4>
+                        <p class="text-xs text-slate-400">系統將在此直接載入學員的自我推薦信與具體提問問題。</p>
+                    </div>
+
+                    <!-- 實際內容顯示區 (預設隱藏) -->
+                    <div id="applicant-detail-box" class="hidden flex-grow flex flex-col space-y-6">
+                        
+                        <!-- 信件頁首 -->
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 id="view-student-name" class="text-lg font-bold text-slate-800">姓名</h3>
+                                <p class="text-xs text-slate-400 mt-1">申請信函</p>
+                            </div>
+                            
+                            <!-- 審核狀態/決定動作 -->
+                            <div id="actionButtons" class="flex gap-2">
+                                <form id="acceptForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
+                                    <input type="hidden" name="applicant_id" id="acceptAppId" value="">
+                                    <input type="hidden" name="status_action" value="accept">
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-colors">
+                                        同意預約
+                                    </button>
+                                </form>
+
+                                <form id="rejectForm" action="{% url 'manage_applicants' %}?action=update_status" method="POST" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="chat_id" value="{{ chat_info.id }}">
+                                    <input type="hidden" name="applicant_id" id="rejectAppId" value="">
+                                    <input type="hidden" name="status_action" value="reject">
+                                    <button type="submit" class="bg-rose-50 text-rose-600 hover:bg-rose-100/50 border border-rose-200 font-bold text-xs px-4 py-2 rounded-xl transition-colors">
+                                        婉拒
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- 推薦信內文區 -->
+                        <div class="space-y-4">
+                            <div>
+                                <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">自我介紹 / 履歷經歷摘要：</h5>
+                                <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 text-sm text-slate-700 leading-relaxed min-h-[100px]" id="view-experience">
+                                    經歷內容...
+                                </div>
+                            </div>
+
+                            <div>
+                                <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">具體想提問的大綱問題：</h5>
+                                <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100 text-sm text-slate-700 leading-relaxed min-h-[100px]" id="view-questions">
+                                    問題內容...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        // 修正：顯示申請信 (從按鈕 data 屬性讀取資料，並合併內容與顯示右側按鈕)
-        function showLetter(btn) {
-            const appId = btn.getAttribute('data-app-id');
-            const exp = btn.getAttribute('data-experience');
-            const quest = btn.getAttribute('data-questions');
-            
-            // 1. 更新內容框框 (不變)
-            const contentBox = document.getElementById('letterContentBox');
-            contentBox.style.whiteSpace = 'pre-wrap';
-            contentBox.innerText = `經歷摘要：\n${exp}\n\n想要詢問的問題？：\n${quest}`;
-            
-            // 2. 處理操作按鈕
-            const actionButtonsContainer = document.getElementById('actionButtons');
-            
-            // 這裡我們取得同一個控制器的網址
-            // 假設你在 urls.py 定義的名字是 'manage_applicants'
-            let baseUrl = "{% url 'manage_applicants' %}?action=update_status";
-            
-            // 設定 acceptForm
-            const acceptForm = document.getElementById('acceptForm');
-            acceptForm.action = baseUrl;
-            // 確保表單裡有必要的隱藏欄位
-            updateHiddenInput(acceptForm, 'applicant_id', appId);
-            updateHiddenInput(acceptForm, 'status_action', 'accept');
+{% block extra_scripts %}
+<script>
+    function selectApplicant(card) {
+        // 1. 取消所有卡片選中狀態
+        document.querySelectorAll('.applicant-card').forEach(el => {
+            el.classList.remove('border-blue-500', 'ring-2', 'ring-blue-100', 'bg-blue-50/20');
+            el.classList.add('border-slate-200');
+        });
 
-            // 設定 rejectForm
-            const rejectForm = document.getElementById('rejectForm');
-            rejectForm.action = baseUrl;
-            updateHiddenInput(rejectForm, 'applicant_id', appId);
-            updateHiddenInput(rejectForm, 'status_action', 'reject');
-            
-            // 顯示按鈕區塊
-            actionButtonsContainer.classList.remove('d-none');
+        // 2. 高亮當前卡片
+        card.classList.remove('border-slate-200');
+        card.classList.add('border-blue-500', 'ring-2', 'ring-blue-100', 'bg-blue-50/20');
+
+        // 3. 提取數據
+        const appId = card.getAttribute('data-app-id');
+        const name = card.getAttribute('data-app-name');
+        const exp = card.getAttribute('data-experience');
+        const quest = card.getAttribute('data-questions');
+        const status = card.getAttribute('data-status');
+
+        // 4. 切換顯示
+        document.getElementById('no-selection-placeholder').classList.add('hidden');
+        const detailBox = document.getElementById('applicant-detail-box');
+        detailBox.classList.remove('hidden');
+
+        // 5. 填寫資料
+        document.getElementById('view-student-name').innerText = name;
+        document.getElementById('view-experience').innerText = exp;
+        document.getElementById('view-questions').innerText = quest;
+
+        // 6. 設定表單 ID
+        document.getElementById('acceptAppId').value = appId;
+        document.getElementById('rejectAppId').value = appId;
+
+        // 7. 依審核狀態決定是否隱藏動作按鈕
+        const actionBtnContainer = document.getElementById('actionButtons');
+        if (status === 'accepted' || status === 'rejected') {
+            actionBtnContainer.classList.add('hidden');
+        } else {
+            actionBtnContainer.classList.remove('hidden');
         }
 
-        // 輔助函式：用來動態新增或更新表單裡的隱藏欄位
-        function updateHiddenInput(form, name, value) {
-            let input = form.querySelector(`input[name="${name}"]`);
-            if (!input) {
-                input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = name;
-                form.appendChild(input);
+        // 8. 加上過場微動畫
+        detailBox.classList.remove('opacity-100', 'translate-y-0');
+        detailBox.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+            detailBox.classList.remove('opacity-0', 'translate-y-2');
+            detailBox.classList.add('opacity-100', 'translate-y-0', 'transition-all', 'duration-300');
+        }, 10);
+    }
+
+    // 發布狀態按鈕切換
+    function toggleStatus() {
+        const btn = document.getElementById('statusBtn');
+        const url = "{% url 'manage_chats' %}?action=toggle&id={{ chat_info.id }}";
+
+        fetch(url, {
+            method: "POST",
+            headers: { "X-CSRFToken": "{{ csrf_token }}" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                updateStatusUI(data.new_status);
             }
-            input.value = value;
-        }
+        });
+    }
 
-        // 切換狀態 (連線到後端 API) (保持不變)
-        function toggleStatus() {
-            const btn = document.getElementById('statusBtn');
-            
-            // 透過 URL 參數 ?action=toggle&id=... 告訴後端要執行切換狀態
-            const url = "{% url 'manage_chats' %}?action=toggle&id={{ chat_info.id }}";
-
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    if (data.new_status === 1) {
-                        btn.innerText = "發布"; // 根據你的 UI 需求更新文字
-                        btn.classList.remove("status-closed");
-                    } else {
-                        btn.innerText = "草稿";
-                        btn.classList.add("status-closed");
-                    }
-                }
-            });
+    function updateStatusUI(status) {
+        const btn = document.getElementById('statusBtn');
+        if (status === 1) {
+            btn.innerText = "已發布";
+            btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition-colors";
+        } else {
+            btn.innerText = "草稿狀態";
+            btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold border border-slate-200 bg-slate-100 text-slate-500 shadow-sm transition-colors";
         }
-    </script>
-</body>
-</html>
+    }
+
+    // 初始化狀態按鈕樣式
+    document.addEventListener("DOMContentLoaded", function() {
+        updateStatusUI({{ chat_info.is_published|yesno:"1,0" }});
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DBMS{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+    <style>
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body class="app-body">
+    <header class="header-outer">
+        <div class="header-inner">
+            <a href="{% url 'homepage_logged_in' %}" class="brand-logo" title="回首頁">
+                <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="var(--theme-teal-light)" />
+                            <stop offset="100%" stop-color="var(--theme-teal)" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 2C6.5 2 2 3.8 2 6s4.5 4 10 4 10-1.8 10-4-4.5-4-10-4z" fill="url(#logo-grad)" />
+                    <path d="M2 6v5c0 2.2 4.5 4 10 4s10-1.8 10-4V6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M2 11v5c0 2.2 4.5 4 10 4s10-1.8 10-4v-5" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>DBMS <span class="logo-text-db">db</span></span>
+            </a>
+
+            <div class="nav-right-group">
+                <div class="nav-menu">
+                    <a class="nav-link {% block nav_coffeechat %}{% endblock %}" href="{% if request.session.role == 'alumni' %}{% url 'ca_homepage' %}{% else %}{% url 'apply_chat' %}{% endif %}" title="Coffee Chat">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 2c.3.8.3 1.7 0 2.5M11 1.5c.3.8.3 1.7 0 2.5M15 2c.3.8.3 1.7 0 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                            <path d="M4 8h14v7c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V8z"/>
+                            <path d="M18 10h1.5c1.1 0 2 .9 2 2v1c0 1.1-.9 2-2 2H18v-5z"/>
+                            <path d="M2 21h18v-1.5H2V21z"/>
+                        </svg>
+                        Coffee Chat
+                    </a>
+
+                    <a class="nav-link {% block nav_company %}{% endblock %}" href="{% url 'search_companies' %}" title="公司搜尋">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm6 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm8 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/>
+                        </svg>
+                        公司搜尋
+                    </a>
+
+                    <a class="nav-link {% block nav_projects %}{% endblock %}" href="{% url 'project_list' %}" title="微專案">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                        </svg>
+                        Micro Projects
+                    </a>
+
+                    <a class="nav-link {% block nav_resume %}{% endblock %}" href="{% url 'resume' %}" title="個人履歷">
+                        <span class="nav-avatar" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 12a4 4 0 100-8 4 4 0 000 8z"/>
+                                <path d="M4 20a8 8 0 0116 0"/>
+                            </svg>
+                        </span>
+                        {{ request.session.name|default:"使用者" }}
+                    </a>
+
+                    <a class="nav-link" href="{% url 'logout' %}" title="登出">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10 3h8c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2h-8v-2h8V5h-8V3z"/>
+                            <path d="M3 12l4-4v3h7v2H7v3l-4-4z"/>
+                        </svg>
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

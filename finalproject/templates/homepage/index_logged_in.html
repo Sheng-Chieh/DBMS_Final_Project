@@ -1,332 +1,64 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DBMS Final Project - 首頁</title>
-    <!-- 引入 Noto Sans TC 確保中文字型質感 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* 1. 主色調完全對齊 company_search.html */
-            --brand-color: #2563eb;          /* 皇家藍 (與搜尋系統按鈕 bg-blue-600 一致) */
-            --brand-hover: #1d4ed8;          /* 皇家藍懸停 (bg-blue-700) */
-            --theme-teal: #42b5d4;           /* 經典青藍色 (與橫幅漸層一致) */
-            --theme-teal-light: #53c8d8;     /* 亮青藍色 (與橫幅漸層一致) */
-            --text-main: #1e293b;            /* 深色文字 (text-slate-800) */
-            --text-muted: #64748b;           /* 輔助文字 (text-slate-50) */
-            --bg-light: #f8fafc;             /* 背景底色 (bg-slate-50) */
-            --border-color: #e2e8f0;         /* 邊框顏色 (border-slate-200) */
-            
-            /* 2. 圓角重構：由膠囊狀改為現代微圓角 (呼應 rounded-xl) */
-            --btn-radius: 12px;              
-        }
+{% extends "shared/base.html" %}
 
-        * {
-            box-sizing: border-box;
-        }
+{% block title %}DBMS Final Project - 首頁{% endblock %}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: "Noto Sans TC", -apple-system, system-ui, BlinkMacSystemFont, sans-serif;
-            color: var(--text-main);
-            background-color: var(--bg-light); /* 對齊 company_search.html 的背景 */
-            line-height: 1.5;
-        }
+{% block extra_styles %}
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-top: 90px;
+    padding-bottom: 120px;
+}
 
-        /* 導覽列外層：100% 寬度滿版，帶有柔和底線與極輕微陰影 */
-        .header-outer {
-            width: 100%;
-            background-color: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+.hero-left {
+    max-width: 780px;
+    margin: 0 auto;
+}
 
-        /* 導覽列內層：限制最大寬度，並保持與下方內容對齊 */
-        .header-inner {
-            max-width: 1128px;
-            margin: 0 auto;
-            padding: 0 24px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+.hero h1 {
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.25;
+    margin: 0 0 24px 0;
+    letter-spacing: -0.5px;
+}
 
-        /* 主內容容器 */
-        .container {
-            max-width: 1128px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
+.hero-desc {
+    font-size: 19px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin: 0 0 48px 0;
+    font-weight: 400;
+}
 
-        /* 品牌 Logo 樣式 */
-        .brand-logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-main);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: transform 0.2s ease;
-        }
+@media (max-width: 992px) {
+    .hero {
+        padding-top: 70px;
+        padding-bottom: 90px;
+    }
 
-        .brand-logo:hover {
-            transform: translateY(-1px);
-        }
+    .hero h1 {
+        font-size: 40px;
+    }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            flex-shrink: 0;
-        }
+    .hero-desc {
+        font-size: 17px;
+        margin-bottom: 36px;
+    }
+}
+{% endblock %}
 
-        .logo-text-db {
-            color: var(--theme-teal);
-            font-weight: 900;
-            position: relative;
-        }
-        
-        /* 科技感小圓點 - 對齊青藍色調 */
-        .logo-text-db::after {
-            content: '';
-            display: inline-block;
-            width: 5px;
-            height: 5px;
-            background-color: var(--theme-teal-light);
-            border-radius: 50%;
-            margin-left: 2.5px;
-            vertical-align: baseline;
-        }
-
-        .nav-right-group {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        /* 導覽選單 */
-        .nav-menu {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-        }
-
-        .nav-link {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 500;
-            transition: color 0.2s ease, transform 0.2s ease;
-            position: relative;
-            padding: 6px 0;
-            cursor: pointer;
-        }
-
-        .nav-link:hover {
-            color: var(--theme-teal); /* 懸停時轉為主題青藍色 */
-        }
-
-        .nav-link svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
-            fill: currentColor;
-            transition: transform 0.2s ease;
-        }
-
-        .nav-link:hover svg {
-            transform: translateY(-2px);
-        }
-
-        .nav-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            background: #e8eef9;
-            border: 1px solid #d6e0f2;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #5f76a6;
-            margin-bottom: 4px;
-        }
-
-        .nav-avatar svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        /* 主要內容區域 (置中舒適排版) */
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding-top: 110px;
-            padding-bottom: 130px;
-        }
-
-        .hero-left {
-            max-width: 780px; 
-            margin: 0 auto;
-        }
-
-        /* 標題帶有高質感的漸層色 */
-        .hero h1 {
-            font-size: 52px;
-            font-weight: 700;
-            color: var(--text-main);
-            background: linear-gradient(135deg, var(--text-main) 30%, var(--theme-teal-hover) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.25;
-            margin: 0 0 24px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .hero-desc {
-            font-size: 19px;
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin: 0 0 48px 0;
-            font-weight: 400;
-        }
-
-        /* 響應式排版 */
-        @media (max-width: 992px) {
-            .hero {
-                padding-top: 80px;
-                padding-bottom: 90px;
-            }
-
-            .hero h1 {
-                font-size: 40px;
-            }
-
-            .hero-desc {
-                font-size: 17px;
-                margin-bottom: 36px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header-inner {
-                flex-direction: column;
-                height: auto;
-                padding: 20px 0;
-                gap: 20px;
-            }
-
-            .nav-right-group {
-                width: 100%;
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 16px;
-                padding: 0 16px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- 全寬滿版導覽列外框 -->
-    <header class="header-outer">
-        <div class="header-inner">
-            <!-- 品牌標誌（與 company_search 漸層完全吻合） -->
-            <a href="{% url 'homepage_logged_in' %}" class="brand-logo" title="回首頁">
-                <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <!-- 定義精緻的雙色主題漸層 -->
-                        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="var(--theme-teal-light)" />
-                            <stop offset="100%" stop-color="var(--theme-teal)" />
-                        </linearGradient>
-                    </defs>
-                    <!-- 專業科技質感的資料庫疊層圖標 -->
-                    <path d="M12 2C6.5 2 2 3.8 2 6s4.5 4 10 4 10-1.8 10-4-4.5-4-10-4z" fill="url(#logo-grad)" />
-                    <path d="M2 6v5c0 2.2 4.5 4 10 4s10-1.8 10-4V6" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M2 11v5c0 2.2 4.5 4 10 4s10-1.8 10-4v-5" fill="none" stroke="url(#logo-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <span>DBMS <span class="logo-text-db">db</span></span>
-            </a>
-            
-            <div class="nav-right-group">
-                <!-- 四個主要功能圖示 -->
-                <div class="nav-menu">
-                    <!-- Coffee Chat -->
-                    <a class="nav-link" href="{% if request.session.role == 'alumni' %}{% url 'ca_homepage' %}{% else %}{% url 'apply_chat' %}{% endif %}" title="Coffee Chat">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M7 2c.3.8.3 1.7 0 2.5M11 1.5c.3.8.3 1.7 0 2.5M15 2c.3.8.3 1.7 0 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                            <path d="M4 8h14v7c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V8z"/>
-                            <path d="M18 10h1.5c1.1 0 2 .9 2 2v1c0 1.1-.9 2-2 2H18v-5z"/>
-                            <path d="M2 21h18v-1.5H2V21z"/>
-                        </svg>
-                        Coffee Chat
-                    </a>
-                    
-                    <!-- 公司搜尋 -->
-                    <a class="nav-link" href="{% url 'search_companies' %}" title="公司搜尋">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm6 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm8 12h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2z"/>
-                        </svg>
-                        公司搜尋
-                    </a>
-                    
-                    <!-- Micro Projects -->
-                    <a class="nav-link" href="{% url 'project_list' %}" title="微專案">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-                        </svg>
-                        Micro Projects
-                    </a>
-
-                    <!-- 個人履歷 -->
-                    <a class="nav-link" href="{% url 'resume' %}" title="個人履歷">
-                        <span class="nav-avatar" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 12a4 4 0 100-8 4 4 0 000 8z"/>
-                                <path d="M4 20a8 8 0 0116 0"/>
-                            </svg>
-                        </span>
-                        {{ request.session.name|default:"使用者" }}
-                    </a>
-
-                    <!-- 登出 -->
-                    <a class="nav-link" href="{% url 'logout' %}" title="登出">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M10 3h8c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2h-8v-2h8V5h-8V3z"/>
-                            <path d="M3 12l4-4v3h7v2H7v3l-4-4z"/>
-                        </svg>
-                        登出
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- 置中內容區 -->
-    <div class="container">
-        <!-- 主要內容 -->
-        <main class="hero">
-            <div class="hero-left">
-                <h1>歡迎加入專業人士社群網</h1>
-                
-                <p class="hero-desc">
-                    在這裡您可以探索各大企業資訊、與熱心校友發起 Coffee Chat 獲取一對一職涯諮詢、或參與業界實務微專案（Micro Projects）累積精彩作品。立即加入，打造屬於您的精緻職涯網路！
-                </p>
-            </div>
-        </main>
+{% block content %}
+<main class="hero">
+    <div class="hero-left">
+        <h1>歡迎加入專業人士社群網</h1>
+        <p class="hero-desc">
+            在這裡您可以探索各大企業資訊、與熱心校友發起 Coffee Chat 獲取一對一職涯諮詢、或參與業界實務微專案（Micro Projects）累積精彩作品。立即加入，打造屬於您的精緻職涯網路！
+        </p>
     </div>
-</body>
-</html>
+</main>
+{% endblock %}
