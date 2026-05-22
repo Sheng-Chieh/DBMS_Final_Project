@@ -4,7 +4,7 @@
 
 ## 主要功能
 - 角色分流：學生/校友註冊與登入
-- Onboarding 與履歷管理：活動、課程、工作經驗 CRUD
+- Onboarding 與履歷管理：活動、課程、工作經驗
 - 公司查詢與詳情：依關鍵字/產業/地區篩選
 - 公司推薦聊天：RAG 向量檢索 + Gemini 回覆理由
 - Coffee Chat：校友發布時段、學生申請、校友審核
@@ -25,7 +25,7 @@
 
 ## 前置需求
 - Anaconda / Miniconda
-- MySQL / MariaDB (InnoDB)
+- MySQL
 - pip (conda 環境內)
 
 ## 安裝與啟動
