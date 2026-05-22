@@ -6,4 +6,3 @@ langchain-community
 langchain-google-genai
 chromadb
 sentence-transformers
-jieba
