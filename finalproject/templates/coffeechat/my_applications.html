@@ -35,9 +35,14 @@
                             <span class="text-xs text-slate-400 font-semibold">{{ app.scheduled_time }}</span>
                         </h2>
                     </div>
-                    <button class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-xl shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#snapshot{{ app.id }}">
+                    <!-- 修正處：保留 data-bs 屬性以相容舊架構，但改用我們自訂的輕量 JS 控制，並幫 SVG 加上 transition 以利旋轉 -->
+                    <button class="toggle-snapshot-btn text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-xl shadow-sm" 
+                            type="button" 
+                            data-target-id="snapshot{{ app.id }}">
                         檢視申請信快照
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-3.5 h-3.5 transition-transform duration-300 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                        </svg>
                     </button>
                 </div>
 
@@ -93,9 +98,9 @@
                     </div>
                 </div>
 
-                <!-- 展開的快照抽屜 -->
-                <div class="collapse" id="snapshot{{ app.id }}">
-                    <div class="p-6 bg-slate-50 border-t border-slate-100 space-y-4 text-xs">
+                <!-- 展開的快照抽屜 (修正處：預設使用 hidden 隱藏，並加上過渡動畫 class) -->
+                <div class="hidden transition-all duration-300 border-t border-slate-100" id="snapshot{{ app.id }}">
+                    <div class="p-6 bg-slate-50 space-y-4 text-xs">
                         <div>
                             <span class="text-slate-400 font-bold block mb-1">您的經歷簡述與自我推薦信：</span>
                             <div class="bg-white p-4 rounded-xl border border-slate-200 text-slate-700 leading-relaxed whitespace-pre-line">{{ app.experience_summary }}</div>
@@ -124,4 +129,37 @@
         </div>
     </div>
 </div>
+
+<!-- 修正處：新增原生 JavaScript 腳本，完全解決展開失效問題 -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 選取所有具有展開功能的按鈕
+        const toggleButtons = document.querySelectorAll('.toggle-snapshot-btn');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target-id');
+                const targetDiv = document.getElementById(targetId);
+                const arrowSvg = this.querySelector('svg');
+                
+                if (targetDiv) {
+                    // 切換 hidden 類別
+                    const isHidden = targetDiv.classList.contains('hidden');
+                    if (isHidden) {
+                        targetDiv.classList.remove('hidden');
+                        // 順暢旋轉箭頭 180 度
+                        if (arrowSvg) {
+                            arrowSvg.classList.add('rotate-180');
+                        }
+                    } else {
+                        targetDiv.classList.add('hidden');
+                        if (arrowSvg) {
+                            arrowSvg.classList.remove('rotate-180');
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
