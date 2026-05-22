@@ -25,7 +25,7 @@
 
 ## 前置需求
 - Anaconda / Miniconda
-- MySQL / MariaDB (InnoDB)
+- MySQL
 - pip (conda 環境內)
 
 ## 安裝與啟動
