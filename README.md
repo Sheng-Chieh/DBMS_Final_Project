@@ -94,41 +94,37 @@ python manage.py runserver
 ## 功能操作說明
 
 ### 首頁與登入
-- `/`：訪客首頁
-- `/register`：註冊 (選擇學生或校友)
-- `/login`：登入
-- `/logout`：登出
+- 訪客可直接瀏覽首頁介紹。
+- 註冊時需選擇學生或校友角色；登入後系統會依角色導向對應功能。
+- 登出會清空登入狀態，回到訪客頁面。
 
 ### Onboarding 與履歷
-- `/onboarding`：首次登入的基本資料填寫
-- `/resume`：個人履歷總覽
-- `/add-activity`、`/add-work`、`/add-course`：新增履歷資料
-- `/activity/update/<id>`、`/work/update/<id>`、`/course/update/<id>`：更新資料
-- `/activity/delete/<id>`、`/work/delete/<id>`、`/course/delete/<id>`：刪除資料
+- 首次登入會進入 Onboarding，填寫系所、入學/畢業年度等基本資料。
+- 履歷頁整合活動、課程、工作經驗，支援新增、編輯與刪除。
+- 校友可補上目前公司與職稱；學生則保留學習資訊與活動紀錄。
 
 ### 公司查詢與推薦
-- `/search`：公司列表與篩選
-- `/company/<id>`：公司詳情 + 同系所校友列表
-- `/company/chat`：公司推薦聊天頁面
-- `/company/chat_lc`：聊天 API (SSE)
+- 公司列表支援關鍵字、產業與地區條件篩選。
+- 公司詳情會顯示與你同系所、且在該公司任職或有相關經歷的校友名單。
+- 公司推薦聊天以向量檢索為基礎，並透過 Gemini 產生推薦理由；未設定 API Key 仍會有基本回覆。
 
 ### Coffee Chat
 學生端：
-- `/coffeechat/apply`：查看已發布時段並送出申請
-- `/coffeechat/my-applications`：查看自己的申請狀態
+- 瀏覽校友公開的對談時段並提交申請。
+- 申請完成後可追蹤狀態（審核中/已接受/已婉拒）。
 
 校友端：
-- `/ca_homepage`：校友首頁
-- `/manage-chats`：管理自己發布的時段 (新增/編輯/上下架/刪除)
-- `/manage-applicants`：審核申請者 (接受/拒絕)
+- 建立對談時段，設定線上或線下地點、對談時間與目標系所。
+- 管理已發布的時段，支援編輯、上下架與刪除。
+- 審核申請者，可接受或婉拒，狀態即時更新。
 
 ### Micro Project
-- `/projects/`：微任務列表與篩選
-- `/projects/create/`：校友發布微任務 (學生不可發布)
+- 學生可瀏覽微任務列表，依產業/公司/標籤篩選。
+- 校友可發布微任務並綁定標籤，方便學生快速找到合適的專案。
 
 ## 假資料與資料表說明
 - 所有 CSV 位於 `dataset/`，可用 create_database.py 一鍵匯入。
-- 本專案使用原生 SQL 操作。
+- 需先執行 `python manage.py migrate`以紀錄使用者的登入狀態。
 - 若顯示資料表不存在，請先執行 create_database.py 建表。
 
 ## 常見問題
