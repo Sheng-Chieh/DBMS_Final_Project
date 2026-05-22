@@ -151,6 +151,78 @@ def build_no_results_message(user_query):
         print(f"LLM 呼叫失敗: {e}")
         return "依照這個條件，目前找不到類似的公司。"
 
+def classify_company_intent(user_query: str) -> dict:
+    """
+    判斷使用者是否具有公司查詢 / 公司推薦意圖。
+
+    回傳格式：
+    {
+        "is_company_query": bool,
+        "reason": str
+    }
+    """
+    text = (user_query or "").strip()
+
+    if not text:
+        return {
+            "is_company_query": False,
+            "reason": "使用者沒有輸入內容"
+        }
+
+    llm = get_llm()
+
+    if not llm:
+        return {
+            "is_company_query": False,
+            "reason": "無法啟用 LLM，且未偵測到公司查詢關鍵字"
+        }
+
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+        """
+        你是一個意圖分類器，任務是判斷使用者輸入是否和「公司查詢、公司推薦、尋找企業、尋找供應商、查找產業公司」有關。
+
+        請只輸出 JSON，不要輸出 Markdown，不要加上其他說明。
+
+        JSON 格式如下：
+        {{
+        "is_company_query": true 或 false,
+        "reason": "簡短原因"
+        }}
+
+        判斷標準：
+        - 如果使用者想找公司、推薦公司、查詢某產業公司、找特定地區或類型的企業，is_company_query = true
+        - 如果使用者是在閒聊、問天氣、問程式、問學術問題、問和公司資料庫無關的問題，is_company_query = false
+        """
+        ),
+        (
+            "human",
+            "使用者輸入：{user_query}"
+        )
+    ])
+
+    try:
+        result = llm.invoke(prompt.format_messages(user_query=text))
+        content = normalize_llm_text(result)
+        parsed = json.loads(content)
+        
+
+        return {
+            "is_company_query": bool(parsed.get("is_company_query", False)),
+            "reason": parsed.get("reason", "")
+        }
+
+    except Exception as e:
+        print(f"intent error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "is_company_query": False,
+            "reason": "意圖分類失敗，保守判定為非公司查詢"
+        }
+
+
 @login_required
 @csrf_exempt
 def chat_recommend_companies_lc(request):
@@ -161,6 +233,9 @@ def chat_recommend_companies_lc(request):
     messages = payload.get("messages") or []
     user_query = (payload.get("message") or "").strip()
     
+    def sse_event(data: dict) -> str:
+            return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
     # 若無最新查詢，嘗試從歷史對話中尋找最後一句 user 發言
     if not user_query:
         for m in reversed(messages):
@@ -185,10 +260,33 @@ def chat_recommend_companies_lc(request):
             return f"data: {json.dumps({'type': 'error', 'text': text}, ensure_ascii=False)}\n\n".encode("utf-8")
 
         try:
+            yield sse_event({
+                            "type": "progress",
+                            "text": "正在判斷問題類型..."
+                        })
+
+            intent = classify_company_intent(user_query)
+
+            if not intent.get("is_company_query"):
+                yield sse_event({
+                    "type": "result",
+                    "payload": {
+                        "assistant_message": (
+                            "我目前只能協助「公司查詢 / 公司推薦」。\n\n"
+                            "你可以試試這樣問：\n"
+                            "・請推薦台北的半導體公司\n"
+                            "・有哪些 AIoT 相關公司？\n"
+                            "・我想找做醫療器材的企業"
+                        ),
+                        "recommendations": []
+                    }
+                })
+                return
+
             yield send_progress("正在資料庫中搜尋相符的公司...")
             
             retriever = get_retriever()
-            retrieved = retriever.search(query=user_query, top_k=3)
+            retrieved = retriever.search(query=user_query, top_k=3, max_distance=1.2)
 
             if not retrieved:
                 no_results_message = build_no_results_message(user_query)
