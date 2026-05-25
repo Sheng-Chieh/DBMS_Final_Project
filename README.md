@@ -1,6 +1,19 @@
 # DBMS_Final_Project
 
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Django](https://img.shields.io/badge/Django-Framework-green)
+![MySQL](https://img.shields.io/badge/MySQL-Database-lightgrey)
+
 以 Django + MySQL 為基底的校園職涯媒合平台，包含履歷管理、公司搜尋與推薦、Coffee Chat 對談、微任務專案等功能，並可用 CSV 假資料快速建立資料庫。
+
+## 目錄 (Table of Contents)
+- [主要功能](#主要功能)
+- [技術](#技術)
+- [專案結構](#專案結構)
+- [前置需求](#前置需求)
+- [安裝與啟動](#安裝與啟動)
+- [功能操作說明](#功能操作說明)
+- [常見問題](#常見問題)
 
 ## 主要功能
 - 角色分流：學生/校友註冊與登入
@@ -45,21 +58,7 @@ pip install -r requirements.txt
 先在 MySQL 建立空的資料庫，例如 `final_project`。
 
 ### 4) 設定 .env
-請在專案根目錄建立或調整 .env (與 create_database.py 同層)，內容可參考：
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-HF_TOKEN=your_huggingface_token
-RAG_EMBEDDING_MODEL=BAAI/bge-m3
-RAG_DEVICE=cpu
-
-DB_ENGINE=django.db.backends.mysql
-DB_NAME=final_project
-DB_USER=root
-DB_PASSWORD=your_password
-DB_HOST=127.0.0.1
-DB_PORT=3306
-```
+請在專案根目錄調整 .env (與 create_database.py 同層)，根據環境填入對應的資料庫連線資訊與 API Key。
 
 說明：
 - `RAG_EMBEDDING_MODEL`：公司向量索引使用的 Hugging Face 模型
@@ -83,9 +82,15 @@ python create_database.py
 python finalproject/company/rag_lc/build_index.py
 ```
 
-### 7) 啟動 Django 伺服器
+### 7) 執行 Django 資料庫遷移
+在啟動伺服器之前，必須建立 Django 內建的應用程式資料表（如使用者登入狀態、Session 等）：
 ```bash
 cd finalproject
+python manage.py migrate
+```
+
+### 8) 啟動 Django 伺服器
+```bash
 python manage.py runserver
 ```
 
@@ -124,7 +129,6 @@ python manage.py runserver
 
 ## 假資料與資料表說明
 - 所有 CSV 位於 `dataset/`，可用 create_database.py 一鍵匯入。
-- 需先執行 `python manage.py migrate`以紀錄使用者的登入狀態。
 - 若顯示資料表不存在，請先執行 create_database.py 建表。
 
 ## 常見問題
