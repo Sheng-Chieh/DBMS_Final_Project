@@ -8,6 +8,9 @@ from django.core.exceptions import ImproperlyConfigured
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+from langchain_huggingface import HuggingFaceEmbeddings
+import torch
+import torch.nn as nn
 
 def _get_setting(name: str, default=None):
     if not settings.configured:
@@ -25,7 +28,7 @@ def _normalize_persist_dir(persist_dir: str) -> str:
 
 @lru_cache(maxsize=2)
 def _get_embedding(model_name: str) -> HuggingFaceEmbeddings:
-    rag_device = _get_setting("RAG_DEVICE")
+    rag_device = cpu_device = torch.device("cpu")
     hf_token = _get_setting("HF_TOKEN")
     model_kwargs = {'device': rag_device, 'token': hf_token}
     encode_kwargs = {'normalize_embeddings': False}

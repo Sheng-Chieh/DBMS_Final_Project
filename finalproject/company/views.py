@@ -18,6 +18,10 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from .rag_lc.retriever import CompanyRetrieverLC
 
+import torch
+import torch.nn as nn
+from langchain_huggingface import HuggingFaceEmbeddings
+
 RAG_PERSIST_DIR = str(Path(settings.BASE_DIR) / "rag_data_lc")
 RAG_EMBEDDING_MODEL = settings.RAG_EMBEDDING_MODEL
 
@@ -89,7 +93,7 @@ def get_llm():
     if not api_key:
         return None
     return ChatGoogleGenerativeAI(
-        model="gemini-3.1-flash-lite-preview",
+        model="gemini-3.1-flash-lite",
         google_api_key=api_key,
         temperature=0.2,
     )
