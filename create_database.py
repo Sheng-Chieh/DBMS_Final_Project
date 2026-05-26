@@ -148,8 +148,7 @@ TABLES_SCHEMA = {
     "tag_dictionary": """
         CREATE TABLE tag_dictionary (
             tag_id INT AUTO_INCREMENT PRIMARY KEY,
-            tag_name VARCHAR(50) NOT NULL UNIQUE COMMENT '標籤名稱',
-            tag_category VARCHAR(50) NOT NULL COMMENT '標籤分類'
+            tag_name VARCHAR(50) NOT NULL UNIQUE COMMENT '標籤名稱'
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """,
     "micro_project": """
@@ -160,7 +159,6 @@ TABLES_SCHEMA = {
             title VARCHAR(100) NOT NULL COMMENT '專案名稱',
             description TEXT NOT NULL COMMENT '專案詳細內容與需求',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (alumni_id) REFERENCES users(user_id) ON DELETE CASCADE,
             FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -357,22 +355,28 @@ class CSVImporter:
             reader = csv.DictReader(f)
             data = []
             for row in reader:
-                if not row.get('tag_name') or not row.get('tag_category'): continue
+                # 1. 這裡只檢查 tag_name，徹底移除 tag_category 的檢查
+                if not row.get('tag_name'): continue
+                
                 data.append((
                     self._clean_int(row.get('tag_id')),
-                    row.get('tag_name').strip(),
-                    row.get('tag_category').strip()
+                    row.get('tag_name').strip()
                 ))
+                
         if data:
             # 如果 CSV 內有提供 tag_id 則帶入，否則讓資料庫自增
             if data[0][0] is not None:
-                sql = "INSERT INTO tag_dictionary (tag_id, tag_name, tag_category) VALUES (%s, %s, %s)"
+                sql = "INSERT INTO tag_dictionary (tag_id, tag_name) VALUES (%s, %s)"
             else:
-                sql = "INSERT INTO tag_dictionary (tag_name, tag_category) VALUES (%s, %s)"
-                data = [(r[1], r[2]) for r in data]
+                # 2. 這裡的 SQL 徹底拿掉 tag_category
+                sql = "INSERT INTO tag_dictionary (tag_name) VALUES (%s)"
+                # 3. 這裡只抓 r[1] (也就是 tag_name)，注意單一元素的 tuple 需要加逗號
+                data = [(r[1],) for r in data]
+                
             cursor.executemany(sql, data)
             print(f"  [OK] tag_dictionary 成功匯入 {len(data)} 筆資料。")
         return True
+
 
     def insert_micro_project(self, cursor):
         path = self._get_path("micro_project.csv")

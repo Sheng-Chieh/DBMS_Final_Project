@@ -1,27 +1,27 @@
-tag_id,tag_name,tag_category
-1,Python,Skill
-2,SQL,Skill
-3,商業分析,Domain
-4,行銷企劃,Domain
-5,資料視覺化,Skill
-6,機器學習,Skill
-7,因果推斷,Domain
-8,資料清理,Skill
-9,FastAPI,Tool
-10,Git,Tool
-11,前端開發,Domain
-12,後端開發,Domain
-13,專案管理,Skill
-14,敏捷開發,Domain
-15,市場調查,Domain
-16,競品分析,Skill
-17,ESG 永續企劃,Domain
-18,社群經營,Skill
-19,公關溝通,Skill
-20,Power BI,Tool
-21,Power Apps,Tool
-22,SharePoint,Tool
-23,Excel 進階,Tool
-24,UI/UX 設計,Skill
-25,Figma,Tool
-26,平面設計,Skill
+tag_id,tag_name
+1,Python
+2,SQL
+3,商業分析
+4,行銷企劃
+5,資料視覺化
+6,機器學習
+7,因果推斷
+8,資料清理
+9,FastAPI
+10,Git
+11,前端開發
+12,後端開發
+13,專案管理
+14,敏捷開發
+15,市場調查
+16,競品分析
+17,ESG 永續企劃
+18,社群經營
+19,公關溝通
+20,Power BI
+21,Power Apps
+22,SharePoint
+23,Excel 進階
+24,UI/UX 設計
+25,Figma
+26,平面設計
