@@ -3,6 +3,7 @@
 {% block title %}DBMS Final Project - 首頁{% endblock %}
 
 {% block extra_styles %}
+/* ================= 原有 Hero 樣式 ================= */
 .hero {
     display: flex;
     flex-direction: column;
@@ -22,6 +23,11 @@
     font-size: 52px;
     font-weight: 700;
     color: var(--text-main);
+
+    background: linear-gradient(135deg, var(--text-main) 30%, var(--theme-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
     line-height: 1.25;
     margin: 0 0 24px 0;
     letter-spacing: -0.5px;
@@ -35,20 +41,52 @@
     font-weight: 400;
 }
 
+/* ================= 豐富版首頁擴充樣式 ================= */
+.section-padding { padding: 80px 24px; max-width: 1128px; margin: 0 auto; }
+.section-title { text-align: center; font-size: 32px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+.section-subtitle { text-align: center; font-size: 16px; color: var(--text-muted); margin-bottom: 48px; }
+
+/* 數據統計區塊 */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; padding: 40px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 40px;}
+.stat-item h3 { font-size: 40px; font-weight: 900; color: var(--text-main); margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.stat-item p { color: var(--text-muted); font-size: 15px; margin: 0; }
+
+/* 核心功能區塊 */
+.features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+.feature-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; transition: box-shadow 0.3s ease, transform 0.3s ease; }
+.feature-card:hover { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); transform: translateY(-2px); }
+.feature-icon { width: 48px; height: 48px; background: rgba(66, 181, 212, 0.1); color: var(--theme-teal); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.feature-icon svg { width: 24px; height: 24px; }
+.feature-card h4 { font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: var(--text-main); }
+.feature-card p { font-size: 15px; color: var(--text-muted); margin: 0; line-height: 1.6; }
+
+/* 見證區塊 */
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.review-card { background: #ffffff; border-radius: 12px; padding: 28px; border: 1px solid var(--border-color); }
+.stars { color: #f59e0b; font-size: 18px; margin-bottom: 16px; letter-spacing: 2px; }
+.review-text { font-size: 15px; color: var(--text-main); line-height: 1.6; margin-bottom: 24px; font-style: italic; }
+.reviewer-info { display: flex; align-items: center; gap: 12px; }
+.reviewer-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.reviewer-details h5 { margin: 0 0 4px 0; font-size: 14px; color: var(--text-main); }
+.reviewer-details span { font-size: 12px; color: var(--text-muted); }
+
+/* 按鈕樣式 (繼承 Hero 按鈕) */
+.hero-actions { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.btn-hero { display: inline-flex; align-items: center; justify-content: center; padding: 14px 38px; font-size: 18px; font-weight: 600; border-radius: 12px; text-decoration: none; transition: all 0.2s ease; cursor: pointer; }
+.btn-hero.primary { background-color: var(--brand-color); color: #ffffff; border: 1.5px solid transparent; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.25); }
+.btn-hero.primary:hover { background-color: var(--brand-hover); transform: translateY(-1px); box-shadow: 0 12px 20px -3px rgba(37, 99, 235, 0.35); }
+.btn-hero.secondary { background-color: #ffffff; color: var(--brand-color); border: 1.5px solid var(--brand-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+.btn-hero.secondary:hover { background-color: rgba(37, 99, 235, 0.03); color: var(--brand-hover); transform: translateY(-1px); }
+
+/* Footer 獨立樣式 */
+.site-footer { background: #ffffff; border-top: 1px solid var(--border-color); padding: 40px 0; text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 40px; }
+
 @media (max-width: 992px) {
-    .hero {
-        padding-top: 70px;
-        padding-bottom: 90px;
-    }
-
-    .hero h1 {
-        font-size: 40px;
-    }
-
-    .hero-desc {
-        font-size: 17px;
-        margin-bottom: 36px;
-    }
+    .hero { padding-top: 70px; padding-bottom: 90px; }
+    .hero h1 { font-size: 40px; }
+    .hero-desc { font-size: 17px; margin-bottom: 36px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 40px 24px; }
+    .features-grid, .testimonials-grid { grid-template-columns: 1fr; }
 }
 {% endblock %}
 
@@ -57,8 +95,146 @@
     <div class="hero-left">
         <h1>歡迎加入專業人士社群網</h1>
         <p class="hero-desc">
-            在這裡您可以探索各大企業資訊、與熱心校友發起 Coffee Chat 獲取一對一職涯諮詢、或參與業界實務微專案（Micro Projects）累積精彩作品。立即加入，打造屬於您的精緻職涯網路！
+            在這裡您可以探索各大企業資訊、與熱心校友發起 Coffee Chat 獲取一對一職涯諮詢、參與業界實務微專案（Micro Projects）累積精彩作品。立即加入，打造屬於您的精緻職涯網路！
         </p>
+        <div class="hero-actions">
+            <a href="{% url 'resume' %}" class="btn-hero primary">前往我的履歷</a>
+            <a href="#features" class="btn-hero secondary">了解核心功能</a>
+        </div>
     </div>
 </main>
+
+<div class="stats-grid">
+    <div class="stat-item">
+        <h3 class="counter" data-target="1240">0</h3>
+        <p>註冊用戶數</p>
+    </div>
+    <div class="stat-item">
+        <h3 class="counter" data-target="85">0</h3>
+        <p>媒合成功率 (%)</p>
+    </div>
+    <div class="stat-item">
+        <h3 class="counter" data-target="450">0</h3>
+        <p>完成的 Coffee Chat</p>
+    </div>
+    <div class="stat-item">
+        <h3 class="counter" data-target="50">0</h3>
+        <p>合作企業資源</p>
+    </div>
+</div>
+
+<section id="features" class="section-padding">
+    <h2 class="section-title">核心功能</h2>
+    <p class="section-subtitle">四個步驟，完成您的求職與職涯準備</p>
+    
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
+            </div>
+            <h4>Coffee Chat 預約</h4>
+            <p>打破距離限制，一鍵預約業界校友。無論是線上會議還是實體場域，獲得最真實的職場經驗傳承與面試建議。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <h4>企業評價與搜尋</h4>
+            <p>不再盲目投遞履歷。瀏覽各大企業的詳細資訊、職缺分佈以及校友提供的真實內部評價，精準鎖定目標公司。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            </div>
+            <h4>Micro Projects 實戰</h4>
+            <p>缺乏實務經驗？接取由校友或企業發布的微專案，在真實的商業情境中練功，並將成果直接匯入您的個人作品集。</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <h4>個人履歷</h4>
+            <p>您在平台上完成的每一次 Coffee Chat、微專案與修課紀錄，都可以成為履歷的一部分，隨時準備好迎戰面試。</p>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding" style="background-color: #f8fafc; margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px;">
+    <h2 class="section-title">他們都透過平台拿到 Offer</h2>
+    <p class="section-subtitle">來看看學長姐與同學的真實心得</p>
+    
+    <div class="testimonials-grid">
+        <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">「透過 Coffee Chat，我成功聯絡到在台積電的學長，不但修改了我的履歷，還幫我內部推薦，順利拿到實習機會！」</p>
+            <div class="reviewer-info">
+                <div class="reviewer-avatar">林</div>
+                <div class="reviewer-details">
+                    <h5>林同學</h5>
+                    <span>資管系 大三</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">「跨領域求職最怕沒有實務經驗，我透過平台接了兩個數據分析的微專案，面試時的主管對這段經歷非常感興趣。」</p>
+            <div class="reviewer-info">
+                <div class="reviewer-avatar" style="background: var(--theme-teal);">陳</div>
+                <div class="reviewer-details">
+                    <h5>陳同學</h5>
+                    <span>財金系 碩二</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">「身為校友，很高興有一個系統化的平台可以把業界的經驗傳承給學弟妹，看到他們成長真的很有成就感。」</p>
+            <div class="reviewer-info">
+                <div class="reviewer-avatar" style="background: #1e293b;">張</div>
+                <div class="reviewer-details">
+                    <h5>張校友</h5>
+                    <span>Google 軟體工程師</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer" style="margin-left: -24px; margin-right: -24px;">
+    <p>© 2026 DBMS Final Project (Team). All rights reserved.</p>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const counters = document.querySelectorAll('.counter');
+        const animateCounters = () => {
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-target');
+                const duration = 2000; 
+                const increment = target / (duration / 16); 
+                
+                let current = 0;
+                const updateCounter = () => {
+                    current += increment;
+                    if (current < target) {
+                        counter.innerText = Math.ceil(current).toLocaleString();
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.innerText = target.toLocaleString() + (target > 100 ? '+' : '');
+                    }
+                };
+                updateCounter();
+            });
+        };
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                animateCounters();
+                observer.disconnect(); 
+            }
+        }, { threshold: 0.5 });
+        if(document.querySelector('.stats-grid')){
+            observer.observe(document.querySelector('.stats-grid'));
+        }
+    });
+</script>
 {% endblock %}

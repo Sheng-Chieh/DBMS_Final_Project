@@ -285,7 +285,35 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script>
+function updateGraduationYears() {
+
+    const enrollmentSelect = document.getElementById("enrollment_year");
+    const graduationSelect = document.getElementById("graduation_year");
+
+    if (!enrollmentSelect || !graduationSelect) return;
+
+    const enrollmentYear = parseInt(enrollmentSelect.value);
+
+    for (let option of graduationSelect.options) {
+
+        if (option.value === "") continue;
+
+        const graduationYear = parseInt(option.value);
+
+        option.hidden = enrollmentYear && graduationYear < enrollmentYear;
+    }
+
+    if (
+        graduationSelect.value &&
+        enrollmentYear &&
+        parseInt(graduationSelect.value) < enrollmentYear
+    ) {
+        graduationSelect.value = "";
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+
     document.querySelectorAll(".department-select").forEach(function (select) {
         new TomSelect(select, {
             create: false,
@@ -296,6 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
     document.querySelectorAll(".company-select").forEach(function (select) {
         new TomSelect(select, {
             create: false,
@@ -306,7 +335,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 direction: "asc"
             }
         });
-    });  
+    });
+
+    updateGraduationYears();
 });
 </script>
 </body>

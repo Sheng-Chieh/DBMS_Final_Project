@@ -55,18 +55,27 @@ class CompanyRetrieverLC:
         if not self.model_name:
             raise ImproperlyConfigured("RAG_EMBEDDING_MODEL is required to initialize CompanyRetrieverLC")
         self.vs = _get_vectorstore(self.persist_dir, self.model_name)
-
-    def search(self, query: str, top_k: int = 3) -> List[Dict]:
+        
+    def search(self, query: str, top_k: int = 3, max_distance: Optional[float] = None) -> List[Dict]:
         """
-        純向量相似度搜尋：直接向 ChromaDB 索取最相似的 top_k 筆資料。
+        向量相似度搜尋：
+        - Chroma similarity_search_with_score 回傳的 score 通常是 distance
+        - distance 越小代表越相似
+        - 若設定 max_distance，會過濾掉距離過大的結果
         """
         raw = self.vs.similarity_search_with_score(query, k=top_k)
 
         results = []
         for d, score in raw:
+            score = float(score)
+
+            # 如果有設定距離門檻，且距離太大，就跳過
+            if max_distance is not None and score > max_distance:
+                continue
+
             m = d.metadata
             evidence = d.page_content[:300]
-            
+
             results.append(
                 {
                     "company_id": m.get("company_id"),
@@ -77,7 +86,7 @@ class CompanyRetrieverLC:
                     "location_district": m.get("location_district"),
                     "website": m.get("website"),
                     "evidence": evidence,
-                    "vector_distance": float(score),
+                    "vector_distance": score,
                 }
             )
 
