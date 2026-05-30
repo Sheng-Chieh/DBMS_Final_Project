@@ -12,7 +12,7 @@ class MicroProjectManager(models.Manager):
             cursor.execute("SELECT company_id, name, industry_category FROM companies ORDER BY name")
             filter_companies = cursor.fetchall()
 
-            cursor.execute("SELECT tag_id, tag_name FROM tag_dictionary ORDER BY tag_category, tag_name")
+            cursor.execute("SELECT tag_id, tag_name FROM tag_dictionary ORDER BY tag_name")
             filter_tags = cursor.fetchall()
             
         return filter_industries, filter_companies, filter_tags
