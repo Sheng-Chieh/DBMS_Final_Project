@@ -2,6 +2,7 @@
 {% block title %}我的履歷｜校園職涯媒合平台{% endblock %}
 {% block nav_resume %}active{% endblock %}
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
 {% endblock %}
 {% block extra_styles %}
@@ -156,17 +157,26 @@
         }
 
         .summary-icon {
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
-            background: #eff6ff;
-            color: #2563eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            margin-bottom: 22px;
-        }
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        color: #2563eb;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 26px;
+
+        box-shadow:
+            inset 0 0 0 1px rgba(37, 99, 235, 0.08),
+            0 8px 20px rgba(37, 99, 235, 0.08);
+    }
+
+    .summary-icon i {
+        line-height: 1;
+    }
 
         .summary-card h2 {
             font-size: 48px;
@@ -207,7 +217,7 @@
         }
         html {
             scroll-behavior: smooth;
-            scroll-padding-top: 24px;
+            scroll-padding-top: 110px;
         }
         .summary-card {
             cursor: pointer;
@@ -409,34 +419,49 @@
         </div>
 
         <div class="summary-grid">
-            {% if user.role == 'student' %}
-            <a href="#course-section" class="summary-link">
-                <div class="summary-card">
-                    <div class="summary-icon">📘</div>
-                    <h2>{{ courses|length }}</h2>
-                    <p>課程紀錄</p>
-                </div>
-            </a>
-            {% endif %}
-            <a href="#activity-section" class="summary-link">
-                <div class="summary-card">
-                    <div class="summary-icon">🎯</div>
-                    <h2>{{ activities|length }}</h2>
-                    <p>活動經歷</p>
-                </div>
-            </a>
 
-            <a href="#work-section" class="summary-link">
-                <div class="summary-card">
-                    <div class="summary-icon">💼</div>
-                    <h2>{{ works|length }}</h2>
-                    <p>工作經歷</p>
-                </div>
-            </a>
+    {% if user.role == 'student' %}
+    <a href="#course-section" class="summary-link">
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+
+            <h2>{{ courses|length }}</h2>
+            <p>課程紀錄</p>
 
         </div>
-    </div>
+    </a>
+    {% endif %}
 
+    <a href="#activity-section" class="summary-link">
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="bi bi-stars"></i>
+            </div>
+
+            <h2>{{ activities|length }}</h2>
+            <p>活動經歷</p>
+
+        </div>
+    </a>
+
+    <a href="#work-section" class="summary-link">
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <i class="bi bi-briefcase-fill"></i>
+            </div>
+
+            <h2>{{ works|length }}</h2>
+            <p>工作經歷</p>
+
+        </div>
+    </a>
+
+</div>
     <!-- 學生：課程經歷 -->
 {% if user.role == 'student' %}
 <div class="section-card" id="course-section">
